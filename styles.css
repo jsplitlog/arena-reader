@@ -337,11 +337,18 @@ code {
 @media (max-width: 640px) {
   .item { grid-template-columns: 1fr 60px; }
   .item-thumb { width: 60px; height: 60px; }
-  /* Hide non-essential controls on mobile */
-  #refresh, .view-toggle, a.icon-btn.source-link { display: none !important; }
-  .topbar-inner { gap: 0.5em; }
-  .controls { gap: 0.25em; width: 100%; }
-  .controls select { flex: 1; min-width: 0; }
+  /* Unwrap controls so children join topbar-inner flex layout */
+  .controls { display: contents; }
+  .controls[hidden] { display: none; }
+  /* Force line break between icons (order 0) and selects (order 1) */
+  .topbar-inner::after { content: ''; order: 0; width: 100%; }
+  /* Selects go to second row, expand to fill */
+  .controls select { order: 1; flex: 1; min-width: 0; }
+  /* Icons stay on title row; view-toggle auto-margins to the right */
+  .view-toggle { margin-left: auto; }
+  /* Hide non-essential items on mobile */
+  #refresh, a.icon-btn.source-link { display: none !important; }
+  .topbar-inner { gap: 0 0.34375em; }
 }
 
 /* ---- feed (grid) ---- */
