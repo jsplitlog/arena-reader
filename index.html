@@ -4,72 +4,88 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Are.na Link Reader</title>
-  <meta name="description" content="An RSS-style reader for links recently created by people you follow on Are.na, sorted by creation date." />
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css?v=10" />
 </head>
 <body>
   <header class="topbar">
     <div class="topbar-inner">
-      <h1>Are.na Link Reader</h1>
-      <p class="tagline">Links from people you follow &mdash; newest <em>created</em> first.</p>
+      <h1>✶✶ Reader</h1>
       <div class="controls" id="controls" hidden>
-        <label>
-          Sort
-          <select id="sort">
-            <option value="created_at_desc">Created &middot; newest</option>
-            <option value="created_at_asc">Created &middot; oldest</option>
-            <option value="updated_at_desc">Updated &middot; newest</option>
-            <option value="random">Random</option>
-          </select>
-        </label>
-        <label>
-          Type
-          <select id="type">
-            <option value="Link">Links</option>
-            <option value="Image">Images</option>
-            <option value="Embed">Embeds</option>
-            <option value="Attachment">Attachments</option>
-            <option value="Text">Text</option>
-            <option value="Block">All blocks</option>
-          </select>
-        </label>
-        <button id="refresh" type="button" title="Reload the feed">Refresh</button>
-        <button id="settings-toggle" type="button" class="ghost" title="Change token">Token</button>
+        <select id="scope">
+          <option value="network">My Network</option>
+          <option value="me">My Are.na</option>
+          <option value="all">All Are.na</option>
+          <option value="popular">Popular</option>
+        </select>
+        <select id="hotlinks-window" class="popular-ctrl" hidden>
+          <option value="7">7 d</option>
+          <option value="14">14 d</option>
+          <option value="30">30 d</option>
+        </select>
+        <select id="hotlinks-min" class="popular-ctrl" hidden>
+          <option value="2">2+</option>
+          <option value="3">3+</option>
+          <option value="5">5+</option>
+          <option value="10">10+</option>
+        </select>
+        <select id="sort">
+          <option value="created_at_desc">Created</option>
+          <option value="updated_at_desc">Updated</option>
+          <option value="random">Random</option>
+        </select>
+        <select id="type">
+          <option value="Link">Links</option>
+          <option value="Image">Images</option>
+          <option value="Embed">Embeds</option>
+          <option value="Attachment">Attachments</option>
+          <option value="Text">Text</option>
+          <option value="Block">All</option>
+        </select>
+        <button id="refresh" type="button">Refresh</button>
+        <div class="view-toggle" id="view-toggle">
+          <button type="button" data-view="list" title="List" aria-label="List view">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="1" y="2" width="14" height="2" fill="currentColor"/><rect x="1" y="7" width="14" height="2" fill="currentColor"/><rect x="1" y="12" width="14" height="2" fill="currentColor"/></svg>
+          </button>
+          <button type="button" data-view="grid" title="Grid" aria-label="Grid view">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" fill="currentColor"/><rect x="9" y="1" width="6" height="6" fill="currentColor"/><rect x="1" y="9" width="6" height="6" fill="currentColor"/><rect x="9" y="9" width="6" height="6" fill="currentColor"/></svg>
+          </button>
+        </div>
+        <div class="filter-wrap">
+          <button id="filter-btn" type="button" class="ghost" hidden>Filtered <span id="filter-count">0</span></button>
+          <div id="filter-dropdown" class="filter-dropdown" hidden>
+            <div class="filter-dropdown-head">
+              <span>Filtered</span>
+              <button id="filter-toggle" type="button" class="filter-toggle-btn">On</button>
+            </div>
+            <div id="filter-list" class="filter-list"></div>
+          </div>
+        </div>
+        <button id="settings-toggle" type="button" class="ghost">Token</button>
       </div>
     </div>
   </header>
 
   <main class="container">
-    <!-- Token setup -->
-    <section id="auth" class="card auth" hidden>
-      <h2>Connect your Are.na account</h2>
+    <section id="auth" class="auth" hidden>
       <p>
-        This reader calls the Are.na <code>v3</code> API directly from your browser. It needs a
-        <strong>personal access token</strong> so it can see who you follow.
+        Paste a <a href="https://www.are.na/settings/personal-access-tokens" target="_blank" rel="noopener">personal access token</a>.
+        Stored in <code>localStorage</code>, sent only to <code>api.are.na</code>.
       </p>
-      <ol class="howto">
-        <li>Go to your Are.na <a href="https://dev.are.na/oauth/applications" target="_blank" rel="noopener">applications / developer settings</a>.</li>
-        <li>Create an application (or open an existing one) and copy your <strong>Personal Access Token</strong>.</li>
-        <li>Paste it below. It is stored only in this browser (<code>localStorage</code>) and sent only to <code>api.are.na</code>.</li>
-      </ol>
       <form id="token-form" class="token-form">
         <input
           id="token-input"
           type="password"
           autocomplete="off"
           spellcheck="false"
-          placeholder="Paste your personal access token"
+          placeholder="Personal access token"
           aria-label="Personal access token"
         />
-        <button type="submit">Save &amp; load feed</button>
+        <button type="submit">Save</button>
       </form>
-      <p class="hint">Tip: the <code>scope=following</code> search may require an Are.na Premium account.</p>
     </section>
 
-    <!-- Status / errors -->
     <section id="status" class="status" hidden></section>
 
-    <!-- Feed -->
     <section id="feed" class="feed" aria-live="polite"></section>
 
     <div class="loadmore-wrap">
@@ -77,13 +93,6 @@
     </div>
   </main>
 
-  <footer class="footer">
-    <p>
-      Unofficial reader built on the Are.na v3 API &middot;
-      <code>scope=following &middot; sort=created_at_desc</code>
-    </p>
-  </footer>
-
-  <script src="app.js"></script>
+  <script src="app.js?v=10"></script>
 </body>
 </html>
