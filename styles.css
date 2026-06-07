@@ -47,6 +47,7 @@ html, body {
 
 @media (max-width: 640px) {
   html { font-size: 13px; }
+  body { overflow-x: hidden; }
 }
 
 a { color: var(--link); text-decoration: none; }
@@ -271,6 +272,7 @@ code {
   font-size: 0.875rem;
   line-height: 1.33;
   font-weight: 400;
+  overflow-wrap: break-word;
 }
 .item-title a { color: var(--fg); }
 .item-title a:hover { text-decoration: underline; }
@@ -334,6 +336,10 @@ code {
 @media (max-width: 640px) {
   .item { grid-template-columns: 1fr 60px; }
   .item-thumb { width: 60px; height: 60px; }
+  /* Hide non-essential controls on mobile */
+  #refresh, .view-toggle, a.icon-btn.source-link { display: none !important; }
+  .topbar-inner { gap: 0.5em; }
+  .controls { gap: 0.25em; }
 }
 
 /* ---- feed (grid) ---- */
