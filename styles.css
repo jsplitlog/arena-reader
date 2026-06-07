@@ -66,11 +66,12 @@ code {
   background: var(--bg);
   border-bottom: 1px solid var(--border);
   height: auto;
+  padding-top: env(safe-area-inset-top, 0);
 }
 .topbar-inner {
   max-width: var(--maxw);
   margin: 0 auto;
-  padding: 0.65625em 1em;
+  padding: 0.65625em max(1em, env(safe-area-inset-right, 0)) 0.65625em max(1em, env(safe-area-inset-left, 0));
   display: flex;
   align-items: center;
   gap: 1em;
@@ -159,7 +160,7 @@ code {
 .container {
   max-width: var(--maxw);
   margin: 0 auto;
-  padding: 1em;
+  padding: 1em max(1em, env(safe-area-inset-right, 0)) calc(1em + env(safe-area-inset-bottom, 0)) max(1em, env(safe-area-inset-left, 0));
   transition: max-width 0.15s;
 }
 .container.wide { max-width: none; }
