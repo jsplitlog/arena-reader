@@ -4,7 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Are.na Link Reader</title>
-  <link rel="stylesheet" href="styles.css?v=10" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='85' font-size='75' font-family='Arial'>✶R</text></svg>" />
+  <link rel="stylesheet" href="styles.css?v=11" />
 </head>
 <body>
   <header class="topbar">
@@ -49,7 +50,10 @@
           </button>
         </div>
         <div class="filter-wrap">
-          <button id="filter-btn" type="button" class="ghost" hidden>Filtered <span id="filter-count">0</span></button>
+          <button id="filter-btn" type="button" class="icon-btn" title="Filters" aria-label="Filters" hidden>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5h20"/><path d="M6 12h12"/><path d="M9 19h6"/></svg>
+            <span id="filter-count" class="icon-badge">0</span>
+          </button>
           <div id="filter-dropdown" class="filter-dropdown" hidden>
             <div class="filter-dropdown-head">
               <span>Filtered</span>
@@ -58,16 +62,21 @@
             <div id="filter-list" class="filter-list"></div>
           </div>
         </div>
-        <button id="settings-toggle" type="button" class="ghost">Token</button>
+        <button id="settings-toggle" type="button" class="icon-btn" title="Token settings" aria-label="Token settings">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
       </div>
+      <a href="https://github.com/jsplitlog/arena-reader" target="_blank" rel="noopener" class="icon-btn source-link" title="Source on GitHub" aria-label="Source on GitHub">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/></svg>
+      </a>
     </div>
   </header>
 
   <main class="container">
     <section id="auth" class="auth" hidden>
-      <p>
-        Paste a <a href="https://www.are.na/settings/personal-access-tokens" target="_blank" rel="noopener">personal access token</a>.
-        Stored in <code>localStorage</code>, sent only to <code>api.are.na</code>.
+      <p id="auth-msg">
+        Connect your Are.na account with a <a href="https://www.are.na/settings/personal-access-tokens" target="_blank" rel="noopener">personal access token</a>.
+        <span class="auth-note">Stored in your browser only, sent only to <code>api.are.na</code>.</span>
       </p>
       <form id="token-form" class="token-form">
         <input
@@ -75,11 +84,12 @@
           type="password"
           autocomplete="off"
           spellcheck="false"
-          placeholder="Personal access token"
+          placeholder="Paste token here"
           aria-label="Personal access token"
         />
-        <button type="submit">Save</button>
+        <button type="submit">Connect</button>
       </form>
+      <button id="sign-out" type="button" class="sign-out" hidden>Sign out</button>
     </section>
 
     <section id="status" class="status" hidden></section>
@@ -91,6 +101,6 @@
     </div>
   </main>
 
-  <script src="app.js?v=10"></script>
+  <script src="app.js?v=11"></script>
 </body>
 </html>

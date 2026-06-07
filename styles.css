@@ -92,6 +92,7 @@ code {
   align-items: center;
   margin-left: auto;
 }
+.controls[hidden] { display: none; }
 .controls select,
 .controls button {
   font: inherit;
@@ -173,10 +174,12 @@ code {
   color: var(--fg-secondary);
   margin-bottom: 0.65625em;
 }
+.auth p a { text-decoration: underline; }
 .token-form {
   display: flex;
   gap: 0.34375em;
 }
+.token-form[hidden] { display: none; }
 .token-form input {
   flex: 1;
   font: inherit;
@@ -198,6 +201,27 @@ code {
   background: var(--accent);
   color: var(--bg);
   cursor: pointer;
+}
+.auth-note {
+  display: block;
+  margin-top: 0.25em;
+  font-size: 0.6875rem;
+  color: var(--fg-muted);
+}
+.sign-out {
+  font: inherit;
+  font-size: 0.75rem;
+  color: var(--fg-muted);
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.34375em 0.65625em;
+  cursor: pointer;
+  margin-top: 0.5em;
+}
+.sign-out:hover {
+  border-color: var(--fg-muted);
+  color: var(--fg);
 }
 
 /* ---- status ---- */
@@ -438,22 +462,61 @@ code {
   transition: opacity 0.1s;
 }
 
+/* ---- icon buttons (filter, settings) ---- */
+.controls .icon-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--fg-muted);
+  cursor: pointer;
+}
+.controls .icon-btn:hover,
+a.icon-btn:hover { color: var(--fg); border-color: var(--fg-muted); text-decoration: none; }
+.controls .icon-btn.connected { color: var(--fg-secondary); }
+a.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--fg-muted);
+  cursor: pointer;
+}
+/* Pull source link in to match controls internal gap instead of topbar gap */
+a.source-link { margin-left: calc(0.34375em - 1em); }
+/* When controls are hidden (first visit), pin source link to the right */
+.controls[hidden] ~ a.source-link { margin-left: auto; }
+.icon-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  font-size: 0.5rem;
+  line-height: 1;
+  min-width: 12px;
+  height: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: var(--bg);
+  border-radius: 6px;
+  padding: 0 2px;
+  font-weight: 700;
+}
+
 /* ---- filter dropdown ---- */
 .filter-wrap { position: relative; }
-#filter-btn {
-  color: var(--fg-muted);
-}
-#filter-btn span {
-  display: inline-block;
-  background: var(--border);
-  color: var(--fg-secondary);
-  font-size: 0.5625rem;
-  min-width: 1.2em;
-  text-align: center;
-  padding: 0 0.25em;
-  border-radius: 2px;
-  margin-left: 0.125em;
-}
 .filter-dropdown {
   position: absolute;
   top: 100%;

@@ -47,6 +47,8 @@ const el = {
   feed: document.getElementById('feed'),
   loadmore: document.getElementById('loadmore'),
   hotlinksWindow: document.getElementById('hotlinks-window'),
+  signOut: document.getElementById('sign-out'),
+  authMsg: document.getElementById('auth-msg'),
   viewToggle: document.getElementById('view-toggle'),
   filterBtn: document.getElementById('filter-btn'),
   filterCount: document.getElementById('filter-count'),
@@ -523,7 +525,7 @@ function setStatus(message, kind) {
 function friendlyError(err) {
   if (err instanceof ApiError) {
     switch (err.status) {
-      case 401: return 'Token rejected (401). Re-enter via Token button.';
+      case 401: return 'Token rejected (401). Please re-enter your token.';
       case 402: case 403: return `Access denied (${err.status}). May require Are.na Premium.`;
       case 429: return 'Rate limited (429). Wait and retry.';
       default: return `Error (${err.status}).${err.detail ? ' ' + err.detail : ''}`;
@@ -574,7 +576,11 @@ async function loadFeed({ reset }) {
     if (state.sort === 'popular') enrichConnectionCounts();
   } catch (err) {
     setStatus(friendlyError(err), 'error');
-    if (err instanceof ApiError && err.status === 401) showAuth(true);
+    if (err instanceof ApiError && err.status === 401) {
+      state.token = '';
+      localStorage.removeItem(TOKEN_KEY);
+      showAuth(true);
+    }
   } finally {
     state.loading = false;
     el.loadmore.disabled = false;
@@ -597,8 +603,19 @@ function setView(mode) {
 /* ---------- auth ---------- */
 function showAuth(show) {
   el.auth.hidden = !show;
-  el.controls.hidden = show;
-  if (show) { el.tokenInput.value = ''; el.tokenInput.focus(); }
+  const hasToken = !!state.token;
+  // Only hide controls on first visit (no token yet)
+  el.controls.hidden = !hasToken;
+  // Toggle between connect and manage modes
+  el.tokenForm.hidden = hasToken;
+  el.signOut.hidden = !hasToken;
+  el.settingsToggle.classList.toggle('connected', hasToken);
+  if (hasToken) {
+    el.authMsg.innerHTML = 'Connected to Are.na. Token stored in your browser.';
+  } else {
+    el.authMsg.innerHTML = 'Connect your Are.na account with a <a href="https://www.are.na/settings/personal-access-tokens" target="_blank" rel="noopener">personal access token</a>. <span class="auth-note">Stored in your browser only, sent only to <code>api.are.na</code>.</span>';
+  }
+  if (show && !hasToken) { el.tokenInput.value = ''; el.tokenInput.focus(); }
 }
 
 async function start() {
@@ -634,6 +651,14 @@ el.tokenForm.addEventListener('submit', (e) => {
 });
 
 el.settingsToggle.addEventListener('click', () => showAuth(el.auth.hidden));
+
+el.signOut.addEventListener('click', () => {
+  state.token = '';
+  localStorage.removeItem(TOKEN_KEY);
+  el.feed.innerHTML = '';
+  el.loadmore.hidden = true;
+  showAuth(true);
+});
 
 el.scope.addEventListener('change', () => {
   state.scope = el.scope.value;
