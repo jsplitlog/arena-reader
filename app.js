@@ -594,7 +594,6 @@ function setView(mode) {
   const isGrid = mode === 'grid';
   el.feed.classList.toggle('grid', isGrid);
   el.container.classList.toggle('wide', isGrid);
-  el.topbarInner.classList.toggle('wide', isGrid);
   el.viewToggle.querySelectorAll('button').forEach((btn) => {
     btn.classList.toggle('active', btn.dataset.view === mode);
   });

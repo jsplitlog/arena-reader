@@ -13,7 +13,7 @@
   --input-bg: rgb(247, 245, 244);
   --accent: #333;
   --link: #333;
-  --radius: 0.25em;
+  --radius: 0.25rem;
   --block-w: 315px;
   --gutter: 10px;
   --maxw: 720px;
@@ -162,7 +162,7 @@ code {
   padding: 1em;
   transition: max-width 0.15s;
 }
-.container.wide { max-width: var(--maxw-grid); }
+.container.wide { max-width: none; }
 
 /* ---- auth ---- */
 .auth {
@@ -246,7 +246,7 @@ code {
 
 /* ---- connection badge ---- */
 .connection-badge {
-  font-size: 0.625rem;
+  font-size: 0.75rem;
   color: var(--fg-muted);
 }
 
@@ -278,7 +278,7 @@ code {
 .item-title a { color: var(--fg); }
 .item-title a:hover { text-decoration: underline; }
 .item-source {
-  font-size: 0.625rem;
+  font-size: 0.75rem;
   color: var(--fg-muted);
   margin-top: 0.125em;
   word-break: break-word;
@@ -296,7 +296,7 @@ code {
 .item-meta {
   margin-top: auto;
   padding-top: 0.34375em;
-  font-size: 0.625rem;
+  font-size: 0.75rem;
   color: var(--fg-muted);
 }
 .item-meta .avatar {
@@ -347,8 +347,8 @@ code {
   /* Icons stay on title row; view-toggle auto-margins to the right */
   .view-toggle { margin-left: auto; }
   /* Hide non-essential items on mobile */
-  #refresh, a.icon-btn.source-link { display: none !important; }
-  .topbar-inner { gap: 0 0.34375em; }
+  #refresh { display: none !important; }
+  .topbar-inner { gap: 0.34375em; }
 }
 
 /* ---- feed (grid) ---- */
@@ -440,7 +440,7 @@ code {
 }
 .hide-domain {
   font: inherit;
-  font-size: 0.5625rem;
+  font-size: 0.6875rem;
   color: var(--fg-muted);
   background: none;
   border: 1px solid transparent;
@@ -466,7 +466,7 @@ code {
 }
 .hide-user {
   font: inherit;
-  font-size: 0.5625rem;
+  font-size: 0.6875rem;
   color: var(--fg-muted);
   background: none;
   border: 1px solid transparent;
@@ -492,41 +492,23 @@ code {
   color: var(--fg-muted);
   cursor: pointer;
 }
-.controls .icon-btn:hover,
-a.icon-btn:hover { color: var(--fg); border-color: var(--fg-muted); text-decoration: none; }
+.controls .icon-btn:hover { color: var(--fg); border-color: var(--fg-muted); text-decoration: none; }
 .controls .icon-btn.connected { color: var(--fg-secondary); }
-a.icon-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 24px;
-  padding: 0;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--bg);
-  color: var(--fg-muted);
-  cursor: pointer;
-}
-/* Pull source link in to match controls internal gap instead of topbar gap */
-a.source-link { margin-left: calc(0.34375em - 1em); }
-/* When controls are hidden (first visit), pin source link to the right */
-.controls[hidden] ~ a.source-link { margin-left: auto; }
 .icon-badge {
   position: absolute;
-  top: -5px;
-  right: -5px;
-  font-size: 0.5rem;
-  line-height: 1;
-  min-width: 12px;
-  height: 12px;
+  top: -6px;
+  right: -6px;
+  font-size: 0.5625rem;
+  line-height: 14px;
+  min-width: 14px;
+  height: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--accent);
   color: var(--bg);
-  border-radius: 6px;
-  padding: 0 2px;
+  border-radius: 7px;
+  padding: 0 3px;
   font-weight: 700;
 }
 
