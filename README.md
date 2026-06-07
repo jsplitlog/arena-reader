@@ -1,4 +1,4 @@
-# Are.na Link Reader
+# ✶✶ Reader
 
 An RSS-style reader for links **recently created** by the people you follow on
 [Are.na](https://www.are.na) — sorted by the date each link was *added to Are.na*.
