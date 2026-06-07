@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Are.na Link Reader</title>
+  <meta name="description" content="An RSS-style reader for links recently created by people you follow on Are.na, sorted by creation date." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <h1>Are.na Link Reader</h1>
+      <p class="tagline">Links from people you follow &mdash; newest <em>created</em> first.</p>
+      <div class="controls" id="controls" hidden>
+        <label>
+          Sort
+          <select id="sort">
+            <option value="created_at_desc">Created &middot; newest</option>
+            <option value="created_at_asc">Created &middot; oldest</option>
+            <option value="updated_at_desc">Updated &middot; newest</option>
+            <option value="random">Random</option>
+          </select>
+        </label>
+        <label>
+          Type
+          <select id="type">
+            <option value="Link">Links</option>
+            <option value="Image">Images</option>
+            <option value="Embed">Embeds</option>
+            <option value="Attachment">Attachments</option>
+            <option value="Text">Text</option>
+            <option value="Block">All blocks</option>
+          </select>
+        </label>
+        <button id="refresh" type="button" title="Reload the feed">Refresh</button>
+        <button id="settings-toggle" type="button" class="ghost" title="Change token">Token</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Token setup -->
+    <section id="auth" class="card auth" hidden>
+      <h2>Connect your Are.na account</h2>
+      <p>
+        This reader calls the Are.na <code>v3</code> API directly from your browser. It needs a
+        <strong>personal access token</strong> so it can see who you follow.
+      </p>
+      <ol class="howto">
+        <li>Go to your Are.na <a href="https://dev.are.na/oauth/applications" target="_blank" rel="noopener">applications / developer settings</a>.</li>
+        <li>Create an application (or open an existing one) and copy your <strong>Personal Access Token</strong>.</li>
+        <li>Paste it below. It is stored only in this browser (<code>localStorage</code>) and sent only to <code>api.are.na</code>.</li>
+      </ol>
+      <form id="token-form" class="token-form">
+        <input
+          id="token-input"
+          type="password"
+          autocomplete="off"
+          spellcheck="false"
+          placeholder="Paste your personal access token"
+          aria-label="Personal access token"
+        />
+        <button type="submit">Save &amp; load feed</button>
+      </form>
+      <p class="hint">Tip: the <code>scope=following</code> search may require an Are.na Premium account.</p>
+    </section>
+
+    <!-- Status / errors -->
+    <section id="status" class="status" hidden></section>
+
+    <!-- Feed -->
+    <section id="feed" class="feed" aria-live="polite"></section>
+
+    <div class="loadmore-wrap">
+      <button id="loadmore" type="button" hidden>Load more</button>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>
+      Unofficial reader built on the Are.na v3 API &middot;
+      <code>scope=following &middot; sort=created_at_desc</code>
+    </p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
