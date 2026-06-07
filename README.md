@@ -61,7 +61,7 @@ It's a static site — no build step, no server.
 
 ## Getting a token
 
-1. Open your Are.na [developer / applications settings](https://dev.are.na/oauth/applications).
+1. Open your Are.na [personal access token settings](https://www.are.na/settings/personal-access-tokens).
 2. Create an application (or open an existing one) and copy its **Personal
    Access Token**.
 3. Paste it into the app. It's stored only in your browser's `localStorage`
