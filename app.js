@@ -15,7 +15,7 @@ const state = {
   page: 1,
   sort: 'created_at_desc',
   type: 'Link',
-  scope: localStorage.getItem(SCOPE_KEY) || 'network',
+  scope: (['network', 'me', 'all'].includes(localStorage.getItem(SCOPE_KEY)) ? localStorage.getItem(SCOPE_KEY) : 'network'),
   view: localStorage.getItem(VIEW_KEY) || 'list',
   hotlinks: Object.assign(
     { timeWindow: 30, minConnections: 2 },
@@ -47,7 +47,6 @@ const el = {
   feed: document.getElementById('feed'),
   loadmore: document.getElementById('loadmore'),
   hotlinksWindow: document.getElementById('hotlinks-window'),
-  hotlinksMin: document.getElementById('hotlinks-min'),
   viewToggle: document.getElementById('view-toggle'),
   filterBtn: document.getElementById('filter-btn'),
   filterCount: document.getElementById('filter-count'),
@@ -60,13 +59,18 @@ const el = {
 
 /* ---------- API ---------- */
 function searchUrl(page) {
+  const isPopular = state.sort === 'popular';
   const params = new URLSearchParams({
     query: '*',
     type: state.type,
-    sort: state.sort,
+    sort: isPopular ? 'connections_count_desc' : state.sort,
     per: String(PER_PAGE),
     page: String(page),
   });
+  if (isPopular && state.hotlinks.timeWindow > 0) {
+    const since = new Date(Date.now() - state.hotlinks.timeWindow * 86400000).toISOString();
+    params.set('after', since);
+  }
   // scope mapping — API accepts: all, my, following
   if (state.scope === 'network') params.set('scope', 'following');
   else if (state.scope === 'me') params.set('scope', 'my');
@@ -481,111 +485,31 @@ async function enrichChannels() {
   }));
 }
 
-/* ---------- popular feed ---------- */
-async function loadPopular({ reset }) {
-  if (state.loading) return;
-  state.loading = true;
-
-  if (reset) {
-    state.page = 1;
-    el.feed.innerHTML = '';
-    el.loadmore.hidden = true;
-  }
-
-  el.loadmore.disabled = true;
-  setStatus(reset ? 'Loading…' : 'Loading more…', 'loading');
-
-  const { timeWindow, minConnections } = state.hotlinks;
-  const since = new Date(Date.now() - timeWindow * 86400000).toISOString();
-
-  // Sort by created_at_desc so all results are genuinely recent,
-  // then enrich with connection counts and sort by popularity client-side
-  const params = new URLSearchParams({
-    query: '*',
-    type: state.type,
-    sort: 'created_at_desc',
-    after: since,
-    per: String(PER_PAGE),
-    page: String(state.page),
-  });
-
-  try {
-    const res = await fetch(`${API_BASE}/search?${params}`, {
-      headers: { Authorization: `Bearer ${state.token}`, Accept: 'application/json' },
-    });
-    if (!res.ok) {
-      let detail = '';
-      try { const body = await res.json(); detail = body.message || body.error || ''; } catch (_) {}
-      throw new ApiError(res.status, detail);
-    }
-    const data = await res.json();
-    const blocks = Array.isArray(data.data) ? data.data : [];
-    const meta = data.meta || {};
-
-    // Enrich with connection counts in parallel
-    const enriched = await Promise.all(
-      blocks.map(async (b) => ({ block: b, connections: await fetchConnectionCount(b.id) })),
-    );
-
-    // Filter by minimum connections, sort by popularity
-    const hot = enriched
-      .filter((e) => e.connections >= minConnections)
-      .sort((a, b) => b.connections - a.connections);
-
-    const frag = document.createDocumentFragment();
-    for (const { block: b, connections } of hot) {
-      const item = renderItem(b);
-      const line2 = item.querySelector('.meta-line:last-child');
-      if (line2) {
-        line2.appendChild(dot());
-        const badge = document.createElement('span');
-        badge.className = 'connection-badge';
-        badge.textContent = String(connections);
-        badge.title = `${connections} connections`;
-        line2.appendChild(badge);
-      }
-      frag.appendChild(item);
-    }
-    el.feed.appendChild(frag);
-
-    state.hasMore = meta.has_more_pages ?? (blocks.length === PER_PAGE);
-    if (state.hasMore) state.page += 1;
-    setStatus('');
-
-    if (el.feed.children.length === 0) {
-      const empty = document.createElement('div');
-      empty.className = 'empty';
-      empty.textContent = 'Nothing yet.';
-      el.feed.appendChild(empty);
-      el.loadmore.hidden = true;
-    } else {
-      el.loadmore.hidden = !state.hasMore;
-    }
-
-    enrichChannels();
-  } catch (err) {
-    setStatus(friendlyError(err), 'error');
-    if (err instanceof ApiError && err.status === 401) showAuth(true);
-  } finally {
-    state.loading = false;
-    el.loadmore.disabled = false;
-  }
+async function enrichConnectionCounts() {
+  const spans = el.feed.querySelectorAll('.meta-channel[data-block-id]');
+  const work = [...spans].filter((s) => !s.dataset.countDone);
+  await Promise.all(work.map(async (span) => {
+    const id = span.getAttribute('data-block-id');
+    span.dataset.countDone = '1';
+    const count = await fetchConnectionCount(id);
+    if (count < 2) return;
+    const line = span.closest('.meta-line');
+    if (!line) return;
+    line.appendChild(dot());
+    const badge = document.createElement('span');
+    badge.className = 'connection-badge';
+    badge.textContent = String(count);
+    badge.title = `${count} connections`;
+    line.appendChild(badge);
+  }));
 }
 
 function saveHotlinksPrefs() {
   localStorage.setItem(HOTLINKS_KEY, JSON.stringify(state.hotlinks));
 }
 
-function loadContent({ reset }) {
-  if (state.scope === 'popular') return loadPopular({ reset });
-  return loadFeed({ reset });
-}
-
-function updateScopeUI() {
-  const isPopular = state.scope === 'popular';
-  el.sort.hidden = isPopular;
-  el.hotlinksWindow.hidden = !isPopular;
-  el.hotlinksMin.hidden = !isPopular;
+function updateControlsUI() {
+  el.hotlinksWindow.hidden = state.sort !== 'popular';
 }
 
 /* ---------- status helpers ---------- */
@@ -645,8 +569,9 @@ async function loadFeed({ reset }) {
       el.loadmore.hidden = !state.hasMore;
     }
 
-    // Enrich channel names in background (don't block UI)
+    // Enrich in background (don't block UI)
     enrichChannels();
+    if (state.sort === 'popular') enrichConnectionCounts();
   } catch (err) {
     setStatus(friendlyError(err), 'error');
     if (err instanceof ApiError && err.status === 401) showAuth(true);
@@ -682,8 +607,7 @@ async function start() {
   el.type.value = state.type;
   setView(state.view);
   el.hotlinksWindow.value = String(state.hotlinks.timeWindow);
-  el.hotlinksMin.value = String(state.hotlinks.minConnections);
-  updateScopeUI();
+  updateControlsUI();
 
   // Load filters from file (source of truth), fall back to localStorage
   await loadFiltersFromFile();
@@ -691,7 +615,7 @@ async function start() {
 
   if (state.token) {
     showAuth(false);
-    loadContent({ reset: true });
+    loadFeed({ reset: true });
   } else {
     showAuth(true);
   }
@@ -706,7 +630,7 @@ el.tokenForm.addEventListener('submit', (e) => {
   localStorage.setItem(TOKEN_KEY, value);
   setStatus('');
   showAuth(false);
-  loadContent({ reset: true });
+  loadFeed({ reset: true });
 });
 
 el.settingsToggle.addEventListener('click', () => showAuth(el.auth.hidden));
@@ -714,19 +638,14 @@ el.settingsToggle.addEventListener('click', () => showAuth(el.auth.hidden));
 el.scope.addEventListener('change', () => {
   state.scope = el.scope.value;
   localStorage.setItem(SCOPE_KEY, state.scope);
-  updateScopeUI();
-  loadContent({ reset: true });
+  loadFeed({ reset: true });
 });
-el.sort.addEventListener('change', () => { state.sort = el.sort.value; loadContent({ reset: true }); });
-el.type.addEventListener('change', () => { state.type = el.type.value; loadContent({ reset: true }); });
+el.sort.addEventListener('change', () => { state.sort = el.sort.value; updateControlsUI(); loadFeed({ reset: true }); });
+el.type.addEventListener('change', () => { state.type = el.type.value; loadFeed({ reset: true }); });
 
 el.hotlinksWindow.addEventListener('change', () => {
   state.hotlinks.timeWindow = Number(el.hotlinksWindow.value);
-  saveHotlinksPrefs(); loadContent({ reset: true });
-});
-el.hotlinksMin.addEventListener('change', () => {
-  state.hotlinks.minConnections = Number(el.hotlinksMin.value);
-  saveHotlinksPrefs(); loadContent({ reset: true });
+  saveHotlinksPrefs(); loadFeed({ reset: true });
 });
 
 el.viewToggle.addEventListener('click', (e) => {
@@ -752,7 +671,7 @@ document.addEventListener('click', (e) => {
   }
 });
 
-el.refresh.addEventListener('click', () => loadContent({ reset: true }));
-el.loadmore.addEventListener('click', () => loadContent({ reset: false }));
+el.refresh.addEventListener('click', () => loadFeed({ reset: true }));
+el.loadmore.addEventListener('click', () => loadFeed({ reset: false }));
 
 start();
