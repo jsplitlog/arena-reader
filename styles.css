@@ -272,7 +272,8 @@ code {
   font-size: 0.875rem;
   line-height: 1.33;
   font-weight: 400;
-  overflow-wrap: break-word;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 .item-title a { color: var(--fg); }
 .item-title a:hover { text-decoration: underline; }
@@ -339,7 +340,8 @@ code {
   /* Hide non-essential controls on mobile */
   #refresh, .view-toggle, a.icon-btn.source-link { display: none !important; }
   .topbar-inner { gap: 0.5em; }
-  .controls { gap: 0.25em; }
+  .controls { gap: 0.25em; width: 100%; }
+  .controls select { flex: 1; min-width: 0; }
 }
 
 /* ---- feed (grid) ---- */
