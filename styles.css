@@ -465,7 +465,7 @@ code {
 }
 .item-meta {
   grid-column: 1 / -1;
-  padding-top: 0.25em;
+  padding-top: 0.5em;
   font-size: 0.75rem;
   color: var(--fg-muted);
   font-variant-numeric: tabular-nums;
@@ -509,7 +509,7 @@ code {
   align-items: center;
   gap: 0.34375em;
   margin-top: auto;
-  padding-top: 0.34375em;
+  padding-top: 0.625em;
   font-size: 0.75rem;
 }
 .item-author a { color: var(--fg-secondary); }
