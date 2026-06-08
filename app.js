@@ -864,6 +864,12 @@ el.loadmore.addEventListener('click', () => loadFeed({ reset: false }));
 
 /* Scroll-hide topbar: hide on scroll down, reveal on scroll up */
 (function () {
+  // Open the page at the top with the nav visible. Without this, the browser
+  // restores the previous scroll position on launch, which fires the scroll
+  // handler with a downward delta and hides the nav before the user scrolls.
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+  el.topbar.classList.remove('nav-hidden');
+
   let lastY = window.scrollY;
   let ticking = false;
   const THRESHOLD = 10; // ignore micro-scrolls
