@@ -281,8 +281,17 @@ function renderFilterUI() {
   el.filterCount.textContent = count;
   el.filterCount.classList.toggle('disabled', !state.filters.enabled);
   el.filterToggle.textContent = state.filters.enabled ? 'On' : 'Off';
+  el.filterDropdown.querySelector('.filter-dropdown-head').hidden = count === 0;
 
   el.filterList.innerHTML = '';
+
+  // Empty state
+  if (count === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'filter-empty';
+    empty.textContent = 'Filter users or sources from the menu on any block.';
+    el.filterList.appendChild(empty);
+  }
 
   // Domains section
   if (domainKeys.length) {
@@ -379,7 +388,10 @@ function renderItem(b) {
     fav.alt = '';
     fav.loading = 'lazy';
     src.appendChild(fav);
-    src.appendChild(document.createTextNode(domain));
+    const srcLink = document.createElement('a');
+    srcLink.href = href; srcLink.target = '_blank'; srcLink.rel = 'noopener';
+    srcLink.textContent = domain;
+    src.appendChild(srcLink);
     body.appendChild(src);
   }
 
@@ -400,6 +412,14 @@ function renderItem(b) {
     authorLine.appendChild(avImg);
   }
   authorLine.appendChild(metaLink(name, uUrl));
+  const authorSpacer = document.createElement('span');
+  authorSpacer.className = 'meta-spacer';
+  authorLine.appendChild(authorSpacer);
+  const time = document.createElement('time');
+  time.dateTime = created || '';
+  time.textContent = relativeTime(created);
+  time.title = absoluteTime(created);
+  authorLine.appendChild(time);
   body.appendChild(authorLine);
 
   item.appendChild(body);
@@ -464,7 +484,7 @@ function renderItem(b) {
 
   item.appendChild(thumbWrap);
 
-  // Meta bottom: channel …spacer… time ✶✶ (spans both grid columns)
+  // Meta bottom: channel …spacer… ✶✶ (spans both grid columns)
   const meta = document.createElement('div');
   meta.className = 'item-meta';
   const metaLine = document.createElement('div');
@@ -476,11 +496,6 @@ function renderItem(b) {
   const mSpacer = document.createElement('span');
   mSpacer.className = 'meta-spacer';
   metaLine.appendChild(mSpacer);
-  const time = document.createElement('time');
-  time.dateTime = created || '';
-  time.textContent = relativeTime(created);
-  time.title = absoluteTime(created);
-  metaLine.appendChild(time);
   const arenaLink = metaLink('✶✶', blockUrl(b));
   arenaLink.title = 'View on Are.na';
   metaLine.appendChild(arenaLink);
