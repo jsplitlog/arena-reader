@@ -810,6 +810,10 @@ code {
   padding: 0 3px;
   font-weight: 700;
 }
+.icon-badge.disabled {
+  background: var(--border);
+  color: var(--fg-muted);
+}
 
 /* ---- filter dropdown ---- */
 .filter-wrap { position: relative; }

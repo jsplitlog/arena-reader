@@ -279,6 +279,7 @@ function renderFilterUI() {
 
   el.filterCount.hidden = count === 0;
   el.filterCount.textContent = count;
+  el.filterCount.classList.toggle('disabled', !state.filters.enabled);
   el.filterToggle.textContent = state.filters.enabled ? 'On' : 'Off';
 
   el.filterList.innerHTML = '';
