@@ -1,91 +1,74 @@
 # ✶✶ Reader
 
-An RSS-style reader for links **recently created** by the people you follow on
-[Are.na](https://www.are.na) — sorted by the date each link was *added to Are.na*.
+An RSS-style reader for links from people you follow on [Are.na](https://www.are.na), sorted by creation date — the one sort option the website doesn't expose.
 
-The Are.na explore page lets you filter to links from people you follow:
+<!-- Add screenshots here: ![List view](screenshots/list-light.png) -->
 
-```
-https://www.are.na/explore?type=CONNECTABLE&sort=UPDATED_AT&block_filter=LINK&where=FOLLOWING
-```
+## Features
 
-…but the UI only sorts by **UPDATED_AT** or random. This reader sorts by
-**creation date** instead, which the website and apps don't expose.
+- **List and grid views** with animated transitions between layouts
+- **Sort by created, updated, popular, or random** — created date is the default and the reason this exists
+- **Filter by content type** — links, images, embeds, attachments, text, or all
+- **Scope to your network, your own blocks, or all of Are.na**
+- **Per-item filtering** — hide specific domains or users from your feed via the `...` menu on each thumbnail
+- **Filter management** — toggle filters on/off and restore hidden items from the filter dropdown
+- **Site favicons** next to source URLs, with themed backgrounds for contrast in light/dark mode
+- **Provider names** in filter menus (e.g. "Flickr" instead of "flickr.com")
+- **Light and dark mode** via `prefers-color-scheme`, matching Are.na's palette
+- **Installable as a PWA** on iOS and Android for a native app experience
+- **Zero dependencies** — vanilla HTML, CSS, and JS; no build step
 
 ## How it works
 
-There is no public "explore" endpoint — that page is powered by Are.na's
-internal GraphQL. But the documented **v3 REST API** offers the same thing
-through a single search call:
+There is no public "explore" endpoint — the Are.na explore page is powered by internal GraphQL. But the documented **v3 REST API** offers the same filtering through a single search call:
 
 ```
 GET https://api.are.na/v3/search
-    ?query=*                 # wildcard — match everything, no keyword needed
-    &scope=following         # only content from people you follow  (= where=FOLLOWING)
-    &type=Link               # only link blocks                     (= block_filter=LINK)
-    &sort=created_at_desc    # newest *created* first  ← the missing feature
+    ?query=*                 # wildcard — match everything
+    &scope=following         # only content from people you follow
+    &type=Link               # only link blocks
+    &sort=created_at_desc    # newest created first — the missing feature
     &per=50
     &page=N
 Authorization: Bearer <personal access token>
 ```
 
-| Explore URL param          | v3 `/search` equivalent  |
-| -------------------------- | ------------------------ |
-| `where=FOLLOWING`          | `scope=following`        |
-| `block_filter=LINK`        | `type=Link`              |
-| `sort=UPDATED_AT`          | `sort=updated_at_desc`   |
-| *(not in UI)* created date | `sort=created_at_desc`   |
-
-Because everything comes from one paginated endpoint (max `per=100`), it stays
-well within Are.na's rate limits — no per-user fan-out, and it only fetches when
-you open it, refresh, or click **Load more**.
-
-Response envelope:
-
-```jsonc
-{
-  "data": [ /* block objects */ ],
-  "meta": { "current_page": 1, "total_pages": 12, "has_more_pages": true, "next_page": 2 }
-}
-```
+Because everything comes from one paginated endpoint, it stays well within Are.na's rate limits — no per-user fan-out, and it only fetches when you open it, refresh, or click **Load more**.
 
 ## Running it
 
-It's a static site — no build step, no server.
+It's a static site — no build step, no framework.
 
-- **Locally:** open `index.html` in a browser, or serve the folder:
-  ```sh
-  python3 -m http.server 8000   # then visit http://localhost:8000
-  ```
-- **Hosted:** push to a static host (e.g. GitHub Pages) and visit the URL.
+**Locally:**
+
+```sh
+python3 server.py        # serves at http://localhost:8000
+```
+
+The included `server.py` also handles saving filter preferences to a local `filters.json` file. You can also use any static server — filters will fall back to `localStorage`.
+
+**Hosted:** push to a static host (e.g. GitHub Pages) and visit the URL.
 
 ## Getting a token
 
-1. Open your Are.na [personal access token settings](https://www.are.na/settings/personal-access-tokens).
-2. Create an application (or open an existing one) and copy its **Personal
-   Access Token**.
-3. Paste it into the app. It's stored only in your browser's `localStorage`
-   and sent only to `api.are.na`.
+1. Go to your Are.na [personal access token settings](https://www.are.na/settings/personal-access-tokens).
+2. Create an application (or open an existing one) and copy its **Personal Access Token**.
+3. Paste it into the app. It's stored only in your browser's `localStorage` and sent only to `api.are.na`.
 
 ## Caveats
 
-- **Premium:** the `scope=following` search may require an Are.na **Premium**
-  account. If you get a `402`/`403`, that's the likely reason — the app shows a
-  message saying so.
-- **Token in the browser:** because this is a pure client-side tool, your token
-  lives in `localStorage`. Fine for a personal reader on your own machine; if
-  you ever host it publicly, anyone using it supplies their own token.
-- **CORS:** the v3 API is designed for browser clients (the official SDK ships
-  SPA examples), so direct calls should work. If a future change blocks
-  cross-origin requests, you'd need a tiny proxy to add the `Authorization`
-  header server-side.
+- **Premium:** the `scope=following` search may require an Are.na Premium account. If you get a `402`/`403`, the app shows a message explaining this.
+- **Token in the browser:** because this is a pure client-side tool, your token lives in `localStorage`. Fine for a personal reader on your own machine; if you host it publicly, each user supplies their own token.
+- **CORS:** the v3 API supports browser clients, so direct calls work. If a future change blocks cross-origin requests, you'd need a proxy to add the `Authorization` header server-side.
 
 ## Files
 
-| File         | Purpose                                            |
-| ------------ | -------------------------------------------------- |
-| `index.html` | Markup and controls (sort / type / refresh / token)|
-| `styles.css` | Styling (light + dark via `prefers-color-scheme`)  |
-| `app.js`     | Token handling, the `/v3/search` calls, rendering  |
+| File | Purpose |
+| --- | --- |
+| `index.html` | Markup and controls |
+| `styles.css` | Styling (light + dark via `prefers-color-scheme`) |
+| `app.js` | Token handling, API calls, rendering, filtering |
+| `server.py` | Optional dev server with filter persistence |
+| `manifest.json` | PWA manifest for home screen install |
 
 Unofficial. Not affiliated with Are.na.
