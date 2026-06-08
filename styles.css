@@ -437,7 +437,7 @@ code {
 .item-title {
   font-size: 0.875rem;
   line-height: 1.33;
-  font-weight: 400;
+  font-weight: 500;
   overflow-wrap: anywhere;
   word-break: break-word;
   text-wrap: balance;
@@ -465,7 +465,7 @@ code {
 }
 .item-meta {
   grid-column: 1 / -1;
-  padding-top: 0.5em;
+  padding-top: 0.25em;
   font-size: 0.75rem;
   color: var(--fg-muted);
   font-variant-numeric: tabular-nums;
@@ -515,7 +515,7 @@ code {
   align-items: center;
   gap: 0.34375em;
   margin-top: auto;
-  padding-top: 0.625em;
+  padding-top: 1em;
   font-size: 0.75rem;
 }
 .item-author a { color: var(--fg-secondary); }
