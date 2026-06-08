@@ -25,6 +25,6 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_error(404)
 
 if __name__ == '__main__':
-    port = int(sys.argv[1]) if len(sys.argv) > 1 else 8000
+    port = int(os.environ.get('PORT', 0)) or (int(sys.argv[1]) if len(sys.argv) > 1 else 8000)
     print(f'http://localhost:{port}')
     HTTPServer(('', port), Handler).serve_forever()
