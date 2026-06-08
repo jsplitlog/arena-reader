@@ -154,6 +154,17 @@ function domainLabel(b) {
   try { return new URL(url).hostname.replace(/^www\./, ''); } catch (_) { return ''; }
 }
 
+function domainHost(b) {
+  const url = sourceUrl(b);
+  if (!url) return '';
+  try { return new URL(url).hostname.replace(/^www\./, ''); } catch (_) { return ''; }
+}
+
+function faviconUrl(domain) {
+  if (!domain) return null;
+  return `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
+}
+
 function userName(u) { return (u && u.name) || 'Someone'; }
 function userSlug(u) { return (u && u.slug) || ''; }
 function userUrl(u) { return u && u.slug ? `https://www.are.na/${u.slug}` : null; }
@@ -216,9 +227,9 @@ function isItemFiltered(domain, slug) {
   return false;
 }
 
-function filterDomain(domain) {
+function filterDomain(domain, displayName) {
   if (!domain) return;
-  state.filters.domains[domain] = true;
+  state.filters.domains[domain] = displayName || domain;
   saveFilters();
   applyFilters();
   renderFilterUI();
@@ -272,7 +283,8 @@ function renderFilterUI() {
     heading.textContent = 'Domains';
     el.filterList.appendChild(heading);
     for (const d of domainKeys.sort()) {
-      el.filterList.appendChild(filterRow(d, () => unfilterDomain(d)));
+      const label = typeof state.filters.domains[d] === 'string' ? state.filters.domains[d] : d;
+      el.filterList.appendChild(filterRow(label, () => unfilterDomain(d), true, d));
     }
   }
 
@@ -289,9 +301,18 @@ function renderFilterUI() {
   }
 }
 
-function filterRow(label, onRemove) {
+function filterRow(label, onRemove, isDomain, host) {
   const row = document.createElement('div');
   row.className = 'filter-row';
+
+  if (isDomain) {
+    const fav = document.createElement('img');
+    fav.className = 'favicon';
+    fav.src = faviconUrl(host || label);
+    fav.alt = '';
+    fav.loading = 'lazy';
+    row.appendChild(fav);
+  }
 
   const span = document.createElement('span');
   span.className = 'filter-domain';
@@ -312,7 +333,8 @@ function filterRow(label, onRemove) {
 function renderItem(b) {
   const item = document.createElement('article');
   item.className = 'item';
-  const domain = domainLabel(b);
+  const domain = domainHost(b);
+  const domainDisplay = domainLabel(b);
   const user = b.user || {};
   const slug = userSlug(user);
   if (domain) item.setAttribute('data-domain', domain);
@@ -320,7 +342,7 @@ function renderItem(b) {
   if (isItemFiltered(domain, slug)) item.classList.add('filtered');
 
   const href = sourceUrl(b) || blockUrl(b);
-  const title = b.title || (sourceUrl(b) ? domain : '') || 'Untitled';
+  const title = b.title || (sourceUrl(b) ? domainDisplay : '') || 'Untitled';
   const desc = mdText(b.description) || mdText(b.content);
   const avatar = avatarUrl(user);
   const uUrl = userUrl(user);
@@ -339,11 +361,17 @@ function renderItem(b) {
   h.appendChild(a);
   body.appendChild(h);
 
-  // Source domain
+  // Source domain with favicon (always show hostname, not provider name)
   if (domain) {
     const src = document.createElement('div');
     src.className = 'item-source';
-    src.textContent = domain;
+    const fav = document.createElement('img');
+    fav.className = 'favicon';
+    fav.src = faviconUrl(domain);
+    fav.alt = '';
+    fav.loading = 'lazy';
+    src.appendChild(fav);
+    src.appendChild(document.createTextNode(domain));
     body.appendChild(src);
   }
 
@@ -355,14 +383,13 @@ function renderItem(b) {
     body.appendChild(p);
   }
 
-  // Author line (inside body)
+  // Author line (inside body, pushed to bottom via margin-top:auto)
   const authorLine = document.createElement('div');
-  authorLine.className = 'meta-line';
-  authorLine.style.cssText = 'margin-top:auto;padding-top:0.34375em;font-size:0.75rem;color:var(--fg-muted)';
+  authorLine.className = 'item-author';
   if (avatar) {
-    const img = document.createElement('img');
-    img.className = 'avatar'; img.src = avatar; img.alt = ''; img.loading = 'lazy';
-    authorLine.appendChild(img);
+    const avImg = document.createElement('img');
+    avImg.className = 'avatar'; avImg.src = avatar; avImg.alt = ''; avImg.loading = 'lazy';
+    authorLine.appendChild(avImg);
   }
   authorLine.appendChild(metaLink(name, uUrl));
   body.appendChild(authorLine);
@@ -404,27 +431,26 @@ function renderItem(b) {
 
     const fMenu = document.createElement('div');
     fMenu.className = 'item-filter-menu';
-    fMenu.hidden = true;
     if (domain) {
       const dBtn = document.createElement('button');
       dBtn.type = 'button';
-      dBtn.textContent = 'Filter ' + domain;
-      dBtn.addEventListener('click', () => { filterDomain(domain); fMenu.hidden = true; });
+      dBtn.textContent = 'Filter ' + domainDisplay;
+      dBtn.addEventListener('click', () => { filterDomain(domain, domainDisplay); fMenu.classList.remove('open'); });
       fMenu.appendChild(dBtn);
     }
     if (slug) {
       const uBtn = document.createElement('button');
       uBtn.type = 'button';
       uBtn.textContent = 'Filter ' + name;
-      uBtn.addEventListener('click', () => { filterUser(slug, name); fMenu.hidden = true; });
+      uBtn.addEventListener('click', () => { filterUser(slug, name); fMenu.classList.remove('open'); });
       fMenu.appendChild(uBtn);
     }
     thumbWrap.appendChild(fMenu);
 
     fBtn.addEventListener('click', (e) => {
       e.preventDefault(); e.stopPropagation();
-      document.querySelectorAll('.item-filter-menu').forEach(m => { if (m !== fMenu) m.hidden = true; });
-      fMenu.hidden = !fMenu.hidden;
+      document.querySelectorAll('.item-filter-menu').forEach(m => { if (m !== fMenu) m.classList.remove('open'); });
+      fMenu.classList.toggle('open');
     });
   }
 
@@ -575,7 +601,7 @@ async function fetchMe() {
       createdAt: u.created_at || '',
     };
     // Update modal if it's already showing
-    if (!el.auth.hidden) showAuth(true);
+    if (el.auth.classList.contains('open')) showAuth(true);
     // Also update if closed — so next open reflects user
     el.authUser.hidden = false;
     el.authUsername.textContent = state.user.name;
@@ -647,20 +673,35 @@ async function loadFeed({ reset }) {
 
 /* ---------- view mode ---------- */
 function setView(mode) {
+  const prev = state.view;
   state.view = mode;
   localStorage.setItem(VIEW_KEY, mode);
-  const isGrid = mode === 'grid';
-  el.feed.classList.toggle('grid', isGrid);
-  el.container.classList.toggle('wide', isGrid);
-  el.viewToggle.querySelectorAll('button').forEach((btn) => {
-    btn.classList.toggle('active', btn.dataset.view === mode);
-  });
+
+  const apply = () => {
+    const isGrid = mode === 'grid';
+    el.feed.classList.toggle('grid', isGrid);
+    el.container.classList.toggle('wide', isGrid);
+    el.viewToggle.querySelectorAll('button').forEach((btn) => {
+      btn.classList.toggle('active', btn.dataset.view === mode);
+    });
+  };
+
+  // Animate only when actually switching and content exists
+  if (prev !== mode && el.feed.children.length > 0) {
+    el.feed.classList.add('view-switching');
+    setTimeout(() => {
+      apply();
+      requestAnimationFrame(() => el.feed.classList.remove('view-switching'));
+    }, 100);
+  } else {
+    apply();
+  }
 }
 
 /* ---------- auth ---------- */
 function showAuth(show) {
-  el.auth.hidden = !show;
-  el.authOverlay.hidden = !show;
+  el.auth.classList.toggle('open', show);
+  el.authOverlay.classList.toggle('open', show);
   const hasToken = !!state.token;
   // Only hide controls on first visit (no token yet)
   el.controls.hidden = !hasToken;
@@ -729,7 +770,7 @@ el.tokenForm.addEventListener('submit', (e) => {
   loadFeed({ reset: true });
 });
 
-el.settingsToggle.addEventListener('click', () => showAuth(el.auth.hidden));
+el.settingsToggle.addEventListener('click', () => showAuth(!el.auth.classList.contains('open')));
 el.authClose.addEventListener('click', () => showAuth(false));
 el.authOverlay.addEventListener('click', () => showAuth(false));
 
@@ -761,7 +802,7 @@ el.viewToggle.addEventListener('click', (e) => {
 });
 
 el.filterBtn.addEventListener('click', () => {
-  el.filterDropdown.hidden = !el.filterDropdown.hidden;
+  el.filterDropdown.classList.toggle('open');
 });
 
 el.filterToggle.addEventListener('click', () => {
@@ -774,11 +815,11 @@ el.filterToggle.addEventListener('click', () => {
 // close filter dropdown when clicking outside
 document.addEventListener('click', (e) => {
   if (!el.filterBtn.contains(e.target) && !el.filterDropdown.contains(e.target)) {
-    el.filterDropdown.hidden = true;
+    el.filterDropdown.classList.remove('open');
   }
   // close item filter menus when clicking outside
   if (!e.target.closest('.item-filter-btn') && !e.target.closest('.item-filter-menu')) {
-    document.querySelectorAll('.item-filter-menu').forEach(m => { m.hidden = true; });
+    document.querySelectorAll('.item-filter-menu').forEach(m => { m.classList.remove('open'); });
   }
 });
 
