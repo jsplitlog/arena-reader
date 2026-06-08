@@ -730,20 +730,16 @@ code {
 @media (prefers-color-scheme: dark) {
   .item-thumb { outline-color: rgba(255, 255, 255, 0.1); }
 }
+/* Grid cards reuse the list's text styles and vertical spacing hierarchy;
+   only horizontal/card insets are grid-specific. */
 .feed.grid .item-body {
-  padding: 0.5em;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
+  padding: 0.5em 0.5em 0;
 }
-.feed.grid .item-title { font-size: 0.8125rem; }
-.feed.grid .item-desc { font-size: 0.75rem; }
 .feed.grid .item-author {
   padding: 2em 0.5em 0;
 }
 .feed.grid .item-meta {
-  margin-top: auto;
-  padding: 0 0.5em 0.5em;
+  padding: 0.5em;
 }
 @media (max-width: 640px) {
   .feed.grid { grid-template-columns: 1fr; gap: 0.75em; }
