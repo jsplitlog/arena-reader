@@ -792,6 +792,7 @@ code {
 .controls .icon-btn:hover,
 .controls a.icon-btn:hover { color: var(--fg); border-color: var(--fg-muted); text-decoration: none; }
 .controls .icon-btn.connected { color: var(--fg-muted); }
+.icon-badge[hidden] { display: none; }
 .icon-badge {
   position: absolute;
   top: -6px;

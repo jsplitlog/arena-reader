@@ -277,7 +277,7 @@ function renderFilterUI() {
   const userKeys = Object.keys(state.filters.users);
   const count = domainKeys.length + userKeys.length;
 
-  el.filterBtn.hidden = count === 0;
+  el.filterCount.hidden = count === 0;
   el.filterCount.textContent = count;
   el.filterToggle.textContent = state.filters.enabled ? 'On' : 'Off';
 
