@@ -27,6 +27,7 @@ const state = {
   ),
   loading: false,
   hasMore: false,
+  user: null,
 };
 
 // Ensure users obj exists for legacy localStorage
@@ -47,10 +48,14 @@ const el = {
   feed: document.getElementById('feed'),
   loadmore: document.getElementById('loadmore'),
   hotlinksWindow: document.getElementById('hotlinks-window'),
-  signOut: document.getElementById('sign-out'),
   authMsg: document.getElementById('auth-msg'),
   authOverlay: document.getElementById('auth-overlay'),
   authClose: document.getElementById('auth-close'),
+  authUser: document.getElementById('auth-user'),
+  authAvatar: document.getElementById('auth-avatar'),
+  authUsername: document.getElementById('auth-username'),
+  authActions: document.getElementById('auth-actions'),
+  authMemberSince: document.getElementById('auth-member-since'),
   viewToggle: document.getElementById('view-toggle'),
   filterBtn: document.getElementById('filter-btn'),
   filterCount: document.getElementById('filter-count'),
@@ -334,22 +339,11 @@ function renderItem(b) {
   h.appendChild(a);
   body.appendChild(h);
 
-  // Source domain + hide button
+  // Source domain
   if (domain) {
     const src = document.createElement('div');
     src.className = 'item-source';
-    const domainText = document.createElement('span');
-    domainText.textContent = domain;
-    src.appendChild(domainText);
-
-    const hideBtn = document.createElement('button');
-    hideBtn.type = 'button';
-    hideBtn.className = 'hide-domain';
-    hideBtn.textContent = 'hide';
-    hideBtn.title = `Filter out ${domain}`;
-    hideBtn.addEventListener('click', () => filterDomain(domain));
-    src.appendChild(hideBtn);
-
+    src.textContent = domain;
     body.appendChild(src);
   }
 
@@ -361,55 +355,24 @@ function renderItem(b) {
     body.appendChild(p);
   }
 
-  // Meta — two lines
-  const meta = document.createElement('div');
-  meta.className = 'item-meta';
-
-  // Line 1: avatar + username + hide
-  const line1 = document.createElement('div');
-  line1.className = 'meta-line';
+  // Author line (inside body)
+  const authorLine = document.createElement('div');
+  authorLine.className = 'meta-line';
+  authorLine.style.cssText = 'margin-top:auto;padding-top:0.34375em;font-size:0.75rem;color:var(--fg-muted)';
   if (avatar) {
     const img = document.createElement('img');
     img.className = 'avatar'; img.src = avatar; img.alt = ''; img.loading = 'lazy';
-    line1.appendChild(img);
+    authorLine.appendChild(img);
   }
-  const userWrap = document.createElement('span');
-  userWrap.className = 'meta-user-wrap';
-  userWrap.appendChild(metaLink(name, uUrl));
-  if (slug) {
-    const hideUser = document.createElement('button');
-    hideUser.type = 'button';
-    hideUser.className = 'hide-user';
-    hideUser.textContent = 'hide';
-    hideUser.title = `Filter out ${name}`;
-    hideUser.addEventListener('click', () => filterUser(slug, name));
-    userWrap.appendChild(hideUser);
-  }
-  line1.appendChild(userWrap);
-  meta.appendChild(line1);
+  authorLine.appendChild(metaLink(name, uUrl));
+  body.appendChild(authorLine);
 
-  // Line 2: channel (placeholder) · time · ✶✶
-  const line2 = document.createElement('div');
-  line2.className = 'meta-line';
-  const channelSpan = document.createElement('span');
-  channelSpan.className = 'meta-channel';
-  channelSpan.setAttribute('data-block-id', String(b.id));
-  line2.appendChild(channelSpan);
-  const time = document.createElement('time');
-  time.dateTime = created || '';
-  time.textContent = relativeTime(created);
-  time.title = absoluteTime(created);
-  line2.appendChild(time);
-  line2.appendChild(dot());
-  const arenaLink = metaLink('✶✶', blockUrl(b));
-  arenaLink.title = 'View on Are.na';
-  line2.appendChild(arenaLink);
-  meta.appendChild(line2);
-
-  body.appendChild(meta);
   item.appendChild(body);
 
-  // Thumbnail or text preview
+  // Thumbnail/preview wrapper with filter button
+  const thumbWrap = document.createElement('div');
+  thumbWrap.className = 'item-thumb-wrap';
+
   const thumb = blockImage(b);
   if (thumb) {
     const link = document.createElement('a');
@@ -417,7 +380,7 @@ function renderItem(b) {
     const img = document.createElement('img');
     img.className = 'item-thumb'; img.src = thumb; img.alt = ''; img.loading = 'lazy';
     link.appendChild(img);
-    item.appendChild(link);
+    thumbWrap.appendChild(link);
   } else {
     const preview = document.createElement('div');
     preview.className = 'item-preview';
@@ -427,8 +390,68 @@ function renderItem(b) {
       p.textContent = previewText;
       preview.appendChild(p);
     }
-    item.appendChild(preview);
+    thumbWrap.appendChild(preview);
   }
+
+  // Filter button on thumbnail
+  if (domain || slug) {
+    const fBtn = document.createElement('button');
+    fBtn.type = 'button';
+    fBtn.className = 'item-filter-btn';
+    fBtn.setAttribute('aria-label', 'Filter options');
+    fBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>';
+    thumbWrap.appendChild(fBtn);
+
+    const fMenu = document.createElement('div');
+    fMenu.className = 'item-filter-menu';
+    fMenu.hidden = true;
+    if (domain) {
+      const dBtn = document.createElement('button');
+      dBtn.type = 'button';
+      dBtn.textContent = 'Filter ' + domain;
+      dBtn.addEventListener('click', () => { filterDomain(domain); fMenu.hidden = true; });
+      fMenu.appendChild(dBtn);
+    }
+    if (slug) {
+      const uBtn = document.createElement('button');
+      uBtn.type = 'button';
+      uBtn.textContent = 'Filter ' + name;
+      uBtn.addEventListener('click', () => { filterUser(slug, name); fMenu.hidden = true; });
+      fMenu.appendChild(uBtn);
+    }
+    thumbWrap.appendChild(fMenu);
+
+    fBtn.addEventListener('click', (e) => {
+      e.preventDefault(); e.stopPropagation();
+      document.querySelectorAll('.item-filter-menu').forEach(m => { if (m !== fMenu) m.hidden = true; });
+      fMenu.hidden = !fMenu.hidden;
+    });
+  }
+
+  item.appendChild(thumbWrap);
+
+  // Meta bottom: channel …spacer… time ✶✶ (spans both grid columns)
+  const meta = document.createElement('div');
+  meta.className = 'item-meta';
+  const metaLine = document.createElement('div');
+  metaLine.className = 'meta-line';
+  const channelSpan = document.createElement('span');
+  channelSpan.className = 'meta-channel';
+  channelSpan.setAttribute('data-block-id', String(b.id));
+  metaLine.appendChild(channelSpan);
+  const mSpacer = document.createElement('span');
+  mSpacer.className = 'meta-spacer';
+  metaLine.appendChild(mSpacer);
+  const time = document.createElement('time');
+  time.dateTime = created || '';
+  time.textContent = relativeTime(created);
+  time.title = absoluteTime(created);
+  metaLine.appendChild(time);
+  const arenaLink = metaLink('✶✶', blockUrl(b));
+  arenaLink.title = 'View on Are.na';
+  metaLine.appendChild(arenaLink);
+  meta.appendChild(metaLine);
+  item.appendChild(meta);
 
   return item;
 }
@@ -468,7 +491,7 @@ async function fetchFirstChannel(blockId) {
     const data = await res.json();
     const ch = Array.isArray(data.data) && data.data[0];
     if (!ch) return null;
-    return { title: ch.title, slug: ch.slug };
+    return { title: ch.title, slug: ch.slug, userSlug: (ch.user && ch.user.slug) || '' };
   } catch (_) { return null; }
 }
 
@@ -481,11 +504,12 @@ async function enrichChannels() {
     const ch = await fetchFirstChannel(id);
     if (!ch) return;
     const link = document.createElement('a');
-    link.href = `https://www.are.na/${ch.slug || ''}`;
+    link.href = ch.userSlug
+      ? `https://www.are.na/${ch.userSlug}/${ch.slug}`
+      : `https://www.are.na/channel/${ch.slug || ''}`;
     link.target = '_blank'; link.rel = 'noopener';
     link.textContent = ch.title;
     span.appendChild(link);
-    span.appendChild(dot());
   }));
 }
 
@@ -534,6 +558,38 @@ function friendlyError(err) {
     }
   }
   return 'Could not reach api.are.na.';
+}
+
+/* ---------- user info ---------- */
+async function fetchMe() {
+  try {
+    const res = await fetch(`${API_BASE}/me`, {
+      headers: { Authorization: `Bearer ${state.token}`, Accept: 'application/json' },
+    });
+    if (!res.ok) return;
+    const u = await res.json();
+    state.user = {
+      name: userName(u),
+      slug: userSlug(u),
+      avatar: avatarUrl(u),
+      createdAt: u.created_at || '',
+    };
+    // Update modal if it's already showing
+    if (!el.auth.hidden) showAuth(true);
+    // Also update if closed — so next open reflects user
+    el.authUser.hidden = false;
+    el.authUsername.textContent = state.user.name;
+    if (state.user.avatar) {
+      el.authAvatar.src = state.user.avatar;
+      el.authAvatar.style.display = '';
+    } else {
+      el.authAvatar.style.display = 'none';
+    }
+    if (state.user.createdAt) {
+      const year = new Date(state.user.createdAt).getFullYear();
+      el.authMemberSince.textContent = 'Member since ' + year;
+    }
+  } catch (_) {}
 }
 
 /* ---------- feed loading ---------- */
@@ -610,12 +666,31 @@ function showAuth(show) {
   el.controls.hidden = !hasToken;
   // Toggle between connect and manage modes
   el.tokenForm.hidden = hasToken;
-  el.signOut.hidden = !hasToken;
+  el.authActions.hidden = !hasToken;
   el.settingsToggle.classList.toggle('connected', hasToken);
-  if (hasToken) {
-    el.authMsg.innerHTML = 'Connected to Are.na. Token stored in your browser.';
+
+  // User info
+  if (hasToken && state.user) {
+    el.authUser.hidden = false;
+    el.authUsername.textContent = state.user.name;
+    if (state.user.avatar) {
+      el.authAvatar.src = state.user.avatar;
+      el.authAvatar.style.display = '';
+    } else {
+      el.authAvatar.style.display = 'none';
+    }
+    if (state.user.createdAt) {
+      const year = new Date(state.user.createdAt).getFullYear();
+      el.authMemberSince.textContent = 'Member since ' + year;
+    }
   } else {
-    el.authMsg.innerHTML = 'Connect your Are.na account with a <a href="https://www.are.na/settings/personal-access-tokens" target="_blank" rel="noopener">personal access token</a>. <span class="auth-note">Stored in your browser only, sent only to <code>api.are.na</code>.</span>';
+    el.authUser.hidden = true;
+  }
+
+  if (hasToken) {
+    el.authMsg.innerHTML = 'Connected to Are.na <span class="auth-check">✓</span><br><span class="auth-note">Token stored in your browser, only sent to api.are.na.</span>';
+  } else {
+    el.authMsg.innerHTML = 'Not connected <span class="auth-x">✗</span><br>Connect with a <a href="https://www.are.na/settings/personal-access-tokens" target="_blank" rel="noopener">personal access token</a>.<br><span class="auth-note">Stored in your browser only, sent only to api.are.na.</span>';
   }
   if (show && !hasToken) { el.tokenInput.value = ''; el.tokenInput.focus(); }
 }
@@ -634,6 +709,7 @@ async function start() {
 
   if (state.token) {
     showAuth(false);
+    fetchMe();
     loadFeed({ reset: true });
   } else {
     showAuth(true);
@@ -649,6 +725,7 @@ el.tokenForm.addEventListener('submit', (e) => {
   localStorage.setItem(TOKEN_KEY, value);
   setStatus('');
   showAuth(false);
+  fetchMe();
   loadFeed({ reset: true });
 });
 
@@ -656,8 +733,9 @@ el.settingsToggle.addEventListener('click', () => showAuth(el.auth.hidden));
 el.authClose.addEventListener('click', () => showAuth(false));
 el.authOverlay.addEventListener('click', () => showAuth(false));
 
-el.signOut.addEventListener('click', () => {
+document.getElementById('sign-out').addEventListener('click', () => {
   state.token = '';
+  state.user = null;
   localStorage.removeItem(TOKEN_KEY);
   el.feed.innerHTML = '';
   el.loadmore.hidden = true;
@@ -697,6 +775,10 @@ el.filterToggle.addEventListener('click', () => {
 document.addEventListener('click', (e) => {
   if (!el.filterBtn.contains(e.target) && !el.filterDropdown.contains(e.target)) {
     el.filterDropdown.hidden = true;
+  }
+  // close item filter menus when clicking outside
+  if (!e.target.closest('.item-filter-btn') && !e.target.closest('.item-filter-menu')) {
+    document.querySelectorAll('.item-filter-menu').forEach(m => { m.hidden = true; });
   }
 });
 
