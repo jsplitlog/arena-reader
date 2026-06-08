@@ -530,7 +530,6 @@ code {
   font-size: 0.75rem;
 }
 .item-author a { color: var(--fg-secondary); }
-.item-author time { color: var(--fg-muted); }
 .item-author a:hover { color: var(--fg); text-decoration: underline; }
 
 .item-thumb-wrap {

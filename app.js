@@ -412,14 +412,6 @@ function renderItem(b) {
     authorLine.appendChild(avImg);
   }
   authorLine.appendChild(metaLink(name, uUrl));
-  const authorSpacer = document.createElement('span');
-  authorSpacer.className = 'meta-spacer';
-  authorLine.appendChild(authorSpacer);
-  const time = document.createElement('time');
-  time.dateTime = created || '';
-  time.textContent = relativeTime(created);
-  time.title = absoluteTime(created);
-  authorLine.appendChild(time);
   body.appendChild(authorLine);
 
   item.appendChild(body);
@@ -496,6 +488,11 @@ function renderItem(b) {
   const mSpacer = document.createElement('span');
   mSpacer.className = 'meta-spacer';
   metaLine.appendChild(mSpacer);
+  const time = document.createElement('time');
+  time.dateTime = created || '';
+  time.textContent = relativeTime(created);
+  time.title = absoluteTime(created);
+  metaLine.appendChild(time);
   const arenaLink = metaLink('✶✶', blockUrl(b));
   arenaLink.title = 'View on Are.na';
   metaLine.appendChild(arenaLink);
