@@ -415,6 +415,14 @@ code {
 .feed {
   display: flex;
   flex-direction: column;
+  transition-property: opacity;
+  transition-duration: 120ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+.feed.view-switching {
+  opacity: 0;
+  transition-duration: 60ms;
+  transition-timing-function: ease-in;
 }
 .feed.view-switching .item {
   transition: none !important;
@@ -448,10 +456,10 @@ code {
 .item-source {
   font-size: 0.75rem;
   color: var(--fg-muted);
-  margin-top: 0.125em;
+  margin-top: 0.34375em;
   display: flex;
   align-items: center;
-  gap: 0.25em;
+  gap: 0.34375em;
 }
 .item-desc {
   margin-top: 0.34375em;
@@ -459,7 +467,7 @@ code {
   font-size: 0.8125rem;
   line-height: 1.33;
   display: -webkit-box;
-  -webkit-line-clamp: 4;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-wrap: pretty;
@@ -503,7 +511,7 @@ code {
 .meta-channel { display: contents; }
 .meta-channel a {
   color: var(--fg-muted);
-  max-width: 32ch;
+  max-width: 24ch;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

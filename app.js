@@ -700,12 +700,13 @@ function setView(mode) {
 
   if (prev !== mode && el.feed.children.length > 0) {
     el.feed.classList.add('view-switching');
-    requestAnimationFrame(() => {
+    // Wait for 60ms fade-out, then swap layout and fade back in
+    setTimeout(() => {
       const isGrid = mode === 'grid';
       el.feed.classList.toggle('grid', isGrid);
       el.container.classList.toggle('wide', isGrid);
       requestAnimationFrame(() => el.feed.classList.remove('view-switching'));
-    });
+    }, 60);
   } else {
     apply();
   }
