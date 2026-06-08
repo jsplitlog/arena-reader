@@ -4,20 +4,6 @@ An RSS-style reader for links from people you follow on [Are.na](https://www.are
 
 <!-- Add screenshots here: ![List view](screenshots/list-light.png) -->
 
-## Features
-
-- **List and grid views** with animated transitions between layouts
-- **Sort by created, updated, popular, or random**
-- **Filter by content type** — links, images, embeds, attachments, text, or all
-- **Scope to your network, your own blocks, or all of Are.na**
-- **Per-item filtering** — hide specific domains or users from your feed via the `...` menu on each thumbnail
-- **Filter management** — toggle filters on/off and restore hidden items from the filter dropdown
-- **Site favicons** next to source URLs, with themed backgrounds for contrast in light/dark mode
-- **Provider names** in filter menus (e.g. "Flickr" instead of "flickr.com")
-- **Light and dark mode** via `prefers-color-scheme`, matching Are.na's palette
-- **Installable as a PWA** on iOS and Android for a native app experience
-- **Zero dependencies** — vanilla HTML, CSS, and JS; no build step
-
 ## How it works
 
 Built on the Are.na **v3 REST API** using a single search endpoint:

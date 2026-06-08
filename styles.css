@@ -85,6 +85,14 @@ code {
   border-bottom: 1px solid var(--border);
   height: auto;
   padding-top: env(safe-area-inset-top, 0);
+  transition-property: transform, box-shadow;
+  transition-duration: 200ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+.topbar.nav-hidden {
+  transform: translateY(-100%);
+  transition-duration: 150ms;
+  transition-timing-function: ease-in;
 }
 .topbar-inner {
   padding: 0.65625em max(1em, env(safe-area-inset-right, 0)) 0.65625em max(1em, env(safe-area-inset-left, 0));
@@ -98,6 +106,10 @@ code {
   font-weight: 700;
   letter-spacing: 0;
   white-space: nowrap;
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .controls {
@@ -174,9 +186,6 @@ code {
   background: var(--bg);
   color: var(--fg-muted);
   cursor: pointer;
-  transition-property: background-color, color;
-  transition-duration: 150ms;
-  transition-timing-function: ease-out;
 }
 .view-toggle button svg {
   width: 12px;
@@ -407,12 +416,12 @@ code {
   display: flex;
   flex-direction: column;
   transition-property: opacity;
-  transition-duration: 200ms;
+  transition-duration: 120ms;
   transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
 }
 .feed.view-switching {
   opacity: 0;
-  transition-duration: 100ms;
+  transition-duration: 60ms;
   transition-timing-function: ease-in;
 }
 .feed.view-switching .item {
@@ -437,7 +446,7 @@ code {
 .item-title {
   font-size: 0.875rem;
   line-height: 1.33;
-  font-weight: 500;
+  font-weight: 600;
   overflow-wrap: anywhere;
   word-break: break-word;
   text-wrap: balance;
@@ -447,25 +456,27 @@ code {
 .item-source {
   font-size: 0.75rem;
   color: var(--fg-muted);
-  margin-top: 0.125em;
+  margin-top: 0.34375em;
   display: flex;
   align-items: center;
-  gap: 0.25em;
+  gap: 0.34375em;
 }
+.item-source a { color: inherit; text-decoration: none; }
+.item-source a:hover { color: var(--fg); text-decoration: underline; }
 .item-desc {
   margin-top: 0.34375em;
   color: var(--fg-secondary);
   font-size: 0.8125rem;
   line-height: 1.33;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-wrap: pretty;
 }
 .item-meta {
   grid-column: 1 / -1;
-  padding-top: 0.25em;
+  padding-top: 0.5em;
   font-size: 0.75rem;
   color: var(--fg-muted);
   font-variant-numeric: tabular-nums;
@@ -502,7 +513,7 @@ code {
 .meta-channel { display: contents; }
 .meta-channel a {
   color: var(--fg-muted);
-  max-width: 18ch;
+  max-width: 24ch;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -515,10 +526,11 @@ code {
   align-items: center;
   gap: 0.34375em;
   margin-top: auto;
-  padding-top: 1em;
+  padding-top: 2em;
   font-size: 0.75rem;
 }
 .item-author a { color: var(--fg-secondary); }
+.item-author time { color: var(--fg-muted); }
 .item-author a:hover { color: var(--fg); text-decoration: underline; }
 
 .item-thumb-wrap {
@@ -562,11 +574,11 @@ code {
 .item:hover .item-filter-btn,
 .item-filter-btn:focus-visible { opacity: 1; }
 @media (max-width: 640px) {
-  .item-filter-btn {
+  .feed.grid .item-filter-btn {
     opacity: 1;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
   }
-  .item-filter-btn::after {
+  .feed.grid .item-filter-btn::after {
     content: '';
     position: absolute;
     inset: -8px;
@@ -579,7 +591,7 @@ code {
   z-index: 20;
   min-width: 140px;
   background: var(--bg);
-  border: none;
+  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   margin-top: 4px;
   box-shadow: var(--shadow-elevated);
@@ -635,6 +647,19 @@ code {
   #settings-toggle { margin-left: auto; }
   .controls .spacer { display: none; }
   .topbar-inner { gap: 0.34375em; }
+
+  /* Larger touch targets on mobile */
+  .controls > select,
+  .controls > button,
+  .controls > a {
+    font-size: 0.8125rem;
+    padding: 0.5em 0.75em;
+  }
+  .controls > select {
+    padding-right: 2em;
+    background-position: right 0.75em center;
+    background-size: 0.5625em;
+  }
 }
 
 /* ---- feed (grid) ---- */
@@ -770,6 +795,7 @@ code {
 .controls .icon-btn:hover,
 .controls a.icon-btn:hover { color: var(--fg); border-color: var(--fg-muted); text-decoration: none; }
 .controls .icon-btn.connected { color: var(--fg-muted); }
+.icon-badge[hidden] { display: none; }
 .icon-badge {
   position: absolute;
   top: -6px;
@@ -787,6 +813,10 @@ code {
   padding: 0 3px;
   font-weight: 700;
 }
+.icon-badge.disabled {
+  background: var(--border);
+  color: var(--fg-muted);
+}
 
 /* ---- filter dropdown ---- */
 .filter-wrap { position: relative; }
@@ -799,7 +829,7 @@ code {
   max-height: 260px;
   overflow-y: auto;
   background: var(--bg);
-  border: none;
+  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   margin-top: 4px;
   box-shadow: var(--shadow-elevated);
@@ -828,6 +858,7 @@ code {
   font-weight: 700;
   color: var(--fg-secondary);
 }
+.filter-dropdown-head[hidden] { display: none; }
 .filter-toggle-btn {
   font-family: inherit;
   font-size: 0.6875rem;
@@ -841,6 +872,12 @@ code {
 }
 .filter-toggle-btn:hover { border-color: var(--fg-muted); }
 .filter-list { padding: 2px 0; }
+.filter-empty {
+  padding: 8px 10px;
+  font-size: 0.6875rem;
+  color: var(--fg-muted);
+  line-height: 1.4;
+}
 .filter-section-label {
   font-size: 0.625rem;
   font-weight: 700;
@@ -881,4 +918,33 @@ code {
 .filter-remove:hover {
   border-color: var(--border);
   color: var(--fg);
+}
+
+/* ---- mobile touch targets (after base rules so overrides apply) ---- */
+@media (max-width: 640px) {
+  .controls .icon-btn {
+    width: 36px;
+    height: 36px;
+  }
+  .view-toggle button {
+    width: 36px;
+    height: 36px;
+  }
+  .controls > select {
+    height: 36px;
+  }
+}
+/* Scale down controls on very narrow screens (< iPhone SE) */
+@media (max-width: 374px) {
+  .controls .icon-btn,
+  .view-toggle button {
+    width: 30px;
+    height: 30px;
+  }
+  .controls > select {
+    height: 30px;
+  }
+  .topbar-inner {
+    gap: 0.1875em;
+  }
 }

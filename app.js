@@ -63,6 +63,7 @@ const el = {
   filterList: document.getElementById('filter-list'),
   filterToggle: document.getElementById('filter-toggle'),
   container: document.querySelector('.container'),
+  topbar: document.querySelector('.topbar'),
   topbarInner: document.querySelector('.topbar-inner'),
 };
 
@@ -157,7 +158,7 @@ function domainLabel(b) {
 function domainHost(b) {
   const url = sourceUrl(b);
   if (!url) return '';
-  try { return new URL(url).hostname.replace(/^www\./, ''); } catch (_) { return ''; }
+  try { return new URL(url).hostname.replace(/^(www|m|mobile|amp|l|lm)\./, ''); } catch (_) { return ''; }
 }
 
 function faviconUrl(domain) {
@@ -222,7 +223,13 @@ async function loadFiltersFromFile() {
 
 function isItemFiltered(domain, slug) {
   if (!state.filters.enabled) return false;
-  if (domain && state.filters.domains[domain]) return true;
+  if (domain) {
+    if (state.filters.domains[domain]) return true;
+    // Suffix match: m.youtube.com matches a filter for youtube.com
+    for (const fd of Object.keys(state.filters.domains)) {
+      if (domain.endsWith('.' + fd)) return true;
+    }
+  }
   if (slug && state.filters.users[slug]) return true;
   return false;
 }
@@ -270,11 +277,21 @@ function renderFilterUI() {
   const userKeys = Object.keys(state.filters.users);
   const count = domainKeys.length + userKeys.length;
 
-  el.filterBtn.hidden = count === 0;
+  el.filterCount.hidden = count === 0;
   el.filterCount.textContent = count;
+  el.filterCount.classList.toggle('disabled', !state.filters.enabled);
   el.filterToggle.textContent = state.filters.enabled ? 'On' : 'Off';
+  el.filterDropdown.querySelector('.filter-dropdown-head').hidden = count === 0;
 
   el.filterList.innerHTML = '';
+
+  // Empty state
+  if (count === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'filter-empty';
+    empty.textContent = 'Filter users or sources from the menu on any block.';
+    el.filterList.appendChild(empty);
+  }
 
   // Domains section
   if (domainKeys.length) {
@@ -371,7 +388,10 @@ function renderItem(b) {
     fav.alt = '';
     fav.loading = 'lazy';
     src.appendChild(fav);
-    src.appendChild(document.createTextNode(domain));
+    const srcLink = document.createElement('a');
+    srcLink.href = href; srcLink.target = '_blank'; srcLink.rel = 'noopener';
+    srcLink.textContent = domain;
+    src.appendChild(srcLink);
     body.appendChild(src);
   }
 
@@ -392,6 +412,14 @@ function renderItem(b) {
     authorLine.appendChild(avImg);
   }
   authorLine.appendChild(metaLink(name, uUrl));
+  const authorSpacer = document.createElement('span');
+  authorSpacer.className = 'meta-spacer';
+  authorLine.appendChild(authorSpacer);
+  const time = document.createElement('time');
+  time.dateTime = created || '';
+  time.textContent = relativeTime(created);
+  time.title = absoluteTime(created);
+  authorLine.appendChild(time);
   body.appendChild(authorLine);
 
   item.appendChild(body);
@@ -456,7 +484,7 @@ function renderItem(b) {
 
   item.appendChild(thumbWrap);
 
-  // Meta bottom: channel …spacer… time ✶✶ (spans both grid columns)
+  // Meta bottom: channel …spacer… ✶✶ (spans both grid columns)
   const meta = document.createElement('div');
   meta.className = 'item-meta';
   const metaLine = document.createElement('div');
@@ -468,11 +496,6 @@ function renderItem(b) {
   const mSpacer = document.createElement('span');
   mSpacer.className = 'meta-spacer';
   metaLine.appendChild(mSpacer);
-  const time = document.createElement('time');
-  time.dateTime = created || '';
-  time.textContent = relativeTime(created);
-  time.title = absoluteTime(created);
-  metaLine.appendChild(time);
   const arenaLink = metaLink('✶✶', blockUrl(b));
   arenaLink.title = 'View on Are.na';
   metaLine.appendChild(arenaLink);
@@ -686,13 +709,20 @@ function setView(mode) {
     });
   };
 
-  // Animate only when actually switching and content exists
+  // Update toggle buttons instantly, then swap layout
+  el.viewToggle.querySelectorAll('button').forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.view === mode);
+  });
+
   if (prev !== mode && el.feed.children.length > 0) {
     el.feed.classList.add('view-switching');
+    // Wait for 60ms fade-out, then swap layout and fade back in
     setTimeout(() => {
-      apply();
+      const isGrid = mode === 'grid';
+      el.feed.classList.toggle('grid', isGrid);
+      el.container.classList.toggle('wide', isGrid);
       requestAnimationFrame(() => el.feed.classList.remove('view-switching'));
-    }, 100);
+    }, 60);
   } else {
     apply();
   }
@@ -826,5 +856,37 @@ document.addEventListener('click', (e) => {
 
 el.refresh.addEventListener('click', () => loadFeed({ reset: true }));
 el.loadmore.addEventListener('click', () => loadFeed({ reset: false }));
+
+/* Scroll-hide topbar: hide on scroll down, reveal on scroll up */
+(function () {
+  let lastY = window.scrollY;
+  let ticking = false;
+  const THRESHOLD = 10; // ignore micro-scrolls
+
+  window.addEventListener('scroll', () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      const y = window.scrollY;
+      const delta = y - lastY;
+
+      if (y <= 0) {
+        // Always show at top of page
+        el.topbar.classList.remove('nav-hidden');
+      } else if (delta > THRESHOLD) {
+        // Scrolling down past threshold
+        el.topbar.classList.add('nav-hidden');
+        // Close any open filter dropdown when hiding nav
+        el.filterDropdown.classList.remove('open');
+      } else if (delta < -THRESHOLD) {
+        // Scrolling up past threshold
+        el.topbar.classList.remove('nav-hidden');
+      }
+
+      lastY = y;
+      ticking = false;
+    });
+  }, { passive: true });
+})();
 
 start();
