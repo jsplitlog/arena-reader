@@ -472,6 +472,11 @@ function renderItem(b) {
     const avImg = document.createElement('img');
     avImg.className = 'avatar'; avImg.src = avatar; avImg.alt = ''; avImg.loading = 'lazy';
     authorLine.appendChild(avImg);
+  } else {
+    const avFallback = document.createElement('span');
+    avFallback.className = 'avatar avatar-fallback';
+    avFallback.textContent = (name || '?').charAt(0).toUpperCase();
+    authorLine.appendChild(avFallback);
   }
   authorLine.appendChild(metaLink(name, uUrl));
   const authorSpacer = document.createElement('span');

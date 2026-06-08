@@ -487,6 +487,19 @@ code {
   border-radius: 50%;
   object-fit: cover;
   background: var(--border);
+  flex-shrink: 0;
+}
+.avatar-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.5rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--fg-muted);
+  background: var(--surface);
+  outline: 1px solid rgba(0, 0, 0, 0.08);
+  outline-offset: -1px;
 }
 .favicon {
   width: 14px;
@@ -499,7 +512,7 @@ code {
   outline-offset: -1px;
 }
 @media (prefers-color-scheme: dark) {
-  .favicon { outline-color: rgba(255, 255, 255, 0.1); }
+  .favicon, .avatar-fallback { outline-color: rgba(255, 255, 255, 0.1); }
 }
 .item-meta .dot { opacity: 0.4; }
 .item-meta a { color: var(--fg-muted); }
