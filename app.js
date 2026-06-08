@@ -7,15 +7,19 @@ const TOKEN_KEY = 'arena_link_reader_token';
 const VIEW_KEY = 'arena_link_reader_view';
 const HOTLINKS_KEY = 'arena_link_reader_hotlinks';
 const FILTERS_KEY = 'arena_link_reader_filters';
-const SCOPE_KEY = 'arena_link_reader_scope';
 const PER_PAGE = 50;
+
+// Default landing filter: My Network · Created · Links
+const DEFAULT_SCOPE = 'network';
+const DEFAULT_SORT = 'created_at_desc';
+const DEFAULT_TYPE = 'Link';
 
 const state = {
   token: localStorage.getItem(TOKEN_KEY) || '',
   page: 1,
-  sort: 'created_at_desc',
-  type: 'Link',
-  scope: (['network', 'me', 'all'].includes(localStorage.getItem(SCOPE_KEY)) ? localStorage.getItem(SCOPE_KEY) : 'network'),
+  sort: DEFAULT_SORT,
+  type: DEFAULT_TYPE,
+  scope: DEFAULT_SCOPE,
   view: localStorage.getItem(VIEW_KEY) || 'list',
   hotlinks: Object.assign(
     { timeWindow: 30, minConnections: 2 },
@@ -35,6 +39,7 @@ if (!state.filters.users) state.filters.users = {};
 
 /* ---------- element refs ---------- */
 const el = {
+  title: document.getElementById('app-title'),
   controls: document.getElementById('controls'),
   scope: document.getElementById('scope'),
   sort: document.getElementById('sort'),
@@ -821,11 +826,27 @@ document.getElementById('sign-out').addEventListener('click', () => {
 
 el.scope.addEventListener('change', () => {
   state.scope = el.scope.value;
-  localStorage.setItem(SCOPE_KEY, state.scope);
   loadFeed({ reset: true });
 });
 el.sort.addEventListener('change', () => { state.sort = el.sort.value; updateControlsUI(); loadFeed({ reset: true }); });
 el.type.addEventListener('change', () => { state.type = el.type.value; loadFeed({ reset: true }); });
+
+// Clicking the title returns to the default landing filter: My Network · Created · Links
+function goToDefaultFeed() {
+  state.scope = DEFAULT_SCOPE;
+  state.sort = DEFAULT_SORT;
+  state.type = DEFAULT_TYPE;
+  el.scope.value = state.scope;
+  el.sort.value = state.sort;
+  el.type.value = state.type;
+  updateControlsUI();
+  window.scrollTo({ top: 0 });
+  if (state.token) loadFeed({ reset: true });
+}
+el.title.addEventListener('click', goToDefaultFeed);
+el.title.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goToDefaultFeed(); }
+});
 
 el.hotlinksWindow.addEventListener('change', () => {
   state.hotlinks.timeWindow = Number(el.hotlinksWindow.value);
