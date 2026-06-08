@@ -63,6 +63,7 @@ const el = {
   filterList: document.getElementById('filter-list'),
   filterToggle: document.getElementById('filter-toggle'),
   container: document.querySelector('.container'),
+  topbar: document.querySelector('.topbar'),
   topbarInner: document.querySelector('.topbar-inner'),
 };
 
@@ -826,5 +827,37 @@ document.addEventListener('click', (e) => {
 
 el.refresh.addEventListener('click', () => loadFeed({ reset: true }));
 el.loadmore.addEventListener('click', () => loadFeed({ reset: false }));
+
+/* Scroll-hide topbar: hide on scroll down, reveal on scroll up */
+(function () {
+  let lastY = window.scrollY;
+  let ticking = false;
+  const THRESHOLD = 10; // ignore micro-scrolls
+
+  window.addEventListener('scroll', () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      const y = window.scrollY;
+      const delta = y - lastY;
+
+      if (y <= 0) {
+        // Always show at top of page
+        el.topbar.classList.remove('nav-hidden');
+      } else if (delta > THRESHOLD) {
+        // Scrolling down past threshold
+        el.topbar.classList.add('nav-hidden');
+        // Close any open filter dropdown when hiding nav
+        el.filterDropdown.classList.remove('open');
+      } else if (delta < -THRESHOLD) {
+        // Scrolling up past threshold
+        el.topbar.classList.remove('nav-hidden');
+      }
+
+      lastY = y;
+      ticking = false;
+    });
+  }, { passive: true });
+})();
 
 start();

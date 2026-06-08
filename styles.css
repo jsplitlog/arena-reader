@@ -85,6 +85,14 @@ code {
   border-bottom: 1px solid var(--border);
   height: auto;
   padding-top: env(safe-area-inset-top, 0);
+  transition-property: transform, box-shadow;
+  transition-duration: 200ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+.topbar.nav-hidden {
+  transform: translateY(-100%);
+  transition-duration: 150ms;
+  transition-timing-function: ease-in;
 }
 .topbar-inner {
   padding: 0.65625em max(1em, env(safe-area-inset-right, 0)) 0.65625em max(1em, env(safe-area-inset-left, 0));
@@ -635,6 +643,27 @@ code {
   #settings-toggle { margin-left: auto; }
   .controls .spacer { display: none; }
   .topbar-inner { gap: 0.34375em; }
+
+  /* Larger touch targets on mobile */
+  .controls > select,
+  .controls > button,
+  .controls > a {
+    font-size: 0.8125rem;
+    padding: 0.5em 0.75em;
+  }
+  .controls > select {
+    padding-right: 2em;
+    background-position: right 0.75em center;
+    background-size: 0.5625em;
+  }
+  .controls .icon-btn {
+    width: 36px;
+    height: 36px;
+  }
+  .view-toggle button {
+    width: 36px;
+    height: 36px;
+  }
 }
 
 /* ---- feed (grid) ---- */
