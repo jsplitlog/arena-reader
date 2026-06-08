@@ -709,6 +709,7 @@ function showAuth(show) {
   el.tokenForm.hidden = hasToken;
   el.authActions.hidden = !hasToken;
   el.settingsToggle.classList.toggle('connected', hasToken);
+  el.authClose.hidden = !hasToken;
 
   // User info
   if (hasToken && state.user) {
@@ -771,8 +772,8 @@ el.tokenForm.addEventListener('submit', (e) => {
 });
 
 el.settingsToggle.addEventListener('click', () => showAuth(!el.auth.classList.contains('open')));
-el.authClose.addEventListener('click', () => showAuth(false));
-el.authOverlay.addEventListener('click', () => showAuth(false));
+el.authClose.addEventListener('click', () => { if (state.token) showAuth(false); });
+el.authOverlay.addEventListener('click', () => { if (state.token) showAuth(false); });
 
 document.getElementById('sign-out').addEventListener('click', () => {
   state.token = '';
