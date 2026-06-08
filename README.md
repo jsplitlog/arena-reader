@@ -1,13 +1,13 @@
 # ✶✶ Reader
 
-An RSS-style reader for links from people you follow on [Are.na](https://www.are.na), sorted by creation date — the one sort option the website doesn't expose.
+An RSS-style reader for links from people you follow on [Are.na](https://www.are.na), sorted by creation date.
 
 <!-- Add screenshots here: ![List view](screenshots/list-light.png) -->
 
 ## Features
 
 - **List and grid views** with animated transitions between layouts
-- **Sort by created, updated, popular, or random** — created date is the default and the reason this exists
+- **Sort by created, updated, popular, or random**
 - **Filter by content type** — links, images, embeds, attachments, text, or all
 - **Scope to your network, your own blocks, or all of Are.na**
 - **Per-item filtering** — hide specific domains or users from your feed via the `...` menu on each thumbnail
@@ -20,14 +20,14 @@ An RSS-style reader for links from people you follow on [Are.na](https://www.are
 
 ## How it works
 
-There is no public "explore" endpoint — the Are.na explore page is powered by internal GraphQL. But the documented **v3 REST API** offers the same filtering through a single search call:
+Built on the Are.na **v3 REST API** using a single search endpoint:
 
 ```
 GET https://api.are.na/v3/search
     ?query=*                 # wildcard — match everything
     &scope=following         # only content from people you follow
     &type=Link               # only link blocks
-    &sort=created_at_desc    # newest created first — the missing feature
+    &sort=created_at_desc    # newest created first
     &per=50
     &page=N
 Authorization: Bearer <personal access token>
