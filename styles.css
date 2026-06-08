@@ -106,6 +106,10 @@ code {
   font-weight: 700;
   letter-spacing: 0;
   white-space: nowrap;
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .controls {
@@ -434,7 +438,7 @@ code {
 .item-title {
   font-size: 0.875rem;
   line-height: 1.33;
-  font-weight: 500;
+  font-weight: 600;
   overflow-wrap: anywhere;
   word-break: break-word;
   text-wrap: balance;
@@ -462,7 +466,7 @@ code {
 }
 .item-meta {
   grid-column: 1 / -1;
-  padding-top: 0.25em;
+  padding-top: 0.5em;
   font-size: 0.75rem;
   color: var(--fg-muted);
   font-variant-numeric: tabular-nums;
@@ -512,7 +516,7 @@ code {
   align-items: center;
   gap: 0.34375em;
   margin-top: auto;
-  padding-top: 1em;
+  padding-top: 2em;
   font-size: 0.75rem;
 }
 .item-author a { color: var(--fg-secondary); }
@@ -895,9 +899,29 @@ code {
 
 /* ---- mobile touch targets (after base rules so overrides apply) ---- */
 @media (max-width: 640px) {
-  .controls .icon-btn,
+  .controls .icon-btn {
+    width: 36px;
+    height: 36px;
+  }
   .view-toggle button {
     width: 36px;
     height: 36px;
+  }
+  .controls > select {
+    height: 36px;
+  }
+}
+/* Scale down controls on very narrow screens (< iPhone SE) */
+@media (max-width: 374px) {
+  .controls .icon-btn,
+  .view-toggle button {
+    width: 30px;
+    height: 30px;
+  }
+  .controls > select {
+    height: 30px;
+  }
+  .topbar-inner {
+    gap: 0.1875em;
   }
 }
