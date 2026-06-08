@@ -69,14 +69,11 @@ code {
   padding-top: env(safe-area-inset-top, 0);
 }
 .topbar-inner {
-  max-width: var(--maxw-grid);
-  margin: 0 auto;
   padding: 0.65625em max(1em, env(safe-area-inset-right, 0)) 0.65625em max(1em, env(safe-area-inset-left, 0));
   display: flex;
   align-items: center;
   gap: 1em;
   flex-wrap: wrap;
-  transition: max-width 0.15s;
 }
 .topbar h1 {
   font-size: 0.8125rem;
