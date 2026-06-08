@@ -347,8 +347,7 @@ code {
   .controls select { order: 1; flex: 1; min-width: 0; }
   /* Icons stay on title row; view-toggle auto-margins to the right */
   .view-toggle { margin-left: auto; }
-  /* Full-width grid cards on mobile */
-  .feed.grid { grid-template-columns: 1fr; }
+  .container.wide { padding-left: 0; padding-right: 0; }
   /* Hide non-essential items on mobile */
   #refresh { display: none !important; }
   .topbar-inner { gap: 0.34375em; }
@@ -408,6 +407,9 @@ code {
 .feed.grid .item-meta {
   margin-top: auto;
   padding-top: 0.5em;
+}
+@media (max-width: 640px) {
+  .feed.grid { grid-template-columns: 1fr; gap: 0.75em; }
 }
 
 /* ---- load more ---- */
