@@ -49,6 +49,8 @@ const el = {
   hotlinksWindow: document.getElementById('hotlinks-window'),
   signOut: document.getElementById('sign-out'),
   authMsg: document.getElementById('auth-msg'),
+  authOverlay: document.getElementById('auth-overlay'),
+  authClose: document.getElementById('auth-close'),
   viewToggle: document.getElementById('view-toggle'),
   filterBtn: document.getElementById('filter-btn'),
   filterCount: document.getElementById('filter-count'),
@@ -602,6 +604,7 @@ function setView(mode) {
 /* ---------- auth ---------- */
 function showAuth(show) {
   el.auth.hidden = !show;
+  el.authOverlay.hidden = !show;
   const hasToken = !!state.token;
   // Only hide controls on first visit (no token yet)
   el.controls.hidden = !hasToken;
@@ -650,6 +653,8 @@ el.tokenForm.addEventListener('submit', (e) => {
 });
 
 el.settingsToggle.addEventListener('click', () => showAuth(el.auth.hidden));
+el.authClose.addEventListener('click', () => showAuth(false));
+el.authOverlay.addEventListener('click', () => showAuth(false));
 
 el.signOut.addEventListener('click', () => {
   state.token = '';

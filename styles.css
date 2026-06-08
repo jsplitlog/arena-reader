@@ -165,12 +165,48 @@ code {
 }
 .container.wide { max-width: none; }
 
-/* ---- auth ---- */
-.auth {
-  border: 1px solid var(--border);
-  padding: 1em;
-  margin-bottom: 1em;
+/* ---- auth modal ---- */
+.auth-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(0, 0, 0, 0.25);
 }
+.auth-overlay[hidden] { display: none; }
+@media (prefers-color-scheme: dark) {
+  .auth-overlay { background: rgba(0, 0, 0, 0.5); }
+}
+.auth {
+  position: fixed;
+  z-index: 51;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: calc(100% - 2em);
+  max-width: 400px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25em;
+  background: var(--bg);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+}
+@media (prefers-color-scheme: dark) {
+  .auth { box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5); }
+}
+.auth-close {
+  position: absolute;
+  top: 0.5em;
+  right: 0.5em;
+  font: inherit;
+  font-size: 1.25rem;
+  line-height: 1;
+  color: var(--fg-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.125em 0.375em;
+}
+.auth-close:hover { color: var(--fg); }
 .auth p {
   font-size: 0.8125rem;
   color: var(--fg-secondary);
