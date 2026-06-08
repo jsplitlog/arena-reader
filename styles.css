@@ -110,6 +110,12 @@ code {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  cursor: pointer;
+  user-select: none;
+}
+.topbar h1:focus-visible {
+  outline: 2px solid var(--fg-muted);
+  outline-offset: 2px;
 }
 
 .controls {
