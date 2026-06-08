@@ -158,7 +158,7 @@ function domainLabel(b) {
 function domainHost(b) {
   const url = sourceUrl(b);
   if (!url) return '';
-  try { return new URL(url).hostname.replace(/^www\./, ''); } catch (_) { return ''; }
+  try { return new URL(url).hostname.replace(/^(www|m|mobile|amp|l|lm)\./, ''); } catch (_) { return ''; }
 }
 
 function faviconUrl(domain) {
@@ -223,7 +223,13 @@ async function loadFiltersFromFile() {
 
 function isItemFiltered(domain, slug) {
   if (!state.filters.enabled) return false;
-  if (domain && state.filters.domains[domain]) return true;
+  if (domain) {
+    if (state.filters.domains[domain]) return true;
+    // Suffix match: m.youtube.com matches a filter for youtube.com
+    for (const fd of Object.keys(state.filters.domains)) {
+      if (domain.endsWith('.' + fd)) return true;
+    }
+  }
   if (slug && state.filters.users[slug]) return true;
   return false;
 }
@@ -687,13 +693,19 @@ function setView(mode) {
     });
   };
 
-  // Animate only when actually switching and content exists
+  // Update toggle buttons instantly, then swap layout
+  el.viewToggle.querySelectorAll('button').forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.view === mode);
+  });
+
   if (prev !== mode && el.feed.children.length > 0) {
     el.feed.classList.add('view-switching');
-    setTimeout(() => {
-      apply();
+    requestAnimationFrame(() => {
+      const isGrid = mode === 'grid';
+      el.feed.classList.toggle('grid', isGrid);
+      el.container.classList.toggle('wide', isGrid);
       requestAnimationFrame(() => el.feed.classList.remove('view-switching'));
-    }, 100);
+    });
   } else {
     apply();
   }
