@@ -739,7 +739,7 @@ code {
 .feed.grid .item-title { font-size: 0.8125rem; }
 .feed.grid .item-desc { font-size: 0.75rem; }
 .feed.grid .item-author {
-  padding: 0 0.5em;
+  padding: 2em 0.5em 0;
 }
 .feed.grid .item-meta {
   margin-top: auto;
