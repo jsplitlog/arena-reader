@@ -483,6 +483,12 @@ code {
   border-radius: 2px;
   object-fit: contain;
   flex-shrink: 0;
+  background: var(--surface);
+  outline: 1px solid rgba(0, 0, 0, 0.08);
+  outline-offset: -1px;
+}
+@media (prefers-color-scheme: dark) {
+  .favicon { outline-color: rgba(255, 255, 255, 0.1); }
 }
 .item-meta .dot { opacity: 0.4; }
 .item-meta a { color: var(--fg-muted); }
