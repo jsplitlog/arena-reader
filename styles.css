@@ -522,14 +522,15 @@ code {
 .meta-channel a:hover { color: var(--fg); }
 .meta-spacer { flex: 1; }
 .item-author {
+  grid-column: 1 / -1;
   display: flex;
   align-items: center;
   gap: 0.34375em;
-  margin-top: auto;
   padding-top: 2em;
   font-size: 0.75rem;
 }
 .item-author a { color: var(--fg-secondary); }
+.item-author time { color: var(--fg-muted); }
 .item-author a:hover { color: var(--fg); text-decoration: underline; }
 
 .item-thumb-wrap {
@@ -724,6 +725,9 @@ code {
 }
 .feed.grid .item-title { font-size: 0.8125rem; }
 .feed.grid .item-desc { font-size: 0.75rem; }
+.feed.grid .item-author {
+  padding: 0 0.5em;
+}
 .feed.grid .item-meta {
   margin-top: auto;
   padding: 0 0.5em 0.5em;

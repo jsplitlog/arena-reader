@@ -403,17 +403,6 @@ function renderItem(b) {
     body.appendChild(p);
   }
 
-  // Author line (inside body, pushed to bottom via margin-top:auto)
-  const authorLine = document.createElement('div');
-  authorLine.className = 'item-author';
-  if (avatar) {
-    const avImg = document.createElement('img');
-    avImg.className = 'avatar'; avImg.src = avatar; avImg.alt = ''; avImg.loading = 'lazy';
-    authorLine.appendChild(avImg);
-  }
-  authorLine.appendChild(metaLink(name, uUrl));
-  body.appendChild(authorLine);
-
   item.appendChild(body);
 
   // Thumbnail/preview wrapper with filter button
@@ -476,6 +465,25 @@ function renderItem(b) {
 
   item.appendChild(thumbWrap);
 
+  // Author line (spans both grid columns so timestamp right-aligns with thumb)
+  const authorLine = document.createElement('div');
+  authorLine.className = 'item-author';
+  if (avatar) {
+    const avImg = document.createElement('img');
+    avImg.className = 'avatar'; avImg.src = avatar; avImg.alt = ''; avImg.loading = 'lazy';
+    authorLine.appendChild(avImg);
+  }
+  authorLine.appendChild(metaLink(name, uUrl));
+  const authorSpacer = document.createElement('span');
+  authorSpacer.className = 'meta-spacer';
+  authorLine.appendChild(authorSpacer);
+  const time = document.createElement('time');
+  time.dateTime = created || '';
+  time.textContent = relativeTime(created);
+  time.title = absoluteTime(created);
+  authorLine.appendChild(time);
+  item.appendChild(authorLine);
+
   // Meta bottom: channel …spacer… ✶✶ (spans both grid columns)
   const meta = document.createElement('div');
   meta.className = 'item-meta';
@@ -488,11 +496,6 @@ function renderItem(b) {
   const mSpacer = document.createElement('span');
   mSpacer.className = 'meta-spacer';
   metaLine.appendChild(mSpacer);
-  const time = document.createElement('time');
-  time.dateTime = created || '';
-  time.textContent = relativeTime(created);
-  time.title = absoluteTime(created);
-  metaLine.appendChild(time);
   const arenaLink = metaLink('✶✶', blockUrl(b));
   arenaLink.title = 'View on Are.na';
   metaLine.appendChild(arenaLink);
