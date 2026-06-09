@@ -562,19 +562,23 @@ code {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 16px;
+  width: var(--control-h);
+  height: var(--control-h);
   padding: 0;
-  border: none;
+  border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: none;
+  background: var(--bg);
   color: var(--fg-muted);
   cursor: pointer;
-  transition-property: color;
+  transition-property: color, border-color, scale;
   transition-duration: 150ms;
   transition-timing-function: ease-out;
 }
-.item-actions-btn:hover { color: var(--fg); }
+.item-actions-btn:hover {
+  color: var(--fg);
+  border-color: var(--fg-muted);
+}
+.item-actions-btn:active { scale: 0.96; }
 .item-actions-menu {
   position: absolute;
   bottom: 100%;

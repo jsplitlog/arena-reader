@@ -484,15 +484,14 @@ function renderItem(b) {
   const authorSpacer = document.createElement('span');
   authorSpacer.className = 'meta-spacer';
   authorLine.appendChild(authorSpacer);
-  const arenaLink = metaLink('✶✶', blockUrl(b));
-  arenaLink.title = 'View on Are.na';
-  authorLine.appendChild(arenaLink);
-  authorLine.appendChild(dot());
   const time = document.createElement('time');
   time.dateTime = created || '';
   time.textContent = relativeTime(created);
   time.title = absoluteTime(created);
   authorLine.appendChild(time);
+  const arenaLink = metaLink('✶✶', blockUrl(b));
+  arenaLink.title = 'View on Are.na';
+  authorLine.appendChild(arenaLink);
   item.appendChild(authorLine);
 
   // Meta bottom: channel …spacer… actions menu
