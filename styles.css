@@ -733,6 +733,11 @@ code {
   padding: 0.5rem 0.5rem 0;
 }
 .feed.grid .item-author {
+  /* Pin the attribution + meta to the bottom of the (row-stretched) card so
+     they align across a row regardless of neighbours' title/description
+     length. The auto margin absorbs the extra height; the 2em padding-top
+     becomes the *minimum* gap above the attribution. */
+  margin-top: auto;
   padding: 2em 0.5rem 0;
 }
 .feed.grid .item-meta {
