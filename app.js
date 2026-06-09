@@ -514,22 +514,30 @@ function renderItem(b) {
     actBtn.type = 'button';
     actBtn.className = 'item-actions-btn';
     actBtn.setAttribute('aria-label', 'Actions');
-    actBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>';
+    actBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/></svg>';
     actions.appendChild(actBtn);
 
     const actMenu = document.createElement('div');
     actMenu.className = 'item-actions-menu';
     if (domain) {
+      const dLabel = document.createElement('span');
+      dLabel.className = 'actions-menu-label';
+      dLabel.textContent = 'Domain';
+      actMenu.appendChild(dLabel);
       const dBtn = document.createElement('button');
       dBtn.type = 'button';
-      dBtn.textContent = 'Mute ' + domainDisplay;
+      dBtn.textContent = domainDisplay;
       dBtn.addEventListener('click', () => { filterDomain(domain, domainDisplay); actMenu.classList.remove('open'); });
       actMenu.appendChild(dBtn);
     }
     if (slug) {
+      const uLabel = document.createElement('span');
+      uLabel.className = 'actions-menu-label';
+      uLabel.textContent = 'User';
+      actMenu.appendChild(uLabel);
       const uBtn = document.createElement('button');
       uBtn.type = 'button';
-      uBtn.textContent = 'Mute ' + name;
+      uBtn.textContent = name;
       uBtn.addEventListener('click', () => { filterUser(slug, name); actMenu.classList.remove('open'); });
       actMenu.appendChild(uBtn);
     }
@@ -622,10 +630,14 @@ async function enrichChannels() {
 function addChannelFilterOption(item, slug, title) {
   const menu = item.querySelector('.item-actions-menu');
   if (!menu || menu.querySelector('[data-channel-btn]')) return;
+  const label = document.createElement('span');
+  label.className = 'actions-menu-label';
+  label.textContent = 'Channel';
+  menu.appendChild(label);
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.dataset.channelBtn = '1';
-  btn.textContent = 'Mute ' + title;
+  btn.textContent = title;
   btn.addEventListener('click', () => { filterChannel(slug, title); menu.classList.remove('open'); });
   menu.appendChild(btn);
 }
