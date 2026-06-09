@@ -705,36 +705,37 @@ async function loadFeed({ reset }) {
 }
 
 /* ---------- view mode ---------- */
+// The toggle is a single button showing the icon for the mode it switches to.
+function updateViewToggle(mode) {
+  const next = mode === 'grid' ? 'list' : 'grid';
+  el.viewToggle.dataset.current = mode;
+  el.viewToggle.title = next === 'grid' ? 'Grid view' : 'List view';
+  el.viewToggle.setAttribute('aria-label', `Switch to ${next} view`);
+}
+
 function setView(mode) {
   const prev = state.view;
   state.view = mode;
   localStorage.setItem(VIEW_KEY, mode);
 
-  const apply = () => {
+  // Update the toggle icon/label instantly, then swap layout
+  updateViewToggle(mode);
+
+  const applyLayout = () => {
     const isGrid = mode === 'grid';
     el.feed.classList.toggle('grid', isGrid);
     el.container.classList.toggle('wide', isGrid);
-    el.viewToggle.querySelectorAll('button').forEach((btn) => {
-      btn.classList.toggle('active', btn.dataset.view === mode);
-    });
   };
-
-  // Update toggle buttons instantly, then swap layout
-  el.viewToggle.querySelectorAll('button').forEach((btn) => {
-    btn.classList.toggle('active', btn.dataset.view === mode);
-  });
 
   if (prev !== mode && el.feed.children.length > 0) {
     el.feed.classList.add('view-switching');
     // Wait for 60ms fade-out, then swap layout and fade back in
     setTimeout(() => {
-      const isGrid = mode === 'grid';
-      el.feed.classList.toggle('grid', isGrid);
-      el.container.classList.toggle('wide', isGrid);
+      applyLayout();
       requestAnimationFrame(() => el.feed.classList.remove('view-switching'));
     }, 60);
   } else {
-    apply();
+    applyLayout();
   }
 }
 
@@ -853,9 +854,8 @@ el.hotlinksWindow.addEventListener('change', () => {
   saveHotlinksPrefs(); loadFeed({ reset: true });
 });
 
-el.viewToggle.addEventListener('click', (e) => {
-  const btn = e.target.closest('button[data-view]');
-  if (btn) setView(btn.dataset.view);
+el.viewToggle.addEventListener('click', () => {
+  setView(state.view === 'grid' ? 'list' : 'grid');
 });
 
 el.filterBtn.addEventListener('click', () => {

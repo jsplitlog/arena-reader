@@ -172,37 +172,11 @@ code {
 }
 .controls .spacer { flex: 1; }
 
-/* view toggle */
-.view-toggle {
-  display: inline-flex;
-  flex-shrink: 0;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
-}
-.view-toggle button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--control-h);
-  height: var(--control-h);
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: var(--bg);
-  color: var(--fg-muted);
-  cursor: pointer;
-}
-.view-toggle button svg {
-  width: 12px;
-  height: 12px;
-}
-.view-toggle button + button { border-left: 1px solid var(--border); }
-.view-toggle button:hover { color: var(--fg); }
-.view-toggle button.active {
-  background: var(--accent);
-  color: var(--bg);
-}
+/* view toggle — single button that shows the icon for the mode it switches to */
+#view-toggle .view-icon-list,
+#view-toggle .view-icon-grid { display: none; }
+#view-toggle[data-current="list"] .view-icon-grid { display: block; }
+#view-toggle[data-current="grid"] .view-icon-list { display: block; }
 
 /* ---- layout ---- */
 .container {
@@ -946,18 +920,13 @@ code {
     width: 36px;
     height: 36px;
   }
-  .view-toggle button {
-    width: 36px;
-    height: 36px;
-  }
   .controls > select {
     height: 36px;
   }
 }
 /* Scale down controls on very narrow screens (< iPhone SE) */
 @media (max-width: 374px) {
-  .controls .icon-btn,
-  .view-toggle button {
+  .controls .icon-btn {
     width: 30px;
     height: 30px;
   }
