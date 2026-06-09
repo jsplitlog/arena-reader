@@ -105,8 +105,8 @@ code {
   flex-wrap: wrap;
 }
 .topbar h1 {
-  font-size: 0.8125rem;
-  font-weight: 700;
+  font-size: 0.875rem;
+  font-weight: 600;
   letter-spacing: 0;
   white-space: nowrap;
   flex-shrink: 1;
