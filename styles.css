@@ -64,7 +64,10 @@ html, body {
 }
 
 @media (max-width: 640px) {
-  html { font-size: 16px; }
+  /* Lift the mobile root size closer to desktop (20px) so the rem-based
+     feed text — title, description, source, attribution, meta — reads
+     comfortably on small screens. */
+  html { font-size: 18px; }
   body { overflow-x: hidden; }
 }
 
