@@ -370,18 +370,16 @@ code {
 .auth-btn:active { scale: 0.96; }
 .auth-footer {
   margin-top: 1em;
-  padding-top: 0.75em;
-  border-top: 1px solid var(--border);
 }
 .auth-source {
   display: inline-flex;
   align-items: center;
   gap: 0.375em;
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   color: var(--fg-muted);
 }
 .auth-source:hover { color: var(--fg); text-decoration: none; }
-.auth-source svg { flex-shrink: 0; }
+.auth-source svg { width: 1em; height: 1em; flex-shrink: 0; }
 
 /* ---- status ---- */
 .status {
