@@ -26,7 +26,7 @@ const state = {
     JSON.parse(localStorage.getItem(HOTLINKS_KEY) || '{}'),
   ),
   filters: Object.assign(
-    { enabled: true, domains: {}, users: {} },
+    { enabled: true, domains: {}, users: {}, channels: {} },
     JSON.parse(localStorage.getItem(FILTERS_KEY) || '{}'),
   ),
   loading: false,
@@ -34,8 +34,9 @@ const state = {
   user: null,
 };
 
-// Ensure users obj exists for legacy localStorage
+// Ensure filter dimensions exist for legacy localStorage
 if (!state.filters.users) state.filters.users = {};
+if (!state.filters.channels) state.filters.channels = {};
 
 /* ---------- element refs ---------- */
 const el = {
@@ -220,13 +221,13 @@ async function loadFiltersFromFile() {
     if (!res.ok) return;
     const data = await res.json();
     if (data && typeof data === 'object') {
-      state.filters = Object.assign({ enabled: true, domains: {}, users: {} }, data);
+      state.filters = Object.assign({ enabled: true, domains: {}, users: {}, channels: {} }, data);
       localStorage.setItem(FILTERS_KEY, JSON.stringify(state.filters));
     }
   } catch (_) {}
 }
 
-function isItemFiltered(domain, slug) {
+function isItemFiltered(domain, slug, channel) {
   if (!state.filters.enabled) return false;
   if (domain) {
     if (state.filters.domains[domain]) return true;
@@ -236,6 +237,7 @@ function isItemFiltered(domain, slug) {
     }
   }
   if (slug && state.filters.users[slug]) return true;
+  if (channel && state.filters.channels[channel]) return true;
   return false;
 }
 
@@ -269,18 +271,35 @@ function unfilterUser(slug) {
   renderFilterUI();
 }
 
+function filterChannel(slug, title) {
+  if (!slug) return;
+  state.filters.channels[slug] = title || slug;
+  saveFilters();
+  applyFilters();
+  renderFilterUI();
+}
+
+function unfilterChannel(slug) {
+  delete state.filters.channels[slug];
+  saveFilters();
+  applyFilters();
+  renderFilterUI();
+}
+
 function applyFilters() {
   el.feed.querySelectorAll('.item').forEach((item) => {
     const d = item.getAttribute('data-domain') || '';
     const u = item.getAttribute('data-user') || '';
-    item.classList.toggle('filtered', isItemFiltered(d, u));
+    const c = item.getAttribute('data-channel') || '';
+    item.classList.toggle('filtered', isItemFiltered(d, u, c));
   });
 }
 
 function renderFilterUI() {
   const domainKeys = Object.keys(state.filters.domains);
   const userKeys = Object.keys(state.filters.users);
-  const count = domainKeys.length + userKeys.length;
+  const channelKeys = Object.keys(state.filters.channels);
+  const count = domainKeys.length + userKeys.length + channelKeys.length;
 
   el.filterCount.hidden = count === 0;
   el.filterCount.textContent = count;
@@ -294,7 +313,7 @@ function renderFilterUI() {
   if (count === 0) {
     const empty = document.createElement('div');
     empty.className = 'filter-empty';
-    empty.textContent = 'Filter users or sources from the menu on any block.';
+    empty.textContent = 'Filter users, sources, or channels from the menu on any block.';
     el.filterList.appendChild(empty);
   }
 
@@ -319,6 +338,18 @@ function renderFilterUI() {
     for (const slug of userKeys.sort()) {
       const name = state.filters.users[slug] || slug;
       el.filterList.appendChild(filterRow(name, () => unfilterUser(slug)));
+    }
+  }
+
+  // Channels section
+  if (channelKeys.length) {
+    const heading = document.createElement('div');
+    heading.className = 'filter-section-label';
+    heading.textContent = 'Channels';
+    el.filterList.appendChild(heading);
+    for (const slug of channelKeys.sort()) {
+      const title = state.filters.channels[slug] || slug;
+      el.filterList.appendChild(filterRow(title, () => unfilterChannel(slug)));
     }
   }
 }
@@ -569,7 +600,31 @@ async function enrichChannels() {
     link.target = '_blank'; link.rel = 'noopener';
     link.textContent = ch.title;
     span.appendChild(link);
+
+    // The channel resolves after the item renders, so tag the item now,
+    // expose a "Filter [channel]" option, and re-evaluate filtering.
+    const item = span.closest('.item');
+    if (item && ch.slug) {
+      item.setAttribute('data-channel', ch.slug);
+      addChannelFilterOption(item, ch.slug, ch.title || ch.slug);
+      item.classList.toggle('filtered', isItemFiltered(
+        item.getAttribute('data-domain') || '',
+        item.getAttribute('data-user') || '',
+        ch.slug,
+      ));
+    }
   }));
+}
+
+function addChannelFilterOption(item, slug, title) {
+  const menu = item.querySelector('.item-filter-menu');
+  if (!menu || menu.querySelector('[data-channel-btn]')) return;
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.dataset.channelBtn = '1';
+  btn.textContent = 'Filter ' + title;
+  btn.addEventListener('click', () => { filterChannel(slug, title); menu.classList.remove('open'); });
+  menu.appendChild(btn);
 }
 
 async function enrichConnectionCounts() {
