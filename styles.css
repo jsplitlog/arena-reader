@@ -175,11 +175,11 @@ code {
 }
 .controls .spacer { flex: 1; }
 
-/* view toggle — single button that shows the icon for the mode it switches to */
+/* view toggle — single button that shows the icon for the current layout */
 #view-toggle .view-icon-list,
 #view-toggle .view-icon-grid { display: none; }
-#view-toggle[data-current="list"] .view-icon-grid { display: block; }
-#view-toggle[data-current="grid"] .view-icon-list { display: block; }
+#view-toggle[data-current="list"] .view-icon-list { display: block; }
+#view-toggle[data-current="grid"] .view-icon-grid { display: block; }
 
 /* ---- layout ---- */
 .container {

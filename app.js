@@ -760,11 +760,12 @@ async function loadFeed({ reset }) {
 }
 
 /* ---------- view mode ---------- */
-// The toggle is a single button showing the icon for the mode it switches to.
+// The toggle is a single button showing the icon for the current layout;
+// its label describes the action (what tapping switches to).
 function updateViewToggle(mode) {
   const next = mode === 'grid' ? 'list' : 'grid';
   el.viewToggle.dataset.current = mode;
-  el.viewToggle.title = next === 'grid' ? 'Grid view' : 'List view';
+  el.viewToggle.title = `Switch to ${next} view`;
   el.viewToggle.setAttribute('aria-label', `Switch to ${next} view`);
 }
 
