@@ -441,7 +441,7 @@ function renderItem(b) {
 
   item.appendChild(body);
 
-  // Thumbnail/preview wrapper with filter button
+  // Thumbnail/preview wrapper (clean — no overlay controls)
   const thumbWrap = document.createElement('div');
   thumbWrap.className = 'item-thumb-wrap';
 
@@ -465,43 +465,9 @@ function renderItem(b) {
     thumbWrap.appendChild(preview);
   }
 
-  // Filter button on thumbnail
-  if (domain || slug) {
-    const fBtn = document.createElement('button');
-    fBtn.type = 'button';
-    fBtn.className = 'item-filter-btn';
-    fBtn.setAttribute('aria-label', 'Filter options');
-    fBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>';
-    thumbWrap.appendChild(fBtn);
-
-    const fMenu = document.createElement('div');
-    fMenu.className = 'item-filter-menu';
-    if (domain) {
-      const dBtn = document.createElement('button');
-      dBtn.type = 'button';
-      dBtn.textContent = 'Filter ' + domainDisplay;
-      dBtn.addEventListener('click', () => { filterDomain(domain, domainDisplay); fMenu.classList.remove('open'); });
-      fMenu.appendChild(dBtn);
-    }
-    if (slug) {
-      const uBtn = document.createElement('button');
-      uBtn.type = 'button';
-      uBtn.textContent = 'Filter ' + name;
-      uBtn.addEventListener('click', () => { filterUser(slug, name); fMenu.classList.remove('open'); });
-      fMenu.appendChild(uBtn);
-    }
-    thumbWrap.appendChild(fMenu);
-
-    fBtn.addEventListener('click', (e) => {
-      e.preventDefault(); e.stopPropagation();
-      document.querySelectorAll('.item-filter-menu').forEach(m => { if (m !== fMenu) m.classList.remove('open'); });
-      fMenu.classList.toggle('open');
-    });
-  }
-
   item.appendChild(thumbWrap);
 
-  // Author line (spans both grid columns so timestamp right-aligns with thumb)
+  // Author line: avatar, name …spacer… ✶✶ · timestamp
   const authorLine = document.createElement('div');
   authorLine.className = 'item-author';
   if (avatar) {
@@ -523,9 +489,12 @@ function renderItem(b) {
   time.textContent = relativeTime(created);
   time.title = absoluteTime(created);
   authorLine.appendChild(time);
+  const arenaLink = metaLink('✶✶', blockUrl(b));
+  arenaLink.title = 'View on Are.na';
+  authorLine.appendChild(arenaLink);
   item.appendChild(authorLine);
 
-  // Meta bottom: channel …spacer… ✶✶ (spans both grid columns)
+  // Meta bottom: channel …spacer… actions menu
   const meta = document.createElement('div');
   meta.className = 'item-meta';
   const metaLine = document.createElement('div');
@@ -537,9 +506,51 @@ function renderItem(b) {
   const mSpacer = document.createElement('span');
   mSpacer.className = 'meta-spacer';
   metaLine.appendChild(mSpacer);
-  const arenaLink = metaLink('✶✶', blockUrl(b));
-  arenaLink.title = 'View on Are.na';
-  metaLine.appendChild(arenaLink);
+
+  if (domain || slug) {
+    const actions = document.createElement('div');
+    actions.className = 'item-actions';
+    const actBtn = document.createElement('button');
+    actBtn.type = 'button';
+    actBtn.className = 'item-actions-btn';
+    actBtn.setAttribute('aria-label', 'Actions');
+    actBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/></svg>';
+    actions.appendChild(actBtn);
+
+    const actMenu = document.createElement('div');
+    actMenu.className = 'item-actions-menu';
+    if (domain) {
+      const dLabel = document.createElement('span');
+      dLabel.className = 'actions-menu-label';
+      dLabel.textContent = 'Domain';
+      actMenu.appendChild(dLabel);
+      const dBtn = document.createElement('button');
+      dBtn.type = 'button';
+      dBtn.textContent = domainDisplay;
+      dBtn.addEventListener('click', () => { filterDomain(domain, domainDisplay); actMenu.classList.remove('open'); });
+      actMenu.appendChild(dBtn);
+    }
+    if (slug) {
+      const uLabel = document.createElement('span');
+      uLabel.className = 'actions-menu-label';
+      uLabel.textContent = 'User';
+      actMenu.appendChild(uLabel);
+      const uBtn = document.createElement('button');
+      uBtn.type = 'button';
+      uBtn.textContent = name;
+      uBtn.addEventListener('click', () => { filterUser(slug, name); actMenu.classList.remove('open'); });
+      actMenu.appendChild(uBtn);
+    }
+    actions.appendChild(actMenu);
+
+    actBtn.addEventListener('click', (e) => {
+      e.preventDefault(); e.stopPropagation();
+      document.querySelectorAll('.item-actions-menu').forEach(m => { if (m !== actMenu) m.classList.remove('open'); });
+      actMenu.classList.toggle('open');
+    });
+    metaLine.appendChild(actions);
+  }
+
   meta.appendChild(metaLine);
   item.appendChild(meta);
 
@@ -617,12 +628,16 @@ async function enrichChannels() {
 }
 
 function addChannelFilterOption(item, slug, title) {
-  const menu = item.querySelector('.item-filter-menu');
+  const menu = item.querySelector('.item-actions-menu');
   if (!menu || menu.querySelector('[data-channel-btn]')) return;
+  const label = document.createElement('span');
+  label.className = 'actions-menu-label';
+  label.textContent = 'Channel';
+  menu.appendChild(label);
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.dataset.channelBtn = '1';
-  btn.textContent = 'Filter ' + title;
+  btn.textContent = title;
   btn.addEventListener('click', () => { filterChannel(slug, title); menu.classList.remove('open'); });
   menu.appendChild(btn);
 }
@@ -925,14 +940,13 @@ el.filterToggle.addEventListener('click', () => {
   renderFilterUI();
 });
 
-// close filter dropdown when clicking outside
+// close dropdowns when clicking outside
 document.addEventListener('click', (e) => {
   if (!el.filterBtn.contains(e.target) && !el.filterDropdown.contains(e.target)) {
     el.filterDropdown.classList.remove('open');
   }
-  // close item filter menus when clicking outside
-  if (!e.target.closest('.item-filter-btn') && !e.target.closest('.item-filter-menu')) {
-    document.querySelectorAll('.item-filter-menu').forEach(m => { m.classList.remove('open'); });
+  if (!e.target.closest('.item-actions-btn') && !e.target.closest('.item-actions-menu')) {
+    document.querySelectorAll('.item-actions-menu').forEach(m => { m.classList.remove('open'); });
   }
 });
 
