@@ -15,7 +15,9 @@ const DEFAULT_SORT = 'created_at_desc';
 const DEFAULT_TYPE = 'Link';
 
 const state = {
-  token: localStorage.getItem(TOKEN_KEY) || '',
+  // OAuth sign-ins are session-scoped (sessionStorage); pasted PATs persist
+  // in localStorage as before. See docs/oauth-exploration.md.
+  token: sessionStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY) || '',
   page: 1,
   sort: DEFAULT_SORT,
   type: DEFAULT_TYPE,
@@ -50,6 +52,8 @@ const el = {
   auth: document.getElementById('auth'),
   tokenForm: document.getElementById('token-form'),
   tokenInput: document.getElementById('token-input'),
+  oauthConnect: document.getElementById('oauth-connect'),
+  oauthSignin: document.getElementById('oauth-signin'),
   status: document.getElementById('status'),
   feed: document.getElementById('feed'),
   loadmore: document.getElementById('loadmore'),
@@ -766,6 +770,7 @@ async function loadFeed({ reset }) {
     if (err instanceof ApiError && err.status === 401) {
       state.token = '';
       localStorage.removeItem(TOKEN_KEY);
+      sessionStorage.removeItem(TOKEN_KEY);
       showAuth(true);
     }
   } finally {
@@ -819,6 +824,7 @@ function showAuth(show) {
   el.controls.hidden = !hasToken;
   // Toggle between connect and manage modes
   el.tokenForm.hidden = hasToken;
+  el.oauthConnect.hidden = hasToken || !oauthAvailable();
   el.authActions.hidden = !hasToken;
   el.settingsToggle.classList.toggle('connected', hasToken);
   el.authClose.hidden = !hasToken;
@@ -850,6 +856,17 @@ function showAuth(show) {
 }
 
 async function start() {
+  // Complete an in-flight OAuth redirect before anything else (oauth.js).
+  const oauthResult = await handleOAuthCallback();
+  if (oauthResult) {
+    if (oauthResult.token) {
+      state.token = oauthResult.token;
+      sessionStorage.setItem(TOKEN_KEY, oauthResult.token);
+    } else {
+      setStatus(oauthResult.error, 'error');
+    }
+  }
+
   el.scope.value = state.scope;
   el.sort.value = state.sort;
   el.type.value = state.type;
@@ -887,10 +904,13 @@ el.settingsToggle.addEventListener('click', () => showAuth(!el.auth.classList.co
 el.authClose.addEventListener('click', () => { if (state.token) showAuth(false); });
 el.authOverlay.addEventListener('click', () => { if (state.token) showAuth(false); });
 
+el.oauthSignin.addEventListener('click', () => { startOAuth(); });
+
 document.getElementById('sign-out').addEventListener('click', () => {
   state.token = '';
   state.user = null;
   localStorage.removeItem(TOKEN_KEY);
+  sessionStorage.removeItem(TOKEN_KEY);
   el.feed.innerHTML = '';
   el.loadmore.hidden = true;
   showAuth(true);

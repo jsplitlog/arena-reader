@@ -300,6 +300,14 @@ code {
   margin-bottom: 0.75em;
 }
 .auth p a { text-decoration: underline; }
+.oauth-connect {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 0.75em;
+}
+.oauth-connect[hidden] { display: none; }
+.oauth-connect .auth-note { margin-top: 0; }
 .token-form {
   display: flex;
   gap: 8px;
