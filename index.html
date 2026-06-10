@@ -101,35 +101,23 @@
       </div>
     </div>
     <p id="auth-msg">
-      Connect your Are.na account with a <a href="https://www.are.na/settings/personal-access-tokens" target="_blank" rel="noopener">personal access token</a>.
-      <span class="auth-note">Stored in your browser only, sent only to <code>api.are.na</code>.</span>
+      Sign in with your Are.na account to read links from people you follow.
+      <span class="auth-note">Your token is stored in this browser only, sent only to <code>api.are.na</code>.</span>
     </p>
     <div id="oauth-connect" class="oauth-connect" hidden>
-      <button id="oauth-signin" type="button" class="auth-btn">Sign in with Are.na</button>
-      <span class="auth-note oauth-divider">or paste a token below</span>
+      <button id="oauth-signin" type="button" class="auth-btn oauth-primary">Sign in with Are.na</button>
     </div>
-    <form id="token-form" class="token-form">
-      <input
-        id="token-input"
-        type="password"
-        autocomplete="off"
-        spellcheck="false"
-        placeholder="Paste token here"
-        aria-label="Personal access token"
-      />
-      <button type="submit">Connect</button>
-    </form>
     <label class="remember-label" for="remember-token" id="remember-label">
       <input id="remember-token" type="checkbox" />
-      Remember on this device <span class="auth-note">(otherwise cleared when the browser session ends)</span>
+      Remember on this device <span class="auth-note">(otherwise signed out when the browser session ends)</span>
     </label>
     <div id="auth-actions" class="auth-actions" hidden>
-      <a href="https://www.are.na/settings/personal-access-tokens" target="_blank" rel="noopener" class="auth-btn">Manage tokens</a>
+      <a href="https://www.are.na/settings" target="_blank" rel="noopener" class="auth-btn">Are.na settings</a>
       <button id="sign-out" type="button" class="auth-btn">Sign out</button>
     </div>
     <p id="auth-revoke-note" class="auth-note" hidden>
-      Sign out clears this browser only — Are.na tokens don't expire, so delete the token in
-      <a href="https://www.are.na/settings/personal-access-tokens" target="_blank" rel="noopener">settings</a> to revoke it.
+      Sign out clears this browser only — Are.na tokens don't expire, so revoke this app's access in your
+      <a href="https://www.are.na/settings" target="_blank" rel="noopener">Are.na settings</a> to fully invalidate it.
     </p>
     <div class="auth-footer">
       <a href="https://github.com/jsplitlog/arena-reader" target="_blank" rel="noopener" class="auth-source">

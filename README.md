@@ -35,16 +35,18 @@ The included `server.py` also handles saving filter preferences to a local `filt
 
 **Hosted:** push to a static host (e.g. GitHub Pages) and visit the URL.
 
-## Getting a token
+## Signing in
 
-1. Go to your Are.na [personal access token settings](https://www.are.na/settings/personal-access-tokens).
-2. Create an application (or open an existing one) and copy its **Personal Access Token**.
-3. Paste it into the app. It's stored only in your browser's `localStorage` and sent only to `api.are.na`.
+Click **Sign in with Are.na** and authorize the app — the OAuth flow (authorization code + PKCE) runs entirely in your browser; no secrets, no backend.
+
+- Tick **Remember on this device** before signing in to stay signed in across browser restarts; otherwise the token clears when the browser session ends.
+- Sign-in needs a secure context: `https://` in production, or `http://127.0.0.1` for local dev.
+- **Hosting a fork?** Register your own OAuth application at [are.na/developers/oauth/applications](https://www.are.na/developers/oauth/applications) with your URL as the redirect URI, and set its client ID in `oauth.js`.
 
 ## Caveats
 
 - **Premium:** the `scope=following` search may require an Are.na Premium account. If you get a `402`/`403`, the app shows a message explaining this.
-- **Token in the browser:** because this is a pure client-side tool, your token lives in the browser. By default it's kept in `sessionStorage` (cleared when the browser session ends); tick **Remember on this device** to persist it in `localStorage`. Are.na tokens never expire, so signing out clears this browser only — delete the token in [Are.na settings](https://www.are.na/settings/personal-access-tokens) to revoke it.
+- **Token in the browser:** because this is a pure client-side tool, your token lives in the browser. By default it's kept in `sessionStorage` (cleared when the browser session ends); tick **Remember on this device** to persist it in `localStorage`. Are.na tokens never expire, so signing out clears this browser only — revoke the app's access in your [Are.na settings](https://www.are.na/settings) to fully invalidate it.
 - **CORS:** the v3 API supports browser clients, so direct calls work. If a future change blocks cross-origin requests, you'd need a proxy to add the `Authorization` header server-side.
 
 ## Files

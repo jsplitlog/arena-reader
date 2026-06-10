@@ -307,10 +307,15 @@ code {
   margin-bottom: 0.75em;
 }
 .oauth-connect[hidden] { display: none; }
-.oauth-connect .auth-note { margin-top: 0; }
-.token-form {
-  display: flex;
-  gap: 8px;
+.oauth-primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--bg);
+}
+.oauth-primary:hover {
+  border-color: var(--accent);
+  color: var(--bg);
+  opacity: 0.9;
 }
 .remember-label {
   display: flex;
@@ -324,33 +329,6 @@ code {
 .remember-label[hidden] { display: none; }
 .remember-label input { accent-color: var(--accent); margin: 0; }
 .remember-label .auth-note { display: inline; margin-top: 0; }
-.token-form[hidden] { display: none; }
-.token-form input {
-  flex: 1;
-  font-family: inherit;
-  font-size: 0.75rem;
-  line-height: 1.3;
-  padding: 6px 10px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--input-bg);
-  color: var(--fg);
-}
-.token-form button {
-  font-family: inherit;
-  font-size: 0.75rem;
-  line-height: 1.3;
-  padding: 6px 12px;
-  border: 1px solid var(--accent);
-  border-radius: var(--radius);
-  background: var(--accent);
-  color: var(--bg);
-  cursor: pointer;
-  transition-property: scale;
-  transition-duration: 150ms;
-  transition-timing-function: ease-out;
-}
-.token-form button:active { scale: 0.96; }
 .auth-note {
   display: block;
   margin-top: 0.375em;

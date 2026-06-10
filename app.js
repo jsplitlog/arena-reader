@@ -50,8 +50,6 @@ const el = {
   refresh: document.getElementById('refresh'),
   settingsToggle: document.getElementById('settings-toggle'),
   auth: document.getElementById('auth'),
-  tokenForm: document.getElementById('token-form'),
-  tokenInput: document.getElementById('token-input'),
   oauthConnect: document.getElementById('oauth-connect'),
   oauthSignin: document.getElementById('oauth-signin'),
   rememberToken: document.getElementById('remember-token'),
@@ -846,7 +844,6 @@ function showAuth(show) {
   // Only hide controls on first visit (no token yet)
   el.controls.hidden = !hasToken;
   // Toggle between connect and manage modes
-  el.tokenForm.hidden = hasToken;
   el.oauthConnect.hidden = hasToken || !oauthAvailable();
   el.rememberLabel.hidden = hasToken;
   el.revokeNote.hidden = !hasToken;
@@ -874,10 +871,14 @@ function showAuth(show) {
 
   if (hasToken) {
     el.authMsg.innerHTML = 'Connected to Are.na <span class="auth-check">✓</span><br><span class="auth-note">Token stored in your browser, only sent to api.are.na.</span>';
+  } else if (oauthAvailable()) {
+    el.authMsg.innerHTML = 'Not connected <span class="auth-x">✗</span><br>Sign in with your Are.na account to load your feed.<br><span class="auth-note">Your token is stored in this browser only, sent only to api.are.na.</span>';
   } else {
-    el.authMsg.innerHTML = 'Not connected <span class="auth-x">✗</span><br>Connect with a <a href="https://www.are.na/settings/personal-access-tokens" target="_blank" rel="noopener">personal access token</a>.<br><span class="auth-note">Stored in your browser only, sent only to api.are.na.</span>';
+    // No client id configured, or an insecure context (plain http on a
+    // non-loopback host) — WebCrypto and OAuth both need https/127.0.0.1.
+    el.authMsg.innerHTML = 'Not connected <span class="auth-x">✗</span><br>Sign-in needs a secure context — open this app over <code>https://</code> (or <code>http://127.0.0.1</code> for local dev).';
   }
-  if (show && !hasToken) { el.tokenInput.value = ''; el.tokenInput.focus(); }
+  if (show && !hasToken && !el.oauthConnect.hidden) el.oauthSignin.focus();
 }
 
 async function start() {
@@ -913,25 +914,13 @@ async function start() {
 }
 
 /* ---------- events ---------- */
-el.tokenForm.addEventListener('submit', (e) => {
-  e.preventDefault();
-  const value = el.tokenInput.value.trim();
-  if (!value) return;
-  state.token = value;
-  saveToken(value, el.rememberToken.checked);
-  setStatus('');
-  showAuth(false);
-  fetchMe();
-  loadFeed({ reset: true });
+el.oauthSignin.addEventListener('click', () => {
+  startOAuth({ remember: el.rememberToken.checked });
 });
 
 el.settingsToggle.addEventListener('click', () => showAuth(!el.auth.classList.contains('open')));
 el.authClose.addEventListener('click', () => { if (state.token) showAuth(false); });
 el.authOverlay.addEventListener('click', () => { if (state.token) showAuth(false); });
-
-el.oauthSignin.addEventListener('click', () => {
-  startOAuth({ remember: el.rememberToken.checked });
-});
 
 document.getElementById('sign-out').addEventListener('click', () => {
   state.token = '';
