@@ -55,6 +55,7 @@ const el = {
   oauthConnect: document.getElementById('oauth-connect'),
   oauthSignin: document.getElementById('oauth-signin'),
   rememberToken: document.getElementById('remember-token'),
+  rememberLabel: document.getElementById('remember-label'),
   revokeNote: document.getElementById('auth-revoke-note'),
   status: document.getElementById('status'),
   feed: document.getElementById('feed'),
@@ -820,6 +821,20 @@ function setView(mode) {
 }
 
 /* ---------- auth ---------- */
+// Tokens never expire, so session-scoped storage is the safe default;
+// localStorage is an explicit opt-in (the "Remember on this device" box,
+// honored by both the OAuth and pasted-PAT paths). Clear the other store
+// so a stale copy can't linger.
+function saveToken(token, remember) {
+  if (remember) {
+    localStorage.setItem(TOKEN_KEY, token);
+    sessionStorage.removeItem(TOKEN_KEY);
+  } else {
+    sessionStorage.setItem(TOKEN_KEY, token);
+    localStorage.removeItem(TOKEN_KEY);
+  }
+}
+
 function showAuth(show) {
   el.auth.classList.toggle('open', show);
   el.authOverlay.classList.toggle('open', show);
@@ -829,6 +844,7 @@ function showAuth(show) {
   // Toggle between connect and manage modes
   el.tokenForm.hidden = hasToken;
   el.oauthConnect.hidden = hasToken || !oauthAvailable();
+  el.rememberLabel.hidden = hasToken;
   el.revokeNote.hidden = !hasToken;
   el.authActions.hidden = !hasToken;
   el.settingsToggle.classList.toggle('connected', hasToken);
@@ -866,7 +882,7 @@ async function start() {
   if (oauthResult) {
     if (oauthResult.token) {
       state.token = oauthResult.token;
-      sessionStorage.setItem(TOKEN_KEY, oauthResult.token);
+      saveToken(oauthResult.token, oauthResult.remember);
     } else {
       setStatus(oauthResult.error, 'error');
     }
@@ -898,16 +914,7 @@ el.tokenForm.addEventListener('submit', (e) => {
   const value = el.tokenInput.value.trim();
   if (!value) return;
   state.token = value;
-  // Tokens never expire, so session-scoped storage is the safe default;
-  // localStorage is an explicit opt-in. Clear the other store so a stale
-  // copy can't linger.
-  if (el.rememberToken.checked) {
-    localStorage.setItem(TOKEN_KEY, value);
-    sessionStorage.removeItem(TOKEN_KEY);
-  } else {
-    sessionStorage.setItem(TOKEN_KEY, value);
-    localStorage.removeItem(TOKEN_KEY);
-  }
+  saveToken(value, el.rememberToken.checked);
   setStatus('');
   showAuth(false);
   fetchMe();
@@ -918,7 +925,9 @@ el.settingsToggle.addEventListener('click', () => showAuth(!el.auth.classList.co
 el.authClose.addEventListener('click', () => { if (state.token) showAuth(false); });
 el.authOverlay.addEventListener('click', () => { if (state.token) showAuth(false); });
 
-el.oauthSignin.addEventListener('click', () => { startOAuth(); });
+el.oauthSignin.addEventListener('click', () => {
+  startOAuth({ remember: el.rememberToken.checked });
+});
 
 document.getElementById('sign-out').addEventListener('click', () => {
   state.token = '';

@@ -8,14 +8,16 @@
  */
 
 const OAUTH = {
-  // Set after registering the app at https://www.are.na/oauth/applications.
-  // The registered redirect URI must exactly match redirectUri below.
-  clientId: '',
+  // Registered at https://www.are.na/developers/oauth/applications.
+  // The registered redirect URIs must exactly match redirectUri below
+  // (production URL and http://127.0.0.1:8000/ for local dev).
+  clientId: 'jCHfPWPrViwkd23ZgyHM42X0DDKvrV3vwaDi9DULbCE',
   redirectUri: location.origin + location.pathname,
   authorizeUrl: 'https://www.are.na/oauth/authorize',
   tokenUrl: 'https://api.are.na/v3/oauth/token',
-  // 'read' is the default scope; the connect-to-channel feature (#19) will
-  // need 'write'.
+  // Least privilege: the reader only needs 'read'. The registered app
+  // supports 'write' too — flip this when the connect-to-channel feature
+  // (#19) lands; users will see one re-consent redirect.
   scope: 'read',
 };
 
@@ -23,6 +25,9 @@ const OAUTH = {
 // recommend sessionStorage over localStorage for them.
 const OAUTH_VERIFIER_KEY = 'arena_oauth_code_verifier';
 const OAUTH_STATE_KEY = 'arena_oauth_state';
+// The "Remember on this device" choice has to survive the redirect to
+// are.na, so it rides along with the other transient values.
+const OAUTH_REMEMBER_KEY = 'arena_oauth_remember';
 
 function base64url(bytes) {
   return btoa(String.fromCharCode(...bytes))
@@ -45,11 +50,13 @@ function oauthAvailable() {
   return !!OAUTH.clientId && window.isSecureContext && !!(crypto && crypto.subtle);
 }
 
-async function startOAuth() {
+async function startOAuth(opts) {
   const { verifier, challenge } = await generatePKCE();
   const state = generateState();
   sessionStorage.setItem(OAUTH_VERIFIER_KEY, verifier);
   sessionStorage.setItem(OAUTH_STATE_KEY, state);
+  if (opts && opts.remember) sessionStorage.setItem(OAUTH_REMEMBER_KEY, '1');
+  else sessionStorage.removeItem(OAUTH_REMEMBER_KEY);
   const params = new URLSearchParams({
     client_id: OAUTH.clientId,
     redirect_uri: OAUTH.redirectUri,
@@ -65,7 +72,7 @@ async function startOAuth() {
 /*
  * Call once on startup. Returns:
  *   null                — current URL is not an OAuth callback
- *   { token }           — success
+ *   { token, remember } — success; remember reflects the pre-redirect choice
  *   { error: string }   — callback failed (state mismatch, denial, exchange error)
  * Always strips OAuth params from the URL and clears transient storage.
  */
@@ -75,8 +82,10 @@ async function handleOAuthCallback() {
 
   const storedState = sessionStorage.getItem(OAUTH_STATE_KEY);
   const verifier = sessionStorage.getItem(OAUTH_VERIFIER_KEY);
+  const remember = sessionStorage.getItem(OAUTH_REMEMBER_KEY) === '1';
   sessionStorage.removeItem(OAUTH_STATE_KEY);
   sessionStorage.removeItem(OAUTH_VERIFIER_KEY);
+  sessionStorage.removeItem(OAUTH_REMEMBER_KEY);
   // Remove code/state from the address bar and history before doing
   // anything else, so the one-time code never lingers in the URL.
   history.replaceState(null, '', location.pathname);
@@ -108,7 +117,7 @@ async function handleOAuthCallback() {
     if (!res.ok || !body.access_token) {
       return { error: body.error_description || body.error || `Token exchange failed (${res.status}).` };
     }
-    return { token: body.access_token };
+    return { token: body.access_token, remember };
   } catch (_) {
     return { error: 'Could not reach api.are.na to complete sign-in.' };
   }

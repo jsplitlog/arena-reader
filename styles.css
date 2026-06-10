@@ -310,18 +310,18 @@ code {
 .oauth-connect .auth-note { margin-top: 0; }
 .token-form {
   display: flex;
-  flex-wrap: wrap;
   gap: 8px;
 }
 .remember-label {
-  width: 100%;
   display: flex;
   align-items: center;
   gap: 6px;
+  margin-top: 8px;
   font-size: 0.6875rem;
   color: var(--fg-muted);
   cursor: pointer;
 }
+.remember-label[hidden] { display: none; }
 .remember-label input { accent-color: var(--accent); margin: 0; }
 .remember-label .auth-note { display: inline; margin-top: 0; }
 .token-form[hidden] { display: none; }
