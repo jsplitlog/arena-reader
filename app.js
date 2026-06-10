@@ -54,6 +54,8 @@ const el = {
   tokenInput: document.getElementById('token-input'),
   oauthConnect: document.getElementById('oauth-connect'),
   oauthSignin: document.getElementById('oauth-signin'),
+  rememberToken: document.getElementById('remember-token'),
+  revokeNote: document.getElementById('auth-revoke-note'),
   status: document.getElementById('status'),
   feed: document.getElementById('feed'),
   loadmore: document.getElementById('loadmore'),
@@ -111,16 +113,19 @@ async function fetchPage(page) {
       const body = await res.json();
       detail = body.message || body.error || '';
     } catch (_) {}
-    throw new ApiError(res.status, detail);
+    // Unix timestamp of the current rate-limit window's end (v3 docs).
+    const resetAt = Number(res.headers.get('X-RateLimit-Reset')) || 0;
+    throw new ApiError(res.status, detail, resetAt);
   }
   return res.json();
 }
 
 class ApiError extends Error {
-  constructor(status, detail) {
+  constructor(status, detail, resetAt) {
     super(detail || `Request failed (${status})`);
     this.status = status;
     this.detail = detail;
+    this.resetAt = resetAt || 0;
   }
 }
 
@@ -136,9 +141,11 @@ function mdText(mc) {
 }
 
 function stripHtml(html) {
-  const tmp = document.createElement('div');
-  tmp.innerHTML = html;
-  return tmp.textContent || tmp.innerText || '';
+  // DOMParser yields an inert document — resources don't load and event
+  // handlers never fire, unlike innerHTML on a live element. Block HTML is
+  // authored by other users, so it must never be activated.
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  return doc.body.textContent || '';
 }
 
 function blockImage(b) {
@@ -173,7 +180,20 @@ function domainHost(b) {
 
 function faviconUrl(domain) {
   if (!domain) return null;
-  return `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
+  // Fetched from the source site itself rather than a third-party favicon
+  // service, so the list of domains you read isn't shipped to Google.
+  return `https://${domain}/favicon.ico`;
+}
+
+function faviconImg(domain) {
+  const fav = document.createElement('img');
+  fav.className = 'favicon';
+  fav.src = faviconUrl(domain);
+  fav.alt = '';
+  fav.loading = 'lazy';
+  // Many sites have no /favicon.ico — drop the broken image quietly.
+  fav.addEventListener('error', () => fav.remove());
+  return fav;
 }
 
 function userName(u) { return (u && u.name) || 'Someone'; }
@@ -363,12 +383,7 @@ function filterRow(label, onRemove, isDomain, host) {
   row.className = 'filter-row';
 
   if (isDomain) {
-    const fav = document.createElement('img');
-    fav.className = 'favicon';
-    fav.src = faviconUrl(host || label);
-    fav.alt = '';
-    fav.loading = 'lazy';
-    row.appendChild(fav);
+    row.appendChild(faviconImg(host || label));
   }
 
   const span = document.createElement('span');
@@ -422,12 +437,7 @@ function renderItem(b) {
   if (domain) {
     const src = document.createElement('div');
     src.className = 'item-source';
-    const fav = document.createElement('img');
-    fav.className = 'favicon';
-    fav.src = faviconUrl(domain);
-    fav.alt = '';
-    fav.loading = 'lazy';
-    src.appendChild(fav);
+    src.appendChild(faviconImg(domain));
     const srcLink = document.createElement('a');
     srcLink.href = href; srcLink.target = '_blank'; srcLink.rel = 'noopener';
     srcLink.textContent = domain;
@@ -575,38 +585,48 @@ function dot() {
 }
 
 /* ---------- hot links ---------- */
-async function fetchConnectionCount(blockId) {
-  try {
-    const res = await fetch(`${API_BASE}/blocks/${blockId}/connections?per=1`, {
-      headers: { Authorization: `Bearer ${state.token}`, Accept: 'application/json' },
-    });
-    if (!res.ok) return 0;
-    const data = await res.json();
-    const meta = data.meta || {};
-    return meta.total_count ?? meta.total ?? (Array.isArray(data.data) ? data.data.length : 0);
-  } catch (_) { return 0; }
-}
-
-async function fetchFirstChannel(blockId) {
+// One request per block (channel + count come from the same connections
+// response) — the previous two-fetch version doubled the request volume and
+// brushed the free tier's documented 120 req/min limit.
+async function fetchConnectionInfo(blockId) {
   try {
     const res = await fetch(`${API_BASE}/blocks/${blockId}/connections?per=1`, {
       headers: { Authorization: `Bearer ${state.token}`, Accept: 'application/json' },
     });
     if (!res.ok) return null;
     const data = await res.json();
-    const ch = Array.isArray(data.data) && data.data[0];
-    if (!ch) return null;
-    return { title: ch.title, slug: ch.slug, userSlug: (ch.user && ch.user.slug) || '' };
+    const meta = data.meta || {};
+    const first = Array.isArray(data.data) && data.data[0];
+    return {
+      channel: first ? { title: first.title, slug: first.slug, userSlug: (first.user && first.user.slug) || '' } : null,
+      count: meta.total_count ?? meta.total ?? (Array.isArray(data.data) ? data.data.length : 0),
+    };
   } catch (_) { return null; }
 }
 
 async function enrichChannels() {
+  const showCounts = state.sort === 'popular';
   const spans = el.feed.querySelectorAll('.meta-channel[data-block-id]');
   const work = [...spans].filter((s) => !s.dataset.done);
   await Promise.all(work.map(async (span) => {
     const id = span.getAttribute('data-block-id');
     span.dataset.done = '1';
-    const ch = await fetchFirstChannel(id);
+    const info = await fetchConnectionInfo(id);
+    if (!info) return;
+
+    if (showCounts && info.count >= 2) {
+      const line = span.closest('.meta-line');
+      if (line) {
+        line.appendChild(dot());
+        const badge = document.createElement('span');
+        badge.className = 'connection-badge';
+        badge.textContent = String(info.count);
+        badge.title = `${info.count} connections`;
+        line.appendChild(badge);
+      }
+    }
+
+    const ch = info.channel;
     if (!ch) return;
     const link = document.createElement('a');
     link.href = ch.userSlug
@@ -646,25 +666,6 @@ function addChannelFilterOption(item, slug, title) {
   menu.appendChild(btn);
 }
 
-async function enrichConnectionCounts() {
-  const spans = el.feed.querySelectorAll('.meta-channel[data-block-id]');
-  const work = [...spans].filter((s) => !s.dataset.countDone);
-  await Promise.all(work.map(async (span) => {
-    const id = span.getAttribute('data-block-id');
-    span.dataset.countDone = '1';
-    const count = await fetchConnectionCount(id);
-    if (count < 2) return;
-    const line = span.closest('.meta-line');
-    if (!line) return;
-    line.appendChild(dot());
-    const badge = document.createElement('span');
-    badge.className = 'connection-badge';
-    badge.textContent = String(count);
-    badge.title = `${count} connections`;
-    line.appendChild(badge);
-  }));
-}
-
 function saveHotlinksPrefs() {
   localStorage.setItem(HOTLINKS_KEY, JSON.stringify(state.hotlinks));
 }
@@ -686,7 +687,10 @@ function friendlyError(err) {
     switch (err.status) {
       case 401: return 'Token rejected (401). Please re-enter your token.';
       case 402: case 403: return `Access denied (${err.status}). May require Are.na Premium.`;
-      case 429: return 'Rate limited (429). Wait and retry.';
+      case 429: {
+        const wait = err.resetAt ? Math.max(0, Math.ceil(err.resetAt - Date.now() / 1000)) : 0;
+        return wait ? `Rate limited (429). Try again in ${wait}s.` : 'Rate limited (429). Wait and retry.';
+      }
       default: return `Error (${err.status}).${err.detail ? ' ' + err.detail : ''}`;
     }
   }
@@ -762,9 +766,9 @@ async function loadFeed({ reset }) {
       el.loadmore.hidden = !state.hasMore;
     }
 
-    // Enrich in background (don't block UI)
+    // Enrich in background (don't block UI); counts ride along when the
+    // sort is 'popular'.
     enrichChannels();
-    if (state.sort === 'popular') enrichConnectionCounts();
   } catch (err) {
     setStatus(friendlyError(err), 'error');
     if (err instanceof ApiError && err.status === 401) {
@@ -825,6 +829,7 @@ function showAuth(show) {
   // Toggle between connect and manage modes
   el.tokenForm.hidden = hasToken;
   el.oauthConnect.hidden = hasToken || !oauthAvailable();
+  el.revokeNote.hidden = !hasToken;
   el.authActions.hidden = !hasToken;
   el.settingsToggle.classList.toggle('connected', hasToken);
   el.authClose.hidden = !hasToken;
@@ -893,7 +898,16 @@ el.tokenForm.addEventListener('submit', (e) => {
   const value = el.tokenInput.value.trim();
   if (!value) return;
   state.token = value;
-  localStorage.setItem(TOKEN_KEY, value);
+  // Tokens never expire, so session-scoped storage is the safe default;
+  // localStorage is an explicit opt-in. Clear the other store so a stale
+  // copy can't linger.
+  if (el.rememberToken.checked) {
+    localStorage.setItem(TOKEN_KEY, value);
+    sessionStorage.removeItem(TOKEN_KEY);
+  } else {
+    sessionStorage.setItem(TOKEN_KEY, value);
+    localStorage.removeItem(TOKEN_KEY);
+  }
   setStatus('');
   showAuth(false);
   fetchMe();

@@ -7,9 +7,14 @@ from pathlib import Path
 os.chdir(Path(__file__).resolve().parent)
 
 class Handler(SimpleHTTPRequestHandler):
+    MAX_BODY = 1_000_000  # filters.json is tiny; cap writes from the network
+
     def do_POST(self):
         if self.path == '/filters.json':
             length = int(self.headers.get('Content-Length', 0))
+            if length > self.MAX_BODY:
+                self.send_error(413, 'Payload too large')
+                return
             body = self.rfile.read(length)
             try:
                 data = json.loads(body)
@@ -26,5 +31,8 @@ class Handler(SimpleHTTPRequestHandler):
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 0)) or (int(sys.argv[1]) if len(sys.argv) > 1 else 8000)
-    print(f'http://localhost:{port}')
-    HTTPServer(('', port), Handler).serve_forever()
+    # Loopback only — the filters endpoint is an unauthenticated write, so it
+    # must not be reachable from the LAN. Set HOST to opt out deliberately.
+    host = os.environ.get('HOST', '127.0.0.1')
+    print(f'http://127.0.0.1:{port}')
+    HTTPServer((host, port), Handler).serve_forever()
