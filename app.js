@@ -15,8 +15,8 @@ const DEFAULT_SORT = 'created_at_desc';
 const DEFAULT_TYPE = 'Link';
 
 const state = {
-  // OAuth sign-ins are session-scoped (sessionStorage); pasted PATs persist
-  // in localStorage as before. See docs/oauth-exploration.md.
+  // Both auth paths store via saveToken(): sessionStorage by default,
+  // localStorage when "Remember on this device" is checked.
   token: sessionStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY) || '',
   page: 1,
   sort: DEFAULT_SORT,
@@ -774,8 +774,7 @@ async function loadFeed({ reset }) {
     setStatus(friendlyError(err), 'error');
     if (err instanceof ApiError && err.status === 401) {
       state.token = '';
-      localStorage.removeItem(TOKEN_KEY);
-      sessionStorage.removeItem(TOKEN_KEY);
+      clearToken();
       showAuth(true);
     }
   } finally {
@@ -833,6 +832,11 @@ function saveToken(token, remember) {
     sessionStorage.setItem(TOKEN_KEY, token);
     localStorage.removeItem(TOKEN_KEY);
   }
+}
+
+function clearToken() {
+  localStorage.removeItem(TOKEN_KEY);
+  sessionStorage.removeItem(TOKEN_KEY);
 }
 
 function showAuth(show) {
@@ -932,8 +936,7 @@ el.oauthSignin.addEventListener('click', () => {
 document.getElementById('sign-out').addEventListener('click', () => {
   state.token = '';
   state.user = null;
-  localStorage.removeItem(TOKEN_KEY);
-  sessionStorage.removeItem(TOKEN_KEY);
+  clearToken();
   el.feed.innerHTML = '';
   el.loadmore.hidden = true;
   showAuth(true);
