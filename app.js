@@ -54,7 +54,6 @@ const el = {
   oauthSignin: document.getElementById('oauth-signin'),
   rememberToken: document.getElementById('remember-token'),
   rememberLabel: document.getElementById('remember-label'),
-  revokeNote: document.getElementById('auth-revoke-note'),
   status: document.getElementById('status'),
   feed: document.getElementById('feed'),
   loadmore: document.getElementById('loadmore'),
@@ -847,7 +846,6 @@ function showAuth(show) {
   // Toggle between connect and manage modes
   el.oauthConnect.hidden = hasToken || !oauthAvailable();
   el.rememberLabel.hidden = hasToken;
-  el.revokeNote.hidden = !hasToken;
   el.authActions.hidden = !hasToken;
   el.settingsToggle.classList.toggle('connected', hasToken);
   el.authClose.hidden = !hasToken;
