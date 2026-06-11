@@ -992,7 +992,6 @@ el.loadmore.addEventListener('click', () => loadFeed({ reset: false }));
 
   let lastY = window.scrollY;
   let ticking = false;
-  let hoverRevealed = false;
   const THRESHOLD = 10; // ignore micro-scrolls
   const HOVER_ZONE = 24; // px from the top edge that re-reveals the bar
 
@@ -1016,29 +1015,16 @@ el.loadmore.addEventListener('click', () => loadFeed({ reset: false }));
         el.topbar.classList.remove('nav-hidden');
       }
 
-      // Scrolling takes back ownership of the bar from any hover reveal
-      hoverRevealed = false;
       lastY = y;
       ticking = false;
     });
   }, { passive: true });
 
-  // Hovering the top edge reveals the hidden bar without scrolling; it hides
-  // again when the pointer leaves it (unless the page is back at the top).
+  // Hovering the top edge reveals the hidden bar without scrolling; it stays
+  // until the next scroll down hides it again.
   window.addEventListener('mousemove', (e) => {
-    if (e.clientY <= HOVER_ZONE && el.topbar.classList.contains('nav-hidden')) {
-      el.topbar.classList.remove('nav-hidden');
-      hoverRevealed = true;
-    }
+    if (e.clientY <= HOVER_ZONE) el.topbar.classList.remove('nav-hidden');
   }, { passive: true });
-
-  el.topbar.addEventListener('mouseleave', () => {
-    if (hoverRevealed && window.scrollY > 0) {
-      el.topbar.classList.add('nav-hidden');
-      el.filterDropdown.classList.remove('open');
-    }
-    hoverRevealed = false;
-  });
 })();
 
 start();
