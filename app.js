@@ -422,6 +422,28 @@ function filterRow(label, onRemove, isDomain, host) {
 }
 
 /* ---------- rendering ---------- */
+// Popovers are positioned with CSS anchor positioning. Browsers without it
+// drop popovers into the viewport center (top-layer UA default), so compute
+// the position from the trigger on open instead.
+const SUPPORTS_ANCHOR = CSS.supports('anchor-name: --a');
+function anchorFallback(btn, pop, dir) {
+  if (SUPPORTS_ANCHOR) return;
+  pop.addEventListener('toggle', (e) => {
+    if (e.newState !== 'open') return;
+    const r = btn.getBoundingClientRect();
+    pop.style.position = 'fixed';
+    pop.style.left = 'auto';
+    pop.style.right = `${Math.max(4, window.innerWidth - r.right)}px`;
+    if (dir === 'up') {
+      pop.style.top = 'auto';
+      pop.style.bottom = `${window.innerHeight - r.top + 4}px`;
+    } else {
+      pop.style.bottom = 'auto';
+      pop.style.top = `${r.bottom + 4}px`;
+    }
+  });
+}
+
 function renderItem(b) {
   const item = document.createElement('article');
   item.className = 'item';
@@ -553,35 +575,35 @@ function renderItem(b) {
 
     const actMenu = document.createElement('div');
     actMenu.className = 'item-actions-menu';
+    actMenu.id = `item-actions-menu-${b.id}`;
+    actMenu.popover = 'auto';
+    actMenu.style.setProperty('position-anchor', `--act-${b.id}`);
+    actBtn.style.setProperty('anchor-name', `--act-${b.id}`);
+    actBtn.setAttribute('popovertarget', actMenu.id);
+    anchorFallback(actBtn, actMenu, 'up');
     if (domain) {
       const dLabel = document.createElement('span');
       dLabel.className = 'actions-menu-label';
-      dLabel.textContent = 'Domain';
+      dLabel.textContent = 'Mute domain';
       actMenu.appendChild(dLabel);
       const dBtn = document.createElement('button');
       dBtn.type = 'button';
       dBtn.textContent = domainDisplay;
-      dBtn.addEventListener('click', () => { filterDomain(domain, domainDisplay); actMenu.classList.remove('open'); });
+      dBtn.addEventListener('click', () => { filterDomain(domain, domainDisplay); actMenu.hidePopover(); });
       actMenu.appendChild(dBtn);
     }
     if (slug) {
       const uLabel = document.createElement('span');
       uLabel.className = 'actions-menu-label';
-      uLabel.textContent = 'User';
+      uLabel.textContent = 'Mute user';
       actMenu.appendChild(uLabel);
       const uBtn = document.createElement('button');
       uBtn.type = 'button';
       uBtn.textContent = name;
-      uBtn.addEventListener('click', () => { filterUser(slug, name); actMenu.classList.remove('open'); });
+      uBtn.addEventListener('click', () => { filterUser(slug, name); actMenu.hidePopover(); });
       actMenu.appendChild(uBtn);
     }
     actions.appendChild(actMenu);
-
-    actBtn.addEventListener('click', (e) => {
-      e.preventDefault(); e.stopPropagation();
-      document.querySelectorAll('.item-actions-menu').forEach(m => { if (m !== actMenu) m.classList.remove('open'); });
-      actMenu.classList.toggle('open');
-    });
     authorLine.appendChild(actions);
   }
 
@@ -676,13 +698,13 @@ function addChannelFilterOption(item, slug, title) {
   if (!menu || menu.querySelector('[data-channel-btn]')) return;
   const label = document.createElement('span');
   label.className = 'actions-menu-label';
-  label.textContent = 'Channel';
+  label.textContent = 'Mute channel';
   menu.appendChild(label);
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.dataset.channelBtn = '1';
   btn.textContent = title;
-  btn.addEventListener('click', () => { filterChannel(slug, title); menu.classList.remove('open'); });
+  btn.addEventListener('click', () => { filterChannel(slug, title); menu.hidePopover(); });
   menu.appendChild(btn);
 }
 
@@ -979,25 +1001,15 @@ el.viewToggle.addEventListener('click', () => {
   setView(state.view === 'grid' ? 'list' : 'grid');
 });
 
-el.filterBtn.addEventListener('click', () => {
-  el.filterDropdown.classList.toggle('open');
-});
+// Open/close, outside-click, and Escape dismissal are native popover
+// behavior; only positioning needs the no-anchor-support fallback.
+anchorFallback(el.filterBtn, el.filterDropdown, 'down');
 
 el.filterToggle.addEventListener('click', () => {
   state.filters.enabled = !state.filters.enabled;
   saveFilters();
   applyFilters();
   renderFilterUI();
-});
-
-// close dropdowns when clicking outside
-document.addEventListener('click', (e) => {
-  if (!el.filterBtn.contains(e.target) && !el.filterDropdown.contains(e.target)) {
-    el.filterDropdown.classList.remove('open');
-  }
-  if (!e.target.closest('.item-actions-btn') && !e.target.closest('.item-actions-menu')) {
-    document.querySelectorAll('.item-actions-menu').forEach(m => { m.classList.remove('open'); });
-  }
 });
 
 el.refresh.addEventListener('click', () => loadFeed({ reset: true }));
@@ -1030,7 +1042,7 @@ el.loadmore.addEventListener('click', () => loadFeed({ reset: false }));
         // Scrolling down past threshold
         el.topbar.classList.add('nav-hidden');
         // Close any open filter dropdown when hiding nav
-        el.filterDropdown.classList.remove('open');
+        if (el.filterDropdown.matches(':popover-open')) el.filterDropdown.hidePopover();
       } else if (delta < -THRESHOLD) {
         // Scrolling up past threshold
         el.topbar.classList.remove('nav-hidden');

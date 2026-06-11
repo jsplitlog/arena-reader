@@ -622,32 +622,32 @@ code {
 }
 .item-actions-btn:active { scale: 0.96; }
 .item-actions-menu {
-  position: absolute;
-  bottom: 100%;
-  right: 0;
-  z-index: 20;
+  /* [popover]: reset UA top-layer defaults, anchor to the trigger button
+     (per-instance anchor-name/position-anchor pairs are set inline in JS) */
+  margin: 0;
+  padding: 0;
+  inset: auto;
+  bottom: calc(anchor(top) + 4px);
+  right: anchor(right);
   min-width: 160px;
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  margin-bottom: 4px;
   box-shadow: var(--shadow-elevated);
   overflow: hidden;
   font-size: 0.75rem;
   line-height: 1.3;
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(4px);
-  transition-property: opacity, visibility, transform;
-  transition-duration: 150ms;
-  transition-timing-function: ease-in;
 }
-.item-actions-menu.open {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0);
+.item-actions-menu:popover-open {
+  transition-property: opacity, transform;
   transition-duration: 200ms;
   transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+@starting-style {
+  .item-actions-menu:popover-open {
+    opacity: 0;
+    transform: translateY(4px);
+  }
 }
 .item-actions-menu button {
   display: block;
@@ -899,35 +899,35 @@ code {
 }
 
 /* ---- filter dropdown ---- */
-.filter-wrap { position: relative; }
+#filter-btn { anchor-name: --filter-anchor; }
 .filter-dropdown {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  z-index: 20;
+  /* [popover]: reset UA top-layer defaults, anchor below the filter button */
+  margin: 0;
+  padding: 0;
+  inset: auto;
+  position-anchor: --filter-anchor;
+  top: calc(anchor(bottom) + 4px);
+  right: anchor(right);
   width: 220px;
   max-height: 260px;
   overflow-y: auto;
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  margin-top: 4px;
   box-shadow: var(--shadow-elevated);
   font-size: 0.75rem;
   line-height: 1.3;
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(-4px);
-  transition-property: opacity, visibility, transform;
-  transition-duration: 150ms;
-  transition-timing-function: ease-in;
 }
-.filter-dropdown.open {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0);
+.filter-dropdown:popover-open {
+  transition-property: opacity, transform;
   transition-duration: 200ms;
   transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+@starting-style {
+  .filter-dropdown:popover-open {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
 }
 .filter-dropdown-head {
   display: flex;
