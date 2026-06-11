@@ -497,14 +497,6 @@ function renderItem(b) {
   const authorSpacer = document.createElement('span');
   authorSpacer.className = 'meta-spacer';
   authorLine.appendChild(authorSpacer);
-  const time = document.createElement('time');
-  time.dateTime = created || '';
-  time.textContent = relativeTime(created);
-  time.title = absoluteTime(created);
-  authorLine.appendChild(time);
-  const arenaLink = metaLink('✶✶', blockUrl(b));
-  arenaLink.title = 'View on Are.na';
-  authorLine.appendChild(arenaLink);
   item.appendChild(authorLine);
 
   // Meta bottom: channel …spacer… actions menu
@@ -519,6 +511,14 @@ function renderItem(b) {
   const mSpacer = document.createElement('span');
   mSpacer.className = 'meta-spacer';
   metaLine.appendChild(mSpacer);
+  const time = document.createElement('time');
+  time.dateTime = created || '';
+  time.textContent = relativeTime(created);
+  time.title = absoluteTime(created);
+  metaLine.appendChild(time);
+  const arenaLink = metaLink('✶✶', blockUrl(b));
+  arenaLink.title = 'View on Are.na';
+  metaLine.appendChild(arenaLink);
 
   if (domain || slug) {
     const actions = document.createElement('div');
@@ -561,7 +561,7 @@ function renderItem(b) {
       document.querySelectorAll('.item-actions-menu').forEach(m => { if (m !== actMenu) m.classList.remove('open'); });
       actMenu.classList.toggle('open');
     });
-    metaLine.appendChild(actions);
+    authorLine.appendChild(actions);
   }
 
   meta.appendChild(metaLine);
