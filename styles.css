@@ -693,12 +693,14 @@ code {
   /* Force line break between icons (order 0) and selects (order 1) */
   .topbar-inner::after { content: ''; order: 0; width: 100%; }
   /* Selects get their own single row below the icons: equal thirds that
-     never wrap. When a third gets too narrow for the widest selectable
-     label ("Attachments", 5.62em incl. safety margin), all three labels
-     scale down together: font-size = (row width − 2 gaps − 3 borders) /
-     (3 × (5.62em label + 2.125em horizontal padding)). The em padding
-     and arrow gutter shrink with the font, so the fit holds at every
-     width below the breakpoint. */
+     never wrap. When a third gets too narrow for the widest currently
+     selected label, all three labels scale down together:
+     font-size = (row width − 2 gaps − 3 borders) /
+     (3 × (label width in em + 2.125em horizontal padding)).
+     The em padding and arrow gutter shrink with the font, so the fit
+     holds at every width below the breakpoint. fitSelectLabels() in
+     app.js measures the selected labels and sets --select-fit-divisor;
+     the fallback covers the widest selectable label ("Attachments"). */
   .select-row {
     display: flex;
     order: 1;
@@ -725,8 +727,8 @@ code {
   }
   .controls select {
     /* See .select-row above: shrink all three labels together once an
-       equal-width third can't fit the widest selectable label */
-    font-size: min(0.8125rem, calc((100cqw - 14px) / 23.25));
+       equal-width third can't fit the widest selected label */
+    font-size: min(0.8125rem, calc((100cqw - 14px) / var(--select-fit-divisor, 23.25)));
     padding-left: 0.625em;
     padding-right: 1.5em;
     background-position: right 0.5em center;

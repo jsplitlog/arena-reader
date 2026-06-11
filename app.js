@@ -80,7 +80,24 @@ const el = {
   container: document.querySelector('.container'),
   topbar: document.querySelector('.topbar'),
   topbarInner: document.querySelector('.topbar-inner'),
+  selectRow: document.querySelector('.select-row'),
 };
+
+// On mobile the three selects are equal-width thirds whose label size
+// scales to fit (see .select-row in styles.css). The CSS divisor encodes
+// the widest label that must fit; recompute it from the currently
+// *selected* options so e.g. showing "Links" doesn't reserve room for
+// "Attachments". The 1.02 factor absorbs font rendering differences
+// between the canvas measurement and the real select.
+const labelMeasureCtx = document.createElement('canvas').getContext('2d');
+function fitSelectLabels() {
+  const { fontWeight, fontFamily } = getComputedStyle(el.scope);
+  labelMeasureCtx.font = `${fontWeight} 100px ${fontFamily}`;
+  const widest = Math.max(...[el.scope, el.sort, el.type].map(
+    (s) => labelMeasureCtx.measureText(s.options[s.selectedIndex]?.text || '').width / 100
+  ));
+  el.selectRow.style.setProperty('--select-fit-divisor', (3 * (widest * 1.02 + 2.125)).toFixed(2));
+}
 
 /* ---------- API ---------- */
 function searchUrl(page) {
@@ -898,6 +915,7 @@ async function start() {
   el.scope.value = state.scope;
   el.sort.value = state.sort;
   el.type.value = state.type;
+  fitSelectLabels();
   setView(state.view);
 
   // Load filters from file (source of truth), fall back to localStorage
@@ -937,6 +955,8 @@ el.scope.addEventListener('change', () => {
 });
 el.sort.addEventListener('change', () => { state.sort = el.sort.value; loadFeed({ reset: true }); });
 el.type.addEventListener('change', () => { state.type = el.type.value; loadFeed({ reset: true }); });
+// change events from all three selects bubble through their row wrapper
+el.selectRow.addEventListener('change', fitSelectLabels);
 
 // Clicking the title returns to the default landing filter: My Network · Created · Links
 function goToDefaultFeed() {
@@ -946,6 +966,7 @@ function goToDefaultFeed() {
   el.scope.value = state.scope;
   el.sort.value = state.sort;
   el.type.value = state.type;
+  fitSelectLabels();
   window.scrollTo({ top: 0 });
   if (state.token) loadFeed({ reset: true });
 }
