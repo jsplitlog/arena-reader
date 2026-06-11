@@ -26,7 +26,7 @@
   <!-- Favicon -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect width='18' height='18' x='3' y='3' rx='2'/><path d='M7 7v10'/><path d='M11 7v10'/><path d='m15 7 2 10'/></svg>" />
 
-  <link rel="stylesheet" href="styles.css?v=45" />
+  <link rel="stylesheet" href="styles.css?v=46" />
 </head>
 <body>
   <header class="topbar">
@@ -34,24 +34,26 @@
       <h1 id="app-title" role="button" tabindex="0" title="Home — My Network · Created · Links">✶✶ Reader</h1>
       <div class="controls" id="controls" hidden>
         <span class="spacer"></span>
-        <select id="scope">
-          <option value="network">My Network</option>
-          <option value="me">My Are.na</option>
-          <option value="all">All Are.na</option>
-        </select>
-        <select id="sort">
-          <option value="created_at_desc">Created</option>
-          <option value="updated_at_desc">Updated</option>
-          <option value="random">Random</option>
-        </select>
-        <select id="type">
-          <option value="Link">Links</option>
-          <option value="Image">Images</option>
-          <option value="Embed">Embeds</option>
-          <option value="Attachment">Attachments</option>
-          <option value="Text">Text</option>
-          <option value="Block">All</option>
-        </select>
+        <div class="select-row">
+          <select id="scope">
+            <option value="network">My Network</option>
+            <option value="me">My Are.na</option>
+            <option value="all">All Are.na</option>
+          </select>
+          <select id="sort">
+            <option value="created_at_desc">Created</option>
+            <option value="updated_at_desc">Updated</option>
+            <option value="random">Random</option>
+          </select>
+          <select id="type">
+            <option value="Link">Links</option>
+            <option value="Image">Images</option>
+            <option value="Embed">Embeds</option>
+            <option value="Attachment">Attachments</option>
+            <option value="Text">Text</option>
+            <option value="Block">All</option>
+          </select>
+        </div>
         <span class="spacer"></span>
         <button id="settings-toggle" type="button" class="icon-btn" title="Token settings" aria-label="Token settings">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"/><circle cx="12" cy="12" r="3"/></svg>

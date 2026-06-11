@@ -131,7 +131,10 @@ code {
   min-width: 0;
 }
 .controls[hidden] { display: none; }
-.controls > select,
+/* Grouping wrapper for the three selects; transparent to layout except on
+   mobile, where it becomes its own nowrap row (see media query below) */
+.select-row { display: contents; }
+.controls select,
 .controls > button,
 .controls > a {
   font: inherit;
@@ -147,7 +150,7 @@ code {
   transition-duration: 150ms;
   transition-timing-function: ease-out;
 }
-.controls > select {
+.controls select {
   appearance: none;
   -webkit-appearance: none;
   min-width: 0;
@@ -157,13 +160,13 @@ code {
   background-position: right 0.65625em center;
   background-size: 0.5em;
 }
-.controls > select:hover,
+.controls select:hover,
 .controls > button:hover,
 .controls > a:hover {
   border-color: var(--fg-muted);
 }
 .controls > button:active,
-.controls > select:active {
+.controls select:active {
   scale: 0.96;
 }
 .controls .ghost {
@@ -689,23 +692,38 @@ code {
   .controls[hidden] { display: none; }
   /* Force line break between icons (order 0) and selects (order 1) */
   .topbar-inner::after { content: ''; order: 0; width: 100%; }
-  /* Selects go to second row, expand to fill */
-  .controls select { order: 1; flex: 1; min-width: 0; }
+  /* Selects get their own nowrap row below the icons. Each sizes from its
+     label width so the longest ("My Network") isn't clipped, then they
+     share the leftover space; on rows too narrow to fit every label they
+     shrink proportionally instead of wrapping. */
+  .select-row {
+    display: flex;
+    order: 1;
+    flex: 1 1 100%;
+    min-width: 0;
+    gap: 0.25em;
+  }
+  .select-row select { flex: 1 1 auto; min-width: 0; }
   /* Icons stay on title row; push icon cluster to the right */
   #settings-toggle { margin-left: auto; }
   .controls .spacer { display: none; }
   .topbar-inner { gap: 0.34375em; }
 
   /* Larger touch targets on mobile */
-  .controls > select,
+  .controls select,
   .controls > button,
   .controls > a {
     font-size: 0.8125rem;
     padding: 0.5em 0.75em;
   }
-  .controls > select {
-    padding-right: 2em;
-    background-position: right 0.75em center;
+  .controls select {
+    /* Size from the selected option, not the widest one in the list, so
+       e.g. "Attachments" doesn't reserve width while "Links" is shown
+       (older browsers fall back to widest-option sizing) */
+    field-sizing: content;
+    padding-left: 0.625em;
+    padding-right: 1.5em;
+    background-position: right 0.5em center;
     background-size: 0.5625em;
   }
 }
@@ -980,7 +998,7 @@ code {
     width: 36px;
     height: 36px;
   }
-  .controls > select {
+  .controls select {
     height: 36px;
   }
 }
@@ -990,10 +1008,11 @@ code {
     width: 30px;
     height: 30px;
   }
-  .controls > select {
+  .controls select {
     height: 30px;
   }
-  .topbar-inner {
+  .topbar-inner,
+  .select-row {
     gap: 0.1875em;
   }
 }
