@@ -11,7 +11,8 @@ const PER_PAGE = 50;
 // Popular = blocks created in this window, ranked by all-time connection
 // count. One opinionated query — the v3 search API can't rank by *recent*
 // connection activity, and a user-facing window picker only obscured that
-// (see issue #22).
+// (see issue #22). The sort-dropdown option is currently removed pending a
+// rework; setting state.sort = 'popular' still works end to end.
 const POPULAR_WINDOW_DAYS = 30;
 
 // Default landing filter: My Network · Created · Links
