@@ -1,2 +1,5 @@
 filters.json
 .claude/
+.agents/
+skills-lock.json
+docs/
