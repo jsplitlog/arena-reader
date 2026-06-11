@@ -60,6 +60,7 @@ const el = {
   loadmore: document.getElementById('loadmore'),
   hotlinksWindow: document.getElementById('hotlinks-window'),
   authMsg: document.getElementById('auth-msg'),
+  authTagline: document.getElementById('auth-tagline'),
   authOverlay: document.getElementById('auth-overlay'),
   authClose: document.getElementById('auth-close'),
   authUser: document.getElementById('auth-user'),
@@ -869,13 +870,20 @@ function showAuth(show) {
     el.authUser.hidden = true;
   }
 
+  const checkIcon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>';
   if (hasToken) {
-    el.authMsg.innerHTML = 'Connected to Are.na <span class="auth-check">✓</span><br><span class="auth-note">Token stored in your browser, only sent to api.are.na.</span>';
+    el.authTagline.innerHTML = checkIcon + ' Your Are.na account is connected';
+    el.authMsg.hidden = false;
+    el.authMsg.innerHTML = 'Your token stays in this browser, sent only to <code>api.are.na</code>.';
   } else if (oauthAvailable()) {
-    el.authMsg.innerHTML = 'Not connected <span class="auth-x">✗</span><br>Sign in with your Are.na account to load your feed.<br><span class="auth-note">Your token is stored in this browser only, sent only to api.are.na.</span>';
+    el.authTagline.textContent = 'An RSS style reader for Are.na';
+    el.authMsg.hidden = true;
+    el.authMsg.innerHTML = '';
   } else {
+    el.authTagline.textContent = 'An RSS style reader for Are.na';
     // No client id configured, or an insecure context (plain http on a
     // non-loopback host) — WebCrypto and OAuth both need https/127.0.0.1.
+    el.authMsg.hidden = false;
     el.authMsg.innerHTML = 'Not connected <span class="auth-x">✗</span><br>Sign-in needs a secure context — open this app over <code>https://</code> (or <code>http://127.0.0.1</code> for local dev).';
   }
   if (show && !hasToken && !el.oauthConnect.hidden) el.oauthSignin.focus();
