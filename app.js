@@ -5,9 +5,14 @@
 const API_BASE = 'https://api.are.na/v3';
 const TOKEN_KEY = 'arena_link_reader_token';
 const VIEW_KEY = 'arena_link_reader_view';
-const HOTLINKS_KEY = 'arena_link_reader_hotlinks';
 const FILTERS_KEY = 'arena_link_reader_filters';
 const PER_PAGE = 50;
+
+// Popular = blocks created in this window, ranked by all-time connection
+// count. One opinionated query — the v3 search API can't rank by *recent*
+// connection activity, and a user-facing window picker only obscured that
+// (see issue #22).
+const POPULAR_WINDOW_DAYS = 30;
 
 // Default landing filter: My Network · Created · Links
 const DEFAULT_SCOPE = 'network';
@@ -23,10 +28,6 @@ const state = {
   type: DEFAULT_TYPE,
   scope: DEFAULT_SCOPE,
   view: localStorage.getItem(VIEW_KEY) || 'list',
-  hotlinks: Object.assign(
-    { timeWindow: 30, minConnections: 2 },
-    JSON.parse(localStorage.getItem(HOTLINKS_KEY) || '{}'),
-  ),
   filters: Object.assign(
     { enabled: true, domains: {}, users: {}, channels: {} },
     JSON.parse(localStorage.getItem(FILTERS_KEY) || '{}'),
@@ -39,6 +40,9 @@ const state = {
 // Ensure filter dimensions exist for legacy localStorage
 if (!state.filters.users) state.filters.users = {};
 if (!state.filters.channels) state.filters.channels = {};
+
+// Drop the retired Popular time-window prefs from older versions
+localStorage.removeItem('arena_link_reader_hotlinks');
 
 /* ---------- element refs ---------- */
 const el = {
@@ -57,7 +61,6 @@ const el = {
   status: document.getElementById('status'),
   feed: document.getElementById('feed'),
   loadmore: document.getElementById('loadmore'),
-  hotlinksWindow: document.getElementById('hotlinks-window'),
   authMsg: document.getElementById('auth-msg'),
   authTagline: document.getElementById('auth-tagline'),
   authOverlay: document.getElementById('auth-overlay'),
@@ -88,8 +91,8 @@ function searchUrl(page) {
     per: String(PER_PAGE),
     page: String(page),
   });
-  if (isPopular && state.hotlinks.timeWindow > 0) {
-    const since = new Date(Date.now() - state.hotlinks.timeWindow * 86400000).toISOString();
+  if (isPopular) {
+    const since = new Date(Date.now() - POPULAR_WINDOW_DAYS * 86400000).toISOString();
     params.set('after', since);
   }
   // scope mapping — API accepts: all, my, following
@@ -583,7 +586,7 @@ function dot() {
   return s;
 }
 
-/* ---------- hot links ---------- */
+/* ---------- channel + connection enrichment ---------- */
 // One request per block (channel + count come from the same connections
 // response) — the previous two-fetch version doubled the request volume and
 // brushed the free tier's documented 120 req/min limit.
@@ -663,14 +666,6 @@ function addChannelFilterOption(item, slug, title) {
   btn.textContent = title;
   btn.addEventListener('click', () => { filterChannel(slug, title); menu.classList.remove('open'); });
   menu.appendChild(btn);
-}
-
-function saveHotlinksPrefs() {
-  localStorage.setItem(HOTLINKS_KEY, JSON.stringify(state.hotlinks));
-}
-
-function updateControlsUI() {
-  el.hotlinksWindow.hidden = state.sort !== 'popular';
 }
 
 /* ---------- status helpers ---------- */
@@ -871,8 +866,8 @@ function showAuth(show) {
   const checkIcon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>';
   if (hasToken) {
     el.authTagline.innerHTML = checkIcon + ' Your Are.na account is connected';
-    el.authMsg.hidden = false;
-    el.authMsg.innerHTML = 'Your token stays in this browser, sent only to <code>api.are.na</code>.';
+    el.authMsg.hidden = true;
+    el.authMsg.innerHTML = '';
   } else if (oauthAvailable()) {
     el.authTagline.textContent = 'An RSS style reader for Are.na';
     el.authMsg.hidden = true;
@@ -903,8 +898,6 @@ async function start() {
   el.sort.value = state.sort;
   el.type.value = state.type;
   setView(state.view);
-  el.hotlinksWindow.value = String(state.hotlinks.timeWindow);
-  updateControlsUI();
 
   // Load filters from file (source of truth), fall back to localStorage
   await loadFiltersFromFile();
@@ -941,7 +934,7 @@ el.scope.addEventListener('change', () => {
   state.scope = el.scope.value;
   loadFeed({ reset: true });
 });
-el.sort.addEventListener('change', () => { state.sort = el.sort.value; updateControlsUI(); loadFeed({ reset: true }); });
+el.sort.addEventListener('change', () => { state.sort = el.sort.value; loadFeed({ reset: true }); });
 el.type.addEventListener('change', () => { state.type = el.type.value; loadFeed({ reset: true }); });
 
 // Clicking the title returns to the default landing filter: My Network · Created · Links
@@ -952,18 +945,12 @@ function goToDefaultFeed() {
   el.scope.value = state.scope;
   el.sort.value = state.sort;
   el.type.value = state.type;
-  updateControlsUI();
   window.scrollTo({ top: 0 });
   if (state.token) loadFeed({ reset: true });
 }
 el.title.addEventListener('click', goToDefaultFeed);
 el.title.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goToDefaultFeed(); }
-});
-
-el.hotlinksWindow.addEventListener('change', () => {
-  state.hotlinks.timeWindow = Number(el.hotlinksWindow.value);
-  saveHotlinksPrefs(); loadFeed({ reset: true });
 });
 
 el.viewToggle.addEventListener('click', () => {

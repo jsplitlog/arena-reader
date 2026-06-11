@@ -405,6 +405,8 @@ code {
   justify-content: space-between;
   gap: 16px;
 }
+/* Signed in: remember is hidden, so View source centers alone */
+.auth-footer:has(.remember-label[hidden]) { justify-content: center; }
 .auth-source {
   display: inline-flex;
   align-items: center;
