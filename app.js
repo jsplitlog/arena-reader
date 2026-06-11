@@ -586,7 +586,7 @@ function dot() {
   return s;
 }
 
-/* ---------- hot links ---------- */
+/* ---------- channel + connection enrichment ---------- */
 // One request per block (channel + count come from the same connections
 // response) — the previous two-fetch version doubled the request volume and
 // brushed the free tier's documented 120 req/min limit.
@@ -666,14 +666,6 @@ function addChannelFilterOption(item, slug, title) {
   btn.textContent = title;
   btn.addEventListener('click', () => { filterChannel(slug, title); menu.classList.remove('open'); });
   menu.appendChild(btn);
-}
-
-function saveHotlinksPrefs() {
-  localStorage.setItem(HOTLINKS_KEY, JSON.stringify(state.hotlinks));
-}
-
-function updateControlsUI() {
-  el.hotlinksWindow.hidden = state.sort !== 'popular';
 }
 
 /* ---------- status helpers ---------- */
@@ -906,8 +898,6 @@ async function start() {
   el.sort.value = state.sort;
   el.type.value = state.type;
   setView(state.view);
-  el.hotlinksWindow.value = String(state.hotlinks.timeWindow);
-  updateControlsUI();
 
   // Load filters from file (source of truth), fall back to localStorage
   await loadFiltersFromFile();
@@ -944,7 +934,7 @@ el.scope.addEventListener('change', () => {
   state.scope = el.scope.value;
   loadFeed({ reset: true });
 });
-el.sort.addEventListener('change', () => { state.sort = el.sort.value; updateControlsUI(); loadFeed({ reset: true }); });
+el.sort.addEventListener('change', () => { state.sort = el.sort.value; loadFeed({ reset: true }); });
 el.type.addEventListener('change', () => { state.type = el.type.value; loadFeed({ reset: true }); });
 
 // Clicking the title returns to the default landing filter: My Network · Created · Links
@@ -955,18 +945,12 @@ function goToDefaultFeed() {
   el.scope.value = state.scope;
   el.sort.value = state.sort;
   el.type.value = state.type;
-  updateControlsUI();
   window.scrollTo({ top: 0 });
   if (state.token) loadFeed({ reset: true });
 }
 el.title.addEventListener('click', goToDefaultFeed);
 el.title.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goToDefaultFeed(); }
-});
-
-el.hotlinksWindow.addEventListener('change', () => {
-  state.hotlinks.timeWindow = Number(el.hotlinksWindow.value);
-  saveHotlinksPrefs(); loadFeed({ reset: true });
 });
 
 el.viewToggle.addEventListener('click', () => {
