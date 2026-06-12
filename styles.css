@@ -783,7 +783,8 @@ code {
   width: 100%;
   height: auto;
   aspect-ratio: 1 / 1;
-  object-fit: cover;
+  object-fit: contain;
+  background-color: var(--surface);
   border: 0;
   border-bottom: 1px solid var(--border);
   outline: none;
