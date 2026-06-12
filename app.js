@@ -349,7 +349,6 @@ function renderFilterUI() {
   el.filterCount.textContent = count;
   el.filterCount.classList.toggle('disabled', !state.filters.enabled);
   el.filterToggle.textContent = state.filters.enabled ? 'On' : 'Off';
-  el.filterDropdown.querySelector('.filter-dropdown-head').hidden = count === 0;
 
   el.filterList.innerHTML = '';
 
@@ -357,7 +356,7 @@ function renderFilterUI() {
   if (count === 0) {
     const empty = document.createElement('div');
     empty.className = 'filter-empty';
-    empty.textContent = 'Filter users, sources, or channels from the menu on any block.';
+    empty.textContent = 'No filters created.\n\nFilters temporarily mute domains, users, and channels.';
     el.filterList.appendChild(empty);
   }
 
@@ -414,10 +413,41 @@ function filterRow(label, onRemove, isDomain, host) {
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className = 'filter-remove';
-  btn.textContent = 'Restore';
+  btn.innerHTML = X_ICON;
+  btn.setAttribute('aria-label', `Remove filter ${label}`);
+  btn.title = 'Remove filter';
   btn.addEventListener('click', onRemove);
   row.appendChild(btn);
 
+  return row;
+}
+
+const PLUS_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>';
+const X_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
+
+// A label + value row in the per-item actions menu. The trailing icon
+// button adds the filter (+) or removes it (x) depending on current state.
+function actionsMenuRow(menu, sectionLabel, value, isFiltered, onAdd, onRemove) {
+  const label = document.createElement('span');
+  label.className = 'actions-menu-label';
+  label.textContent = sectionLabel;
+  menu.appendChild(label);
+  const row = document.createElement('div');
+  row.className = 'actions-menu-row';
+  const span = document.createElement('span');
+  span.textContent = value;
+  row.appendChild(span);
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.innerHTML = isFiltered() ? X_ICON : PLUS_ICON;
+  btn.setAttribute('aria-label', `${isFiltered() ? 'Unmute' : 'Mute'} ${value}`);
+  btn.title = isFiltered() ? 'Unmute' : 'Mute';
+  btn.addEventListener('click', () => {
+    if (isFiltered()) onRemove(); else onAdd();
+    menu.hidePopover();
+  });
+  row.appendChild(btn);
+  menu.appendChild(row);
   return row;
 }
 
@@ -582,26 +612,16 @@ function renderItem(b) {
     actBtn.setAttribute('popovertarget', actMenu.id);
     anchorFallback(actBtn, actMenu, 'up');
     if (domain) {
-      const dLabel = document.createElement('span');
-      dLabel.className = 'actions-menu-label';
-      dLabel.textContent = 'Mute domain';
-      actMenu.appendChild(dLabel);
-      const dBtn = document.createElement('button');
-      dBtn.type = 'button';
-      dBtn.textContent = domainDisplay;
-      dBtn.addEventListener('click', () => { filterDomain(domain, domainDisplay); actMenu.hidePopover(); });
-      actMenu.appendChild(dBtn);
+      actionsMenuRow(actMenu, 'Domain', domainDisplay,
+        () => state.filters.domains[domain] !== undefined,
+        () => filterDomain(domain, domainDisplay),
+        () => unfilterDomain(domain));
     }
     if (slug) {
-      const uLabel = document.createElement('span');
-      uLabel.className = 'actions-menu-label';
-      uLabel.textContent = 'Mute user';
-      actMenu.appendChild(uLabel);
-      const uBtn = document.createElement('button');
-      uBtn.type = 'button';
-      uBtn.textContent = name;
-      uBtn.addEventListener('click', () => { filterUser(slug, name); actMenu.hidePopover(); });
-      actMenu.appendChild(uBtn);
+      actionsMenuRow(actMenu, 'User', name,
+        () => state.filters.users[slug] !== undefined,
+        () => filterUser(slug, name),
+        () => unfilterUser(slug));
     }
     actions.appendChild(actMenu);
     authorLine.appendChild(actions);
@@ -696,16 +716,11 @@ async function enrichChannels() {
 function addChannelFilterOption(item, slug, title) {
   const menu = item.querySelector('.item-actions-menu');
   if (!menu || menu.querySelector('[data-channel-btn]')) return;
-  const label = document.createElement('span');
-  label.className = 'actions-menu-label';
-  label.textContent = 'Mute channel';
-  menu.appendChild(label);
-  const btn = document.createElement('button');
-  btn.type = 'button';
-  btn.dataset.channelBtn = '1';
-  btn.textContent = title;
-  btn.addEventListener('click', () => { filterChannel(slug, title); menu.hidePopover(); });
-  menu.appendChild(btn);
+  const row = actionsMenuRow(menu, 'Channel', title,
+    () => state.filters.channels[slug] !== undefined,
+    () => filterChannel(slug, title),
+    () => unfilterChannel(slug));
+  row.querySelector('button').dataset.channelBtn = '1';
 }
 
 /* ---------- status helpers ---------- */
