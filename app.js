@@ -70,7 +70,7 @@ const el = {
   authAvatar: document.getElementById('auth-avatar'),
   authUsername: document.getElementById('auth-username'),
   authActions: document.getElementById('auth-actions'),
-  authMemberSince: document.getElementById('auth-member-since'),
+  manageApps: document.getElementById('manage-apps'),
   viewToggle: document.getElementById('view-toggle'),
   filterBtn: document.getElementById('filter-btn'),
   filterCount: document.getElementById('filter-count'),
@@ -871,6 +871,7 @@ function showAuth(show) {
   // Toggle between connect and manage modes
   el.oauthConnect.hidden = hasToken || !oauthAvailable();
   el.rememberLabel.hidden = hasToken;
+  el.manageApps.hidden = !hasToken;
   el.authActions.hidden = !hasToken;
   el.settingsToggle.classList.toggle('connected', hasToken);
   el.authClose.hidden = !hasToken;
@@ -884,10 +885,6 @@ function showAuth(show) {
       el.authAvatar.style.display = '';
     } else {
       el.authAvatar.style.display = 'none';
-    }
-    if (state.user.createdAt) {
-      const year = new Date(state.user.createdAt).getFullYear();
-      el.authMemberSince.textContent = 'Member since ' + year;
     }
   } else {
     el.authUser.hidden = true;
