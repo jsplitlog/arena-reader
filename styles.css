@@ -282,14 +282,8 @@ code {
   gap: 8px;
 }
 .auth-user[hidden] { display: none; }
-.auth-avatar {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  object-fit: cover;
-  background: var(--surface);
-  border: 1px solid var(--border);
-}
+/* Same .avatar component as feed attribution; img/fallback swap via hidden */
+.auth-user .avatar[hidden] { display: none; }
 .auth-username {
   font-size: 0.8rem;
   color: var(--fg-secondary);

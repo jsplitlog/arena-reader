@@ -68,6 +68,7 @@ const el = {
   authClose: document.getElementById('auth-close'),
   authUser: document.getElementById('auth-user'),
   authAvatar: document.getElementById('auth-avatar'),
+  authAvatarFallback: document.getElementById('auth-avatar-fallback'),
   authUsername: document.getElementById('auth-username'),
   authActions: document.getElementById('auth-actions'),
   manageApps: document.getElementById('manage-apps'),
@@ -733,24 +734,24 @@ async function fetchMe() {
       name: userName(u),
       slug: userSlug(u),
       avatar: avatarUrl(u),
-      createdAt: u.created_at || '',
     };
     // Update modal if it's already showing
     if (el.auth.classList.contains('open')) showAuth(true);
     // Also update if closed — so next open reflects user
     el.authUser.hidden = false;
-    el.authUsername.textContent = state.user.name;
-    if (state.user.avatar) {
-      el.authAvatar.src = state.user.avatar;
-      el.authAvatar.style.display = '';
-    } else {
-      el.authAvatar.style.display = 'none';
-    }
-    if (state.user.createdAt) {
-      const year = new Date(state.user.createdAt).getFullYear();
-      el.authMemberSince.textContent = 'Member since ' + year;
-    }
+    renderAuthUser();
   } catch (_) {}
+}
+
+// Account preview uses the same avatar component as feed attribution:
+// the user's image when available, otherwise their initial as fallback.
+function renderAuthUser() {
+  el.authUsername.textContent = state.user.name;
+  const avatar = state.user.avatar;
+  el.authAvatar.hidden = !avatar;
+  el.authAvatarFallback.hidden = !!avatar;
+  if (avatar) el.authAvatar.src = avatar;
+  else el.authAvatarFallback.textContent = (state.user.name || '?').charAt(0).toUpperCase();
 }
 
 /* ---------- feed loading ---------- */
@@ -879,13 +880,7 @@ function showAuth(show) {
   // User info
   if (hasToken && state.user) {
     el.authUser.hidden = false;
-    el.authUsername.textContent = state.user.name;
-    if (state.user.avatar) {
-      el.authAvatar.src = state.user.avatar;
-      el.authAvatar.style.display = '';
-    } else {
-      el.authAvatar.style.display = 'none';
-    }
+    renderAuthUser();
   } else {
     el.authUser.hidden = true;
   }
