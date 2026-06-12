@@ -627,8 +627,19 @@ code {
   font-size: 0.75rem;
   line-height: 1.3;
 }
+/* Exit: animate opacity/transform, holding display/overlay discrete so the
+   popover stays rendered (and in the top layer) until the fade finishes. */
+.item-actions-menu {
+  transition-property: opacity, transform, overlay, display;
+  transition-duration: 150ms;
+  transition-timing-function: ease-in;
+  transition-behavior: allow-discrete;
+}
+.item-actions-menu:not(:popover-open) {
+  opacity: 0;
+  transform: translateY(4px);
+}
 .item-actions-menu:popover-open {
-  transition-property: opacity, transform;
   transition-duration: 200ms;
   transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
 }
@@ -931,8 +942,19 @@ code {
   font-size: 0.75rem;
   line-height: 1.3;
 }
+/* Exit: see .item-actions-menu — allow-discrete keeps the closing popover
+   visible through the fade. */
+.filter-dropdown {
+  transition-property: opacity, transform, overlay, display;
+  transition-duration: 150ms;
+  transition-timing-function: ease-in;
+  transition-behavior: allow-discrete;
+}
+.filter-dropdown:not(:popover-open) {
+  opacity: 0;
+  transform: translateY(-4px);
+}
 .filter-dropdown:popover-open {
-  transition-property: opacity, transform;
   transition-duration: 200ms;
   transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
 }
