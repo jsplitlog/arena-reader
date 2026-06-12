@@ -87,14 +87,12 @@
     <button id="auth-close" type="button" class="auth-close" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
     <div class="auth-brand">
       <strong>✶✶ Reader</strong>
-      <span id="auth-tagline">An RSS style reader for Are.na</span>
-    </div>
-    <div id="auth-user" class="auth-user" hidden>
-      <img id="auth-avatar" class="auth-avatar" alt="" />
-      <div>
-        <strong id="auth-username"></strong>
-        <span id="auth-member-since" class="auth-member-since"></span>
+      <div id="auth-user" class="auth-user" hidden>
+        <img id="auth-avatar" class="avatar" alt="" hidden />
+        <span id="auth-avatar-fallback" class="avatar avatar-fallback" hidden></span>
+        <span id="auth-username" class="auth-username"></span>
       </div>
+      <span id="auth-tagline">An RSS style reader for Are.na</span>
     </div>
     <div id="oauth-connect" class="oauth-connect" hidden>
       <button id="oauth-signin" type="button" class="auth-btn oauth-primary">Sign in with Are.na ✶✶</button>

@@ -68,9 +68,10 @@ const el = {
   authClose: document.getElementById('auth-close'),
   authUser: document.getElementById('auth-user'),
   authAvatar: document.getElementById('auth-avatar'),
+  authAvatarFallback: document.getElementById('auth-avatar-fallback'),
   authUsername: document.getElementById('auth-username'),
   authActions: document.getElementById('auth-actions'),
-  authMemberSince: document.getElementById('auth-member-since'),
+  manageApps: document.getElementById('manage-apps'),
   viewToggle: document.getElementById('view-toggle'),
   filterBtn: document.getElementById('filter-btn'),
   filterCount: document.getElementById('filter-count'),
@@ -650,9 +651,21 @@ function dot() {
 // One request per block (channel + count come from the same connections
 // response) — the previous two-fetch version doubled the request volume and
 // brushed the free tier's documented 120 req/min limit.
+//
+// Attribution shows the first channel the block was connected to (issue #31).
+// A block only comes into existence by being connected to a channel, so the
+// oldest connection is the adding user's first channel by construction.
+// The v3 endpoint returns plain Channel objects ordered by *connection*
+// creation time (`sort` accepts exactly created_at_desc — the default — and
+// created_at_asc; anything else is a 400). The items carry no connector and
+// no connection timestamp — their created_at is the channel's own creation
+// date — so the API's ascending order is the only usable signal and must not
+// be re-sorted client-side. When the original connection was deleted or is
+// in a private channel, this degrades to the oldest connection still visible
+// to the viewer.
 async function fetchConnectionInfo(blockId) {
   try {
-    const res = await fetch(`${API_BASE}/blocks/${blockId}/connections?per=1`, {
+    const res = await fetch(`${API_BASE}/blocks/${blockId}/connections?per=1&sort=created_at_asc`, {
       headers: { Authorization: `Bearer ${state.token}`, Accept: 'application/json' },
     });
     if (!res.ok) return null;
@@ -660,7 +673,7 @@ async function fetchConnectionInfo(blockId) {
     const meta = data.meta || {};
     const first = Array.isArray(data.data) && data.data[0];
     return {
-      channel: first ? { title: first.title, slug: first.slug, userSlug: (first.user && first.user.slug) || '' } : null,
+      channel: first ? { title: first.title, slug: first.slug, userSlug: (first.owner && first.owner.slug) || '' } : null,
       count: meta.total_count ?? meta.total ?? (Array.isArray(data.data) ? data.data.length : 0),
     };
   } catch (_) { return null; }
@@ -673,6 +686,7 @@ async function enrichChannels() {
   await Promise.all(work.map(async (span) => {
     const id = span.getAttribute('data-block-id');
     span.dataset.done = '1';
+    const item = span.closest('.item');
     const info = await fetchConnectionInfo(id);
     if (!info) return;
 
@@ -700,7 +714,6 @@ async function enrichChannels() {
 
     // The channel resolves after the item renders, so tag the item now,
     // expose a "Filter [channel]" option, and re-evaluate filtering.
-    const item = span.closest('.item');
     if (item && ch.slug) {
       item.setAttribute('data-channel', ch.slug);
       addChannelFilterOption(item, ch.slug, ch.title || ch.slug);
@@ -758,24 +771,24 @@ async function fetchMe() {
       name: userName(u),
       slug: userSlug(u),
       avatar: avatarUrl(u),
-      createdAt: u.created_at || '',
     };
     // Update modal if it's already showing
     if (el.auth.classList.contains('open')) showAuth(true);
     // Also update if closed — so next open reflects user
     el.authUser.hidden = false;
-    el.authUsername.textContent = state.user.name;
-    if (state.user.avatar) {
-      el.authAvatar.src = state.user.avatar;
-      el.authAvatar.style.display = '';
-    } else {
-      el.authAvatar.style.display = 'none';
-    }
-    if (state.user.createdAt) {
-      const year = new Date(state.user.createdAt).getFullYear();
-      el.authMemberSince.textContent = 'Member since ' + year;
-    }
+    renderAuthUser();
   } catch (_) {}
+}
+
+// Account preview uses the same avatar component as feed attribution:
+// the user's image when available, otherwise their initial as fallback.
+function renderAuthUser() {
+  el.authUsername.textContent = state.user.name;
+  const avatar = state.user.avatar;
+  el.authAvatar.hidden = !avatar;
+  el.authAvatarFallback.hidden = !!avatar;
+  if (avatar) el.authAvatar.src = avatar;
+  else el.authAvatarFallback.textContent = (state.user.name || '?').charAt(0).toUpperCase();
 }
 
 /* ---------- feed loading ---------- */
@@ -896,6 +909,7 @@ function showAuth(show) {
   // Toggle between connect and manage modes
   el.oauthConnect.hidden = hasToken || !oauthAvailable();
   el.rememberLabel.hidden = hasToken;
+  el.manageApps.hidden = !hasToken;
   el.authActions.hidden = !hasToken;
   el.settingsToggle.classList.toggle('connected', hasToken);
   el.authClose.hidden = !hasToken;
@@ -903,17 +917,7 @@ function showAuth(show) {
   // User info
   if (hasToken && state.user) {
     el.authUser.hidden = false;
-    el.authUsername.textContent = state.user.name;
-    if (state.user.avatar) {
-      el.authAvatar.src = state.user.avatar;
-      el.authAvatar.style.display = '';
-    } else {
-      el.authAvatar.style.display = 'none';
-    }
-    if (state.user.createdAt) {
-      const year = new Date(state.user.createdAt).getFullYear();
-      el.authMemberSince.textContent = 'Member since ' + year;
-    }
+    renderAuthUser();
   } else {
     el.authUser.hidden = true;
   }
