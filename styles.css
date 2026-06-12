@@ -783,7 +783,10 @@ code {
   width: 100%;
   height: auto;
   aspect-ratio: 1 / 1;
-  object-fit: cover;
+  /* contain (not cover) so images scale to fit the square frame without
+     over-cropping; the base .item-thumb's var(--surface) background fills
+     the letterbox area in both light and dark mode. */
+  object-fit: contain;
   border: 0;
   border-bottom: 1px solid var(--border);
   outline: none;
