@@ -608,18 +608,41 @@ function dot() {
 // One request per block (channel + count come from the same connections
 // response) — the previous two-fetch version doubled the request volume and
 // brushed the free tier's documented 120 req/min limit.
-async function fetchConnectionInfo(blockId) {
+//
+// Attribution must show the first channel the *adding* user connected the
+// block to (issue #31). The endpoint's default ordering surfaces the most
+// recent connection — possibly a later one or another user's — so fetch
+// oldest-first and pick the adder's earliest connection.
+function connectorSlug(conn) {
+  if (!conn) return '';
+  if (conn.connected_by && conn.connected_by.slug) return conn.connected_by.slug;
+  if (conn.connected_by_user_slug) return conn.connected_by_user_slug;
+  return (conn.user && conn.user.slug) || '';
+}
+
+function connectionTime(conn) {
+  const t = Date.parse(conn.connected_at || conn.created_at || '');
+  return Number.isNaN(t) ? 0 : t;
+}
+
+async function fetchConnectionInfo(blockId, adderSlug) {
   try {
-    const res = await fetch(`${API_BASE}/blocks/${blockId}/connections?per=1`, {
+    const res = await fetch(`${API_BASE}/blocks/${blockId}/connections?per=50&sort=created_at_asc`, {
       headers: { Authorization: `Bearer ${state.token}`, Accept: 'application/json' },
     });
     if (!res.ok) return null;
     const data = await res.json();
     const meta = data.meta || {};
-    const first = Array.isArray(data.data) && data.data[0];
+    const connections = Array.isArray(data.data) ? data.data.slice() : [];
+    // Defensive: keep oldest-first even if the API ignores the sort param.
+    // Without timestamps every key is 0 and the stable sort is a no-op.
+    connections.sort((a, b) => connectionTime(a) - connectionTime(b));
+    // Fall back to the oldest connection overall when the adder's own
+    // connection no longer exists (or sits beyond this page).
+    const first = (adderSlug && connections.find((c) => connectorSlug(c) === adderSlug)) || connections[0];
     return {
       channel: first ? { title: first.title, slug: first.slug, userSlug: (first.user && first.user.slug) || '' } : null,
-      count: meta.total_count ?? meta.total ?? (Array.isArray(data.data) ? data.data.length : 0),
+      count: meta.total_count ?? meta.total ?? connections.length,
     };
   } catch (_) { return null; }
 }
@@ -631,7 +654,9 @@ async function enrichChannels() {
   await Promise.all(work.map(async (span) => {
     const id = span.getAttribute('data-block-id');
     span.dataset.done = '1';
-    const info = await fetchConnectionInfo(id);
+    const item = span.closest('.item');
+    const adderSlug = (item && item.getAttribute('data-user')) || '';
+    const info = await fetchConnectionInfo(id, adderSlug);
     if (!info) return;
 
     if (showCounts && info.count >= 2) {
@@ -658,7 +683,6 @@ async function enrichChannels() {
 
     // The channel resolves after the item renders, so tag the item now,
     // expose a "Filter [channel]" option, and re-evaluate filtering.
-    const item = span.closest('.item');
     if (item && ch.slug) {
       item.setAttribute('data-channel', ch.slug);
       addChannelFilterOption(item, ch.slug, ch.title || ch.slug);
