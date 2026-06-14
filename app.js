@@ -350,6 +350,7 @@ function isItemFiltered(domain, slug, channel) {
 
 function filterDomain(domain, displayName) {
   if (!domain) return;
+  filtersBackup = null;
   state.filters.domains[domain] = displayName || domain;
   saveFilters();
   applyFilters({ animate: true });
@@ -358,6 +359,7 @@ function filterDomain(domain, displayName) {
 }
 
 function unfilterDomain(domain) {
+  filtersBackup = null;
   const label = state.filters.domains[domain];
   delete state.filters.domains[domain];
   saveFilters();
@@ -368,6 +370,7 @@ function unfilterDomain(domain) {
 
 function filterUser(slug, name) {
   if (!slug) return;
+  filtersBackup = null;
   state.filters.users[slug] = name || slug;
   saveFilters();
   applyFilters({ animate: true });
@@ -376,6 +379,7 @@ function filterUser(slug, name) {
 }
 
 function unfilterUser(slug) {
+  filtersBackup = null;
   const label = state.filters.users[slug];
   delete state.filters.users[slug];
   saveFilters();
@@ -386,6 +390,7 @@ function unfilterUser(slug) {
 
 function filterChannel(slug, title) {
   if (!slug) return;
+  filtersBackup = null;
   state.filters.channels[slug] = title || slug;
   saveFilters();
   applyFilters({ animate: true });
@@ -394,6 +399,7 @@ function filterChannel(slug, title) {
 }
 
 function unfilterChannel(slug) {
+  filtersBackup = null;
   const label = state.filters.channels[slug];
   delete state.filters.channels[slug];
   saveFilters();
@@ -451,6 +457,7 @@ function animateItemOut(item, index) {
 // Animate the nav filter badge as the active-filter count changes: a one-shot
 // pop on increment/decrement, a fade-out when it returns to 0. The first call
 // (page load) sets the value without animating (skip-animation-on-load).
+let filtersBackup = null;
 let badgePrevCount = 0;
 let badgeInitialized = false;
 function updateFilterBadge(count) {
@@ -496,7 +503,15 @@ function renderFilterUI() {
   updateFilterBadge(count);
   el.filterCount.classList.toggle('disabled', !state.filters.enabled);
   el.filterToggle.textContent = state.filters.enabled ? 'On' : 'Off';
-  el.filterReset.hidden = (count === 0);
+  if (count > 0) {
+    el.filterReset.textContent = 'Reset';
+    el.filterReset.hidden = false;
+  } else if (filtersBackup) {
+    el.filterReset.textContent = 'Undo';
+    el.filterReset.hidden = false;
+  } else {
+    el.filterReset.hidden = true;
+  }
 
   el.filterList.innerHTML = '';
 
