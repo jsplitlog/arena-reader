@@ -1406,6 +1406,16 @@ window.addEventListener('keydown', (e) => {
     return;
   }
 
+  if (e.key === 'f') {
+    e.preventDefault();
+    if (el.filterDropdown.matches(':popover-open')) {
+      el.filterDropdown.hidePopover();
+    } else {
+      el.filterDropdown.showPopover();
+    }
+    return;
+  }
+
   if (e.key === 'j' || e.key === 'k') {
     const items = Array.from(document.querySelectorAll('.item:not(.filtered) .item-title a'));
     if (!items.length) return;
