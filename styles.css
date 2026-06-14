@@ -21,13 +21,29 @@
   --radius: 0.25rem;
   --radius-lg: 0.5rem;
   --block-w: 315px;
-  --gutter: 14px;
-  /* Shared spacing — mirrors the Figma "Semantics" spacing tokens. --nav-gap
-     (spacing/item-padding-v, 16) is the standard gutter for nav gaps, the
-     select row, and card action rows; --nav-gap-sm (spacing/item-gap, 8). */
-  --nav-gap: 16px;
-  --nav-gap-sm: 8px;
-  --control-h: calc(0.75rem * 1.8125 + 2px);
+
+  /* Spacing scale — 4px base. The single source of truth for gaps, padding,
+     and margins; reach for these instead of one-off px/em values. 16px maps to
+     the Figma "Semantics" item-padding-v token, 8px to item-gap. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --gutter: 14px;        /* feed column/row gutter (Are.na block rhythm) */
+
+  /* Type scale — rem so it tracks the root size (18px mobile, 20px desktop).
+     --text-ui (12px ref) is the default for controls and meta text. */
+  --text-title: 0.875rem;   /* titles, modal headings */
+  --text-body: 0.8125rem;   /* descriptions, secondary body text */
+  --text-ui: 0.75rem;       /* default UI / control / meta text */
+  --text-sm: 0.6875rem;     /* fine print, compact buttons */
+  --text-label: 0.625rem;   /* uppercase micro-labels */
+  --text-micro: 0.5625rem;  /* badges, avatar initials */
+  --leading: 1.3;           /* body/multi-line text; single-line uses 1 */
+
+  --control-h: calc(var(--text-ui) * 1.8125 + 2px);
   --maxw: 720px;
   --maxw-grid: 1000px;
   --shadow-border:
@@ -73,7 +89,7 @@ html, body {
   color: var(--fg);
   font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif;
   font-size: 20px;
-  line-height: 1.33;
+  line-height: var(--leading);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -124,14 +140,14 @@ code {
   transition-timing-function: ease-in;
 }
 .topbar-inner {
-  padding: 0.65625em max(1em, env(safe-area-inset-right, 0)) 0.65625em max(1em, env(safe-area-inset-left, 0));
+  padding: var(--space-3) max(1em, env(safe-area-inset-right, 0)) var(--space-3) max(1em, env(safe-area-inset-left, 0));
   display: flex;
   align-items: center;
-  gap: 1em;
+  gap: var(--space-4);
   flex-wrap: wrap;
 }
 .topbar h1 {
-  font-size: 0.875rem;
+  font-size: var(--text-title);
   font-weight: 600;
   letter-spacing: 0;
   white-space: nowrap;
@@ -150,7 +166,7 @@ code {
 .controls {
   display: flex;
   flex-wrap: nowrap;
-  gap: var(--nav-gap);
+  gap: var(--space-4);
   align-items: center;
   flex: 1;
   min-width: 0;
@@ -159,33 +175,35 @@ code {
 /* Grouping wrapper for the three selects; transparent to layout except on
    mobile, where it becomes its own nowrap row (see media query below) */
 .select-row { display: contents; }
-.controls select,
+.select-row select,
 .controls > button,
 .controls > a {
   font: inherit;
-  font-size: 0.75rem;
-  line-height: 1.125;
+  font-size: var(--text-ui);
+  line-height: var(--leading);
   color: var(--fg-secondary);
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 0.34375em 0.65625em;
+  padding: var(--space-2) var(--space-3);
   cursor: pointer;
   transition-property: border-color, scale;
   transition-duration: 150ms;
   transition-timing-function: ease-out;
 }
-.controls select {
+.select-row select {
   appearance: none;
   -webkit-appearance: none;
   min-width: 0;
   padding-right: 1.75em;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 10 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23999' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  /* lucide=chevron-down, viewBox cropped tight to the glyph so it renders at
+     the same size as the native chevron it replaces. */
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='5 8 14 8' fill='none' stroke='%23999' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 0.65625em center;
+  background-position: right var(--space-3) center;
   background-size: 0.5em;
 }
-.controls select:hover,
+.select-row select:hover,
 .controls > button:hover,
 .controls > a:hover {
   border-color: var(--fg-muted);
@@ -269,10 +287,10 @@ code {
   max-width: 400px;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 32px;
+  padding: var(--space-8);
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--space-4);
   background: var(--bg);
   box-shadow: var(--shadow-elevated);
   opacity: 0;
@@ -305,21 +323,21 @@ code {
   max-height: calc(100vh - 2em);
   max-height: calc(100svh - 2em);
 }
-.shortcuts-head strong { font-size: 0.9rem; }
+.shortcuts-head strong { font-size: var(--text-title); }
 .shortcuts-list {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: var(--space-4);
   overflow-y: auto;
   min-height: 0;
 }
 .shortcut-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
 }
 .shortcut-group-label {
-  font-size: 0.625rem;
+  font-size: var(--text-label);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--fg-muted);
@@ -328,20 +346,20 @@ code {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--space-4);
 }
 .shortcut-label {
-  font-size: 0.8rem;
+  font-size: var(--text-body);
   color: var(--fg-secondary);
 }
 .shortcut-keys {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-1);
   flex-shrink: 0;
 }
 .shortcut-key-sep {
-  font-size: 0.7rem;
+  font-size: var(--text-sm);
   color: var(--fg-muted);
 }
 .shortcuts-list kbd {
@@ -350,9 +368,9 @@ code {
   justify-content: center;
   min-width: 22px;
   height: 22px;
-  padding: 0 6px;
+  padding: 0 var(--space-2);
   font-family: inherit;
-  font-size: 0.75rem;
+  font-size: var(--text-ui);
   line-height: 1;
   color: var(--fg);
   background: var(--surface);
@@ -385,13 +403,13 @@ code {
 .auth-user {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 .auth-user[hidden] { display: none; }
 /* Same .avatar component as feed attribution; img/fallback swap via hidden */
 .auth-user .avatar[hidden] { display: none; }
 .auth-username {
-  font-size: 0.8rem;
+  font-size: var(--text-body);
   color: var(--fg-secondary);
 }
 .auth-check { color: var(--success); }
@@ -399,22 +417,22 @@ code {
 .auth-brand {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
 }
-.auth-brand strong { font-size: 0.9rem; }
+.auth-brand strong { font-size: var(--text-title); }
 .auth-brand span {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 0.8rem;
+  gap: var(--space-2);
+  font-size: var(--text-body);
   color: var(--fg-secondary);
 }
 .auth-brand span svg { color: var(--success); flex-shrink: 0; }
 /* Signed in: the tagline becomes the "account is connected" status row */
 .auth-brand .auth-user:not([hidden]) + span { color: var(--fg); }
 .auth p {
-  font-size: 0.7rem;
-  line-height: 1.3;
+  font-size: var(--text-sm);
+  line-height: var(--leading);
   color: var(--fg-muted);
   margin-bottom: 0;
 }
@@ -422,7 +440,7 @@ code {
 .oauth-connect {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-3);
 }
 .oauth-connect[hidden] { display: none; }
 .auth-btn.oauth-primary {
@@ -431,7 +449,7 @@ code {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.75rem;
+  font-size: var(--text-ui);
   border-color: var(--accent);
   background: var(--accent);
   color: var(--bg);
@@ -444,8 +462,8 @@ code {
 .remember-label {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 0.7rem;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
   color: var(--fg-muted);
   cursor: pointer;
 }
@@ -461,8 +479,8 @@ code {
 .remember-label .auth-note { display: inline; margin-top: 0; }
 .auth-note {
   display: block;
-  margin-top: 0.375em;
-  font-size: 0.6875rem;
+  margin-top: var(--space-2);
+  font-size: var(--text-sm);
   color: var(--fg-muted);
 }
 .auth-note[hidden] { display: none; }
@@ -472,7 +490,7 @@ code {
 }
 .auth-actions {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
 }
 .auth-actions .auth-btn {
   flex: 1;
@@ -480,19 +498,19 @@ code {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.75rem;
+  font-size: var(--text-ui);
   color: var(--fg-secondary);
 }
 .auth-actions[hidden] { display: none; }
 .auth-btn {
   font-family: inherit;
-  font-size: 0.75rem;
-  line-height: 1.3;
+  font-size: var(--text-ui);
+  line-height: var(--leading);
   color: var(--fg-muted);
   background: none;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 5px 10px;
+  padding: var(--space-1) var(--space-3);
   cursor: pointer;
   text-decoration: none;
   transition-property: border-color, color, scale;
@@ -509,7 +527,7 @@ code {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--nav-gap-sm) var(--nav-gap);
+  gap: var(--space-2) var(--space-4);
   /* On very narrow modals, stack the two links onto their own lines instead of
      letting their text labels wrap mid-phrase. The labels are kept on one line
      (white-space: nowrap below), so the break happens at the item level only
@@ -521,8 +539,8 @@ code {
 .auth-source {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-size: 0.75rem;
+  gap: var(--space-1);
+  font-size: var(--text-ui);
   color: var(--fg-muted);
 }
 .auth-source[hidden] { display: none; }
@@ -532,9 +550,9 @@ code {
 /* ---- status ---- */
 .status {
   border: 1px solid var(--border);
-  padding: 0.65625em 1em;
+  padding: var(--space-3) var(--space-4);
   margin-bottom: 1em;
-  font-size: 0.8125rem;
+  font-size: var(--text-body);
 }
 .status.error {
   border-color: #b60202;
@@ -560,7 +578,7 @@ code {
   display: grid;
   grid-template-columns: 1fr auto;
   column-gap: var(--gutter);
-  padding: 0.75em 0;
+  padding: var(--space-4) 0;
   border-bottom: 1px solid var(--border);
 }
 .sk-item:first-child { padding-top: 0; }
@@ -570,14 +588,14 @@ code {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.5em;
+  gap: var(--space-2);
 }
 .sk-foot {
   grid-column: 1 / -1;
   display: flex;
   align-items: center;
-  gap: 0.5em;
-  padding-top: 2em;
+  gap: var(--space-2);
+  padding-top: var(--space-8);
 }
 
 .sk-line, .sk-thumb, .sk-dot {
@@ -630,10 +648,10 @@ code {
 .skeleton.grid .sk-body { padding: 0.5rem 0.5rem 0; }
 .skeleton.grid .sk-foot {
   margin-top: auto;
-  padding: 2em 0.5rem 0.5rem;
+  padding: var(--space-8) var(--space-3) var(--space-3);
 }
 @media (max-width: 640px) {
-  .skeleton.grid { grid-template-columns: 1fr; gap: 0.75em; }
+  .skeleton.grid { grid-template-columns: 1fr; gap: var(--space-4); }
 }
 
 /* shimmer — a lighter band sweeping across the base fill */
@@ -674,7 +692,7 @@ code {
 
 /* ---- connection badge ---- */
 .connection-badge {
-  font-size: 0.75rem;
+  font-size: var(--text-ui);
   color: var(--fg-muted);
 }
 
@@ -699,7 +717,7 @@ code {
   display: grid;
   grid-template-columns: 1fr auto;
   column-gap: var(--gutter);
-  padding: 0.75em 0;
+  padding: var(--space-4) 0;
   border-bottom: 1px solid var(--border);
 }
 .item:first-child { padding-top: 0; }
@@ -711,8 +729,8 @@ code {
   flex-direction: column;
 }
 .item-title {
-  font-size: 0.875rem;
-  line-height: 1.33;
+  font-size: var(--text-title);
+  line-height: var(--leading);
   font-weight: 600;
   overflow-wrap: anywhere;
   word-break: break-word;
@@ -721,12 +739,12 @@ code {
 .item-title a { color: var(--fg); }
 .item-title a:hover { text-decoration: underline; }
 .item-source {
-  font-size: 0.75rem;
+  font-size: var(--text-ui);
   color: var(--fg-muted);
-  margin-top: 0.34375em;
+  margin-top: var(--space-2);
   display: flex;
   align-items: center;
-  gap: 0.34375em;
+  gap: var(--space-2);
   min-width: 0;
   max-width: 100%;
 }
@@ -740,10 +758,10 @@ code {
 }
 .item-source a:hover { color: var(--fg); text-decoration: underline; }
 .item-desc {
-  margin-top: 0.34375em;
+  margin-top: var(--space-2);
   color: var(--fg-secondary);
-  font-size: 0.8125rem;
-  line-height: 1.33;
+  font-size: var(--text-body);
+  line-height: var(--leading);
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
@@ -756,9 +774,9 @@ code {
   grid-column: 1 / -1;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding-top: 2em;
-  font-size: 0.75rem;
+  gap: var(--space-4);
+  padding-top: var(--space-8);
+  font-size: var(--text-ui);
   color: var(--fg-muted);
   font-variant-numeric: tabular-nums;
 }
@@ -774,7 +792,7 @@ code {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.5rem;
+  font-size: var(--text-micro);
   font-weight: 700;
   line-height: 1;
   color: var(--fg-muted);
@@ -805,12 +823,12 @@ code {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-1);
 }
 .item-author {
   display: flex;
   align-items: center;
-  gap: 0.34375em;
+  gap: var(--space-2);
   min-width: 0;
 }
 .item-author a { color: var(--fg-secondary); }
@@ -826,7 +844,7 @@ code {
 .meta-channel {
   display: flex;
   align-items: center;
-  gap: 0.34375em;
+  gap: var(--space-2);
   min-width: 0;
 }
 .meta-channel:empty { display: none; }
@@ -856,7 +874,7 @@ code {
 .meta-actions {
   display: flex;
   align-items: center;
-  gap: var(--nav-gap);
+  gap: var(--space-4);
   flex-shrink: 0;
 }
 /* inline actions button (... ellipsis) in meta line */
@@ -892,7 +910,7 @@ code {
 .item-icon-btn:active { scale: 0.96; }
 /* ✶✶ source mark sized to read like the 14px icons beside it */
 .item-icon-btn {
-  font-size: 0.6875rem;
+  font-size: var(--text-sm);
   line-height: 1;
   letter-spacing: -0.08em;
   text-indent: -0.08em;
@@ -911,8 +929,8 @@ code {
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-elevated);
   overflow: hidden;
-  font-size: 0.75rem;
-  line-height: 1.3;
+  font-size: var(--text-ui);
+  line-height: var(--leading);
 }
 /* Exit: animate opacity/transform, holding display/overlay discrete so the
    popover stays rendered (and in the top layer) until the fade finishes. */
@@ -940,8 +958,8 @@ code {
 .actions-menu-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
 }
 .actions-menu-row span {
   flex: 1;
@@ -979,47 +997,73 @@ code {
 .filter-remove:active { scale: 0.96; }
 .actions-menu-label {
   display: block;
-  font-size: 0.625rem;
+  font-size: var(--text-label);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--fg-muted);
-  padding: 6px 10px 2px;
+  padding: var(--space-2) var(--space-3) var(--space-1);
 }
 .actions-menu-label:first-child {
-  padding-top: 8px;
+  padding-top: var(--space-2);
 }
 .actions-menu-label + .actions-menu-row {
-  padding-top: 2px;
+  padding-top: var(--space-1);
 }
 
 @media (max-width: 640px) {
+  /* Height of the fixed bottom filter bar: select height (30px, set below)
+     plus its top+bottom padding. Used to pad the feed and lift the toast
+     region clear of the bar. */
+  :root { --filter-bar-h: calc(30px + 2 * var(--space-4)); }
   .item { grid-template-columns: 1fr 60px; }
   .item-thumb { width: 60px; height: 60px; }
-  /* Unwrap controls so children join topbar-inner flex layout */
+  /* Unwrap controls so the title-row icons join topbar-inner's flex layout.
+     The three selects (.select-row) leave the topbar entirely for the fixed
+     bottom bar below, so the top bar carries only the title + icon cluster. */
   .controls { display: contents; }
   .controls[hidden] { display: none; }
-  /* Force line break between icons (order 0) and selects (order 1) */
-  .topbar-inner::after { content: ''; order: 0; width: 100%; }
-  /* Selects get their own single row below the icons: equal thirds that
-     never wrap. When a third gets too narrow for the widest currently
+  /* Filters move to a fixed bottom bar to declutter the top: equal thirds
+     that never wrap. When a third gets too narrow for the widest currently
      selected label, all three labels scale down together:
      font-size = (row width − 2 gaps − 3 borders) /
      (3 × (label width in em + 2.125em horizontal padding)).
-     The 38px subtraction below = 2 × var(--nav-gap) (16) + ~6px of borders.
+     The 38px subtraction below = 2 × var(--space-4) (16) + ~6px of borders.
      The em padding and arrow gutter shrink with the font, so the fit
      holds at every width below the breakpoint. fitSelectLabels() in
      app.js measures the selected labels and sets --select-fit-divisor;
      the fallback covers the widest selectable label ("Attachments"). */
   .select-row {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10;
     display: flex;
-    order: 1;
-    flex: 1 1 100%;
     min-width: 0;
-    gap: var(--nav-gap);
-    margin-top: var(--nav-gap);
+    gap: var(--space-4);
+    padding: var(--space-4) max(var(--space-4), env(safe-area-inset-right, 0))
+             calc(var(--space-4) + env(safe-area-inset-bottom, 0))
+             max(var(--space-4), env(safe-area-inset-left, 0));
+    background: var(--bg);
+    border-top: 1px solid var(--border);
     container-type: inline-size;
+    /* Slides down out of view in concert with the top bar (see .nav-hidden). */
+    transition-property: transform;
+    transition-duration: 200ms;
+    transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
   }
+  /* Hide on scroll-down by pushing the bar below the viewport; mirrors
+     .topbar.nav-hidden, which slides the top bar up. app.js toggles both
+     classes together from the same scroll handler. */
+  .select-row.nav-hidden {
+    transform: translateY(100%);
+    transition-duration: 150ms;
+    transition-timing-function: ease-in;
+  }
+  /* Explicit display:flex above outranks the UA [hidden] rule, so restore it:
+     the bar is hidden pre-auth (app.js mirrors .controls[hidden] onto it). */
+  .select-row[hidden] { display: none; }
   .select-row select {
     flex: 1 1 0;
     min-width: 0;
@@ -1027,26 +1071,25 @@ code {
   /* Icons stay on title row; push icon cluster to the right */
   #settings-toggle { margin-left: auto; }
   .controls .spacer { display: none; }
-  /* Nav-gap between the title-row icons (title↔cluster is the flexible
-     margin-left:auto below). Row-gap is 0 because the full-width ::after
-     wrap-break counts as its own (zero-height) flex line, so a row-gap would
-     apply twice; the select row's margin-top sets the line gap. */
-  .topbar-inner { column-gap: var(--nav-gap); row-gap: 0; }
+  /* Single icon row in the top bar now that selects live at the bottom. */
+  .topbar-inner { column-gap: var(--space-4); row-gap: 0; }
+  /* Pad the feed so the last cards / load-more clear the fixed filter bar. */
+  .container { padding-bottom: calc(1em + var(--filter-bar-h) + env(safe-area-inset-bottom, 0)); }
 
   /* Larger touch targets on mobile */
-  .controls select,
+  .select-row select,
   .controls > button,
   .controls > a {
-    font-size: 0.8125rem;
-    padding: 0.5em 0.75em;
+    font-size: var(--text-body);
+    padding: var(--space-2) var(--space-3);
   }
-  .controls select {
+  .select-row select {
     /* See .select-row above: shrink all three labels together once an
        equal-width third can't fit the widest selected label */
-    font-size: min(0.8125rem, calc((100cqw - 38px) / var(--select-fit-divisor, 23.25)));
-    padding-left: 0.625em;
+    font-size: min(var(--text-body), calc((100cqw - 38px) / var(--select-fit-divisor, 23.25)));
+    padding-left: var(--space-3);
     padding-right: 1.5em;
-    background-position: right 0.5em center;
+    background-position: right var(--space-2) center;
     background-size: 0.5625em;
   }
 }
@@ -1086,10 +1129,10 @@ code {
   aspect-ratio: 1 / 1;
   overflow: hidden;
   border-bottom: 1px solid var(--border);
-  padding: 0.75em;
+  padding: var(--space-4);
   background: var(--surface);
-  font-size: 0.75rem;
-  line-height: 1.4;
+  font-size: var(--text-ui);
+  line-height: var(--leading);
   color: var(--fg-secondary);
   word-break: break-word;
 }
@@ -1114,7 +1157,7 @@ code {
    so the smaller-font attribution/meta rows align with the body text rather
    than getting a narrower em-based inset. */
 .feed.grid .item-body {
-  padding: 0.5rem 0.5rem 0;
+  padding: var(--space-3) var(--space-3) 0;
 }
 .feed.grid .item-attribution {
   /* Pin the attribution to the bottom of the (row-stretched) card so cards
@@ -1122,10 +1165,10 @@ code {
      The auto margin absorbs the extra height; the 2em padding-top becomes the
      *minimum* gap above the attribution. */
   margin-top: auto;
-  padding: 2em 0.5rem 0.5rem;
+  padding: var(--space-8) var(--space-3) var(--space-3);
 }
 @media (max-width: 640px) {
-  .feed.grid { grid-template-columns: 1fr; gap: 0.75em; }
+  .feed.grid { grid-template-columns: 1fr; gap: var(--space-4); }
   .feed.grid .item { max-width: none; }
 }
 
@@ -1133,8 +1176,8 @@ code {
 .loadmore-wrap { text-align: center; margin-top: 1em; }
 #loadmore {
   font: inherit;
-  font-size: 0.75rem;
-  padding: 0.34375em 1em;
+  font-size: var(--text-ui);
+  padding: var(--space-2) var(--space-4);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--bg);
@@ -1175,7 +1218,7 @@ code {
 .empty {
   text-align: center;
   color: var(--fg-muted);
-  font-size: 0.8125rem;
+  font-size: var(--text-body);
   padding: 3em 0;
 }
 
@@ -1230,7 +1273,7 @@ code {
   position: absolute;
   top: -6px;
   right: -6px;
-  font-size: 0.5625rem;
+  font-size: var(--text-micro);
   line-height: 14px;
   min-width: 14px;
   height: 14px;
@@ -1240,7 +1283,7 @@ code {
   background: var(--accent);
   color: var(--bg);
   border-radius: 7px;
-  padding: 0 3px;
+  padding: 0 var(--space-1);
   font-weight: 700;
   /* Tabular figures so a 1→2 digit change doesn't shift the badge width */
   font-variant-numeric: tabular-nums;
@@ -1292,8 +1335,8 @@ code {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-elevated);
-  font-size: 0.75rem;
-  line-height: 1.3;
+  font-size: var(--text-ui);
+  line-height: var(--leading);
 }
 /* Exit: see .item-actions-menu — allow-discrete keeps the closing popover
    visible through the fade. */
@@ -1323,7 +1366,7 @@ code {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 10px;
+  padding: var(--space-2) var(--space-3);
   border-bottom: 1px solid var(--border);
   font-weight: 700;
   color: var(--fg-secondary);
@@ -1332,16 +1375,16 @@ code {
 .filter-head-btns {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
 }
 .filter-reset-btn {
   font-family: inherit;
-  font-size: 0.6875rem;
+  font-size: var(--text-sm);
   line-height: 1;
   color: var(--fg-muted);
   background: none;
   border: none;
-  padding: 8px 4px;
+  padding: var(--space-2) var(--space-1);
   cursor: pointer;
   transition: color 150ms ease-out, scale 150ms ease-out;
 }
@@ -1350,20 +1393,20 @@ code {
 .filter-reset-btn[hidden] { display: none; }
 .filter-toggle-btn {
   font-family: inherit;
-  font-size: 0.6875rem;
+  font-size: var(--text-sm);
   line-height: 1;
   color: var(--fg-muted);
   background: none;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 7px 16px;
+  padding: var(--space-2) var(--space-4);
   cursor: pointer;
   transition: border-color 150ms ease-out, scale 150ms ease-out;
 }
 .filter-toggle-btn:hover { border-color: var(--fg-muted); }
 .filter-toggle-btn:active { scale: 0.96; }
 .filter-list {
-  padding: 2px 0;
+  padding: var(--space-1) 0;
   /* Only the list scrolls (header stays pinned above); thin, themed scrollbar
      to match the app's native-minimal treatment. */
   overflow-y: auto;
@@ -1371,30 +1414,30 @@ code {
   scrollbar-width: thin;
 }
 .filter-empty {
-  padding: 10px;
-  font-size: 0.75rem;
+  padding: var(--space-3);
+  font-size: var(--text-ui);
   color: var(--fg-muted);
-  line-height: 1.3;
+  line-height: var(--leading);
   white-space: pre-line;
 }
 .filter-section-label {
-  font-size: 0.625rem;
+  font-size: var(--text-label);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--fg-muted);
-  padding: 6px 10px 3px;
+  padding: var(--space-2) var(--space-3) var(--space-1);
 }
 .filter-row {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 10px;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
 }
 .filter-row:hover { background: var(--surface); }
 .filter-domain {
   flex: 1;
-  font-size: 0.75rem;
+  font-size: var(--text-ui);
   color: var(--fg);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1411,7 +1454,7 @@ code {
     width: 36px;
     height: 36px;
   }
-  .controls select {
+  .select-row select {
     height: 36px;
   }
 }
@@ -1423,11 +1466,11 @@ code {
     width: 30px;
     height: 30px;
   }
-  .controls select {
+  .select-row select {
     height: 30px;
   }
   .topbar-inner {
-    gap: 0.1875em;
+    gap: var(--space-1);
   }
 }
 
@@ -1443,23 +1486,29 @@ code {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   pointer-events: none;
+}
+/* Lift toasts above the fixed bottom filter bar on mobile. */
+@media (max-width: 640px) {
+  .toast-region {
+    bottom: calc(1.25em + var(--filter-bar-h) + env(safe-area-inset-bottom, 0));
+  }
 }
 .toast {
   pointer-events: auto;
   max-width: min(90vw, 320px);
-  padding: 6px 10px 6px 12px;
+  padding: var(--space-2) var(--space-3);
   background: var(--bg);
   border: 1px solid var(--border);
   color: var(--fg);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-elevated);
-  font-size: 0.75rem;
-  line-height: 1.3;
+  font-size: var(--text-ui);
+  line-height: var(--leading);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-2);
   /* Enter combines opacity + translateY + blur; base state doubles as the exit
      target (shorter duration than the enter, per the subtle-exit guideline). */
   opacity: 0;
