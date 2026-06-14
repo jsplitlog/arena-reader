@@ -1395,10 +1395,16 @@ el.loadmore.addEventListener('click', () => loadFeed({ reset: false }));
   }, { passive: true });
 })();
 
-// Keyboard navigation (j/k) for feed item headlines
+// Keyboard navigation (j/k) for feed item headlines and view toggling (g)
 window.addEventListener('keydown', (e) => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA' || e.isContentEditable) return;
   if (e.altKey || e.ctrlKey || e.metaKey) return;
+
+  if (e.key === 'g') {
+    e.preventDefault();
+    setView(state.view === 'grid' ? 'list' : 'grid');
+    return;
+  }
 
   if (e.key === 'j' || e.key === 'k') {
     const items = Array.from(document.querySelectorAll('.item:not(.filtered) .item-title a'));
