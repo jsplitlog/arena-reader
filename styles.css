@@ -620,8 +620,17 @@ code {
   display: flex;
   align-items: center;
   gap: 0.34375em;
+  min-width: 0;
+  max-width: 100%;
 }
-.item-source a { color: inherit; text-decoration: none; }
+.item-source a {
+  color: inherit;
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
 .item-source a:hover { color: var(--fg); text-decoration: underline; }
 .item-desc {
   margin-top: 0.34375em;
