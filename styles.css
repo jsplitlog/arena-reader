@@ -430,7 +430,6 @@ code {
   display: flex;
   flex-direction: column;
 }
-.skeleton[hidden] { display: none; }
 
 .sk-item {
   display: grid;
@@ -541,6 +540,9 @@ code {
     50% { opacity: 0.5; }
   }
 }
+/* Last so it wins over .skeleton.grid (equal specificity, later in source) —
+   a hidden skeleton must stay hidden even while it carries the grid class. */
+.skeleton[hidden] { display: none; }
 
 /* ---- text block preview (square, grid only) ---- */
 .item-preview { display: none; }
@@ -701,12 +703,21 @@ code {
   outline: 1px solid rgba(0, 0, 0, 0.1);
   outline-offset: -1px;
 }
+/* Right-aligned meta group: timestamp + source/filter icon buttons */
+.meta-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
 /* inline actions button (... ellipsis) in meta line */
 .item-actions {
   position: relative;
   flex-shrink: 0;
 }
-.item-actions-btn {
+/* Icon buttons in the meta line: the Are.na source (✶✶) and the filter menu */
+.item-actions-btn,
+.item-icon-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -722,11 +733,21 @@ code {
   transition-duration: 150ms;
   transition-timing-function: ease-out;
 }
-.item-actions-btn:hover {
+.item-actions-btn:hover,
+.item-icon-btn:hover {
   color: var(--fg);
   border-color: var(--fg-muted);
+  text-decoration: none;
 }
-.item-actions-btn:active { scale: 0.96; }
+.item-actions-btn:active,
+.item-icon-btn:active { scale: 0.96; }
+/* ✶✶ source mark sized to read like the 14px icons beside it */
+.item-icon-btn {
+  font-size: 0.6875rem;
+  line-height: 1;
+  letter-spacing: -0.08em;
+  text-indent: -0.08em;
+}
 .item-actions-menu {
   /* [popover]: reset UA top-layer defaults, anchor to the trigger button
      (per-instance anchor-name/position-anchor pairs are set inline in JS) */

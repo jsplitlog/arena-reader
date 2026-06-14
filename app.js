@@ -556,7 +556,7 @@ function renderItem(b) {
 
   item.appendChild(thumbWrap);
 
-  // Author line: avatar, name …spacer… ✶✶ · timestamp
+  // Author line: avatar, name
   const authorLine = document.createElement('div');
   authorLine.className = 'item-author';
   if (avatar) {
@@ -570,12 +570,12 @@ function renderItem(b) {
     authorLine.appendChild(avFallback);
   }
   authorLine.appendChild(metaLink(name, uUrl));
-  const authorSpacer = document.createElement('span');
-  authorSpacer.className = 'meta-spacer';
-  authorLine.appendChild(authorSpacer);
   item.appendChild(authorLine);
 
-  // Meta bottom: channel …spacer… actions menu
+  // Meta bottom: channel …spacer… [ timestamp · ✶✶ source · actions menu ].
+  // The timestamp, Are.na source button, and filter/actions button share one
+  // right-aligned group (.meta-actions), with the source and filter rendered
+  // as matching icon buttons.
   const meta = document.createElement('div');
   meta.className = 'item-meta';
   const metaLine = document.createElement('div');
@@ -587,14 +587,25 @@ function renderItem(b) {
   const mSpacer = document.createElement('span');
   mSpacer.className = 'meta-spacer';
   metaLine.appendChild(mSpacer);
+
+  const metaActions = document.createElement('div');
+  metaActions.className = 'meta-actions';
   const time = document.createElement('time');
   time.dateTime = created || '';
   time.textContent = relativeTime(created);
   time.title = absoluteTime(created);
-  metaLine.appendChild(time);
-  const arenaLink = metaLink('✶✶', blockUrl(b));
-  arenaLink.title = 'View on Are.na';
-  metaLine.appendChild(arenaLink);
+  metaActions.appendChild(time);
+
+  // Are.na source, now an icon button (matches the actions button styling)
+  const arenaBtn = document.createElement('a');
+  arenaBtn.className = 'item-icon-btn';
+  arenaBtn.href = blockUrl(b);
+  arenaBtn.target = '_blank';
+  arenaBtn.rel = 'noopener';
+  arenaBtn.textContent = '✶✶';
+  arenaBtn.title = 'View on Are.na';
+  arenaBtn.setAttribute('aria-label', 'View on Are.na');
+  metaActions.appendChild(arenaBtn);
 
   if (domain || slug) {
     const actions = document.createElement('div');
@@ -627,9 +638,10 @@ function renderItem(b) {
         () => unfilterUser(slug));
     }
     actions.appendChild(actMenu);
-    authorLine.appendChild(actions);
+    metaActions.appendChild(actions);
   }
 
+  metaLine.appendChild(metaActions);
   meta.appendChild(metaLine);
   item.appendChild(meta);
 
