@@ -282,6 +282,28 @@ code {
 @media (prefers-color-scheme: dark) {
   .auth { box-shadow: var(--shadow-elevated), 0 4px 24px rgba(0, 0, 0, 0.5); }
 }
+.auth-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--control-h);
+  height: var(--control-h);
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--fg-muted);
+  cursor: pointer;
+  transition-property: color, border-color, scale;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+}
+.auth-close[hidden] { display: none; }
+.auth-close:hover { color: var(--fg); border-color: var(--fg-muted); }
+.auth-close:active { scale: 0.96; }
 .auth-user {
   display: flex;
   align-items: center;
