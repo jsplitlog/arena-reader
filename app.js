@@ -97,6 +97,38 @@ const el = {
 const reduceMotionMQ = window.matchMedia('(prefers-reduced-motion: reduce)');
 function prefersReducedMotion() { return reduceMotionMQ.matches; }
 
+/* The three filter selects sit inline in the top bar on desktop, but on mobile
+   they relocate to a fixed bottom bar (declutters the header). The bar can't
+   stay inside .topbar there: .topbar.nav-hidden applies a transform, which
+   would become the containing block for the fixed bar and yank it up to the
+   top edge. So we physically reparent .select-row to <body> on mobile and back
+   into .controls on desktop. */
+const mobileNavMQ = window.matchMedia('(max-width: 640px)');
+const selectRowHome = el.selectRow.parentNode;            // .controls
+const selectRowAnchor = el.selectRow.nextElementSibling;  // trailing spacer
+function syncSelectRowPlacement() {
+  if (mobileNavMQ.matches) {
+    if (el.selectRow.parentNode !== document.body) document.body.appendChild(el.selectRow);
+    // .controls[hidden] no longer cascades once detached, so mirror it here.
+    el.selectRow.hidden = el.controls.hidden;
+  } else {
+    if (el.selectRow.parentNode !== selectRowHome) {
+      selectRowHome.insertBefore(el.selectRow, selectRowAnchor);
+    }
+    // Desktop visibility is governed by .controls[hidden] cascading down.
+    el.selectRow.hidden = false;
+  }
+}
+syncSelectRowPlacement();
+mobileNavMQ.addEventListener('change', syncSelectRowPlacement);
+
+// Hide/reveal the top bar and the mobile bottom filter bar together: the top
+// bar slides up, the bottom bar slides down (both via .nav-hidden).
+function setNavHidden(hidden) {
+  el.topbar.classList.toggle('nav-hidden', hidden);
+  el.selectRow.classList.toggle('nav-hidden', hidden);
+}
+
 /* ---------- toast ---------- */
 // Brief, non-blocking confirmation (issue #35). Reusable for any future toast.
 function showToast(message, type = 'mute', onUndo = null) {
@@ -1188,6 +1220,8 @@ function showAuth(show) {
   const hasToken = !!state.token;
   // Only hide controls on first visit (no token yet)
   el.controls.hidden = !hasToken;
+  // Keep the relocated mobile filter bar in sync with the controls' state.
+  syncSelectRowPlacement();
   // Toggle between connect and manage modes
   el.oauthConnect.hidden = hasToken || !oauthAvailable();
   el.rememberLabel.hidden = hasToken;
@@ -1376,7 +1410,7 @@ el.loadmore.addEventListener('click', () => loadFeed({ reset: false }));
   // restores the previous scroll position on launch, which fires the scroll
   // handler with a downward delta and hides the nav before the user scrolls.
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
-  el.topbar.classList.remove('nav-hidden');
+  setNavHidden(false);
 
   let lastY = window.scrollY;
   let ticking = false;
@@ -1392,15 +1426,15 @@ el.loadmore.addEventListener('click', () => loadFeed({ reset: false }));
 
       if (y <= 0) {
         // Always show at top of page
-        el.topbar.classList.remove('nav-hidden');
+        setNavHidden(false);
       } else if (delta > THRESHOLD) {
         // Scrolling down past threshold
-        el.topbar.classList.add('nav-hidden');
+        setNavHidden(true);
         // Close any open filter dropdown when hiding nav
         if (el.filterDropdown.matches(':popover-open')) el.filterDropdown.hidePopover();
       } else if (delta < -THRESHOLD) {
         // Scrolling up past threshold
-        el.topbar.classList.remove('nav-hidden');
+        setNavHidden(false);
       }
 
       lastY = y;
@@ -1411,7 +1445,7 @@ el.loadmore.addEventListener('click', () => loadFeed({ reset: false }));
   // Hovering the top edge reveals the hidden bar without scrolling; it stays
   // until the next scroll down hides it again.
   window.addEventListener('mousemove', (e) => {
-    if (e.clientY <= HOVER_ZONE) el.topbar.classList.remove('nav-hidden');
+    if (e.clientY <= HOVER_ZONE) setNavHidden(false);
   }, { passive: true });
 })();
 
