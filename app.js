@@ -60,12 +60,14 @@ const el = {
   rememberToken: document.getElementById('remember-token'),
   rememberLabel: document.getElementById('remember-label'),
   status: document.getElementById('status'),
+  skeleton: document.getElementById('skeleton'),
   feed: document.getElementById('feed'),
   loadmore: document.getElementById('loadmore'),
+  loadmoreSpinner: document.getElementById('loadmore-spinner'),
+  sentinel: document.getElementById('feed-sentinel'),
   authMsg: document.getElementById('auth-msg'),
   authTagline: document.getElementById('auth-tagline'),
   authOverlay: document.getElementById('auth-overlay'),
-  authClose: document.getElementById('auth-close'),
   authUser: document.getElementById('auth-user'),
   authAvatar: document.getElementById('auth-avatar'),
   authAvatarFallback: document.getElementById('auth-avatar-fallback'),
@@ -78,11 +80,36 @@ const el = {
   filterDropdown: document.getElementById('filter-dropdown'),
   filterList: document.getElementById('filter-list'),
   filterToggle: document.getElementById('filter-toggle'),
+  toastRegion: document.getElementById('toast-region'),
   container: document.querySelector('.container'),
   topbar: document.querySelector('.topbar'),
   topbarInner: document.querySelector('.topbar-inner'),
   selectRow: document.querySelector('.select-row'),
 };
+
+// Single source of truth for motion gating; CSS handles the rest globally.
+const reduceMotionMQ = window.matchMedia('(prefers-reduced-motion: reduce)');
+function prefersReducedMotion() { return reduceMotionMQ.matches; }
+
+/* ---------- toast ---------- */
+// Brief, non-blocking confirmation (issue #35). Reusable for any future toast.
+function showToast(message) {
+  if (!message) return;
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = message;
+  el.toastRegion.appendChild(toast);
+  // Enter on the next frame so the transition runs from the base state. Under
+  // reduced motion the global rule makes these transitions instant.
+  requestAnimationFrame(() => toast.classList.add('show'));
+  setTimeout(() => {
+    toast.classList.remove('show');
+    let removed = false;
+    const drop = () => { if (removed) return; removed = true; toast.remove(); };
+    toast.addEventListener('transitionend', drop, { once: true });
+    setTimeout(drop, 400); // fallback if no transition fires
+  }, 2400);
+}
 
 // On mobile the three selects are equal-width thirds whose label size
 // scales to fit (see .select-row in styles.css). The CSS divisor encodes
@@ -290,54 +317,139 @@ function filterDomain(domain, displayName) {
   if (!domain) return;
   state.filters.domains[domain] = displayName || domain;
   saveFilters();
-  applyFilters();
+  applyFilters({ animate: true });
   renderFilterUI();
+  showToast(`${displayName || domain} muted`);
 }
 
 function unfilterDomain(domain) {
+  const label = state.filters.domains[domain];
   delete state.filters.domains[domain];
   saveFilters();
   applyFilters();
   renderFilterUI();
+  showToast(`${(typeof label === 'string' && label) || domain} unmuted`);
 }
 
 function filterUser(slug, name) {
   if (!slug) return;
   state.filters.users[slug] = name || slug;
   saveFilters();
-  applyFilters();
+  applyFilters({ animate: true });
   renderFilterUI();
+  showToast(`${name || slug} muted`);
 }
 
 function unfilterUser(slug) {
+  const label = state.filters.users[slug];
   delete state.filters.users[slug];
   saveFilters();
   applyFilters();
   renderFilterUI();
+  showToast(`${label || slug} unmuted`);
 }
 
 function filterChannel(slug, title) {
   if (!slug) return;
   state.filters.channels[slug] = title || slug;
   saveFilters();
-  applyFilters();
+  applyFilters({ animate: true });
   renderFilterUI();
+  showToast(`${title || slug} muted`);
 }
 
 function unfilterChannel(slug) {
+  const label = state.filters.channels[slug];
   delete state.filters.channels[slug];
   saveFilters();
   applyFilters();
   renderFilterUI();
+  showToast(`${label || slug} unmuted`);
 }
 
-function applyFilters() {
+function applyFilters(opts) {
+  const animate = !!(opts && opts.animate) && !prefersReducedMotion();
+  let outIndex = 0;
   el.feed.querySelectorAll('.item').forEach((item) => {
     const d = item.getAttribute('data-domain') || '';
     const u = item.getAttribute('data-user') || '';
     const c = item.getAttribute('data-channel') || '';
-    item.classList.toggle('filtered', isItemFiltered(d, u, c));
+    const filtered = isItemFiltered(d, u, c);
+    if (filtered) {
+      if (item.classList.contains('removing')) return;            // already exiting
+      if (!item.classList.contains('filtered') && animate) animateItemOut(item, outIndex++);
+      else item.classList.add('filtered');
+    } else {
+      // Unfiltered (or filters toggled off): cancel any in-flight exit and show.
+      item.classList.remove('filtered', 'removing');
+      item.style.transitionDelay = '';
+    }
   });
+}
+
+// Animate a newly-filtered item out (subtle fade + upward drift), then drop it
+// from layout via .filtered. Tight, capped stagger so a prolific domain still
+// settles quickly. Re-checks filter state on completion in case it was undone.
+function animateItemOut(item, index) {
+  const delay = Math.min(index, 6) * 25;
+  item.style.transitionDelay = `${delay}ms`;
+  item.classList.add('removing');
+  let done = false;
+  const finalize = () => {
+    if (done) return;
+    done = true;
+    item.removeEventListener('transitionend', onEnd);
+    item.classList.remove('removing');
+    item.style.transitionDelay = '';
+    const d = item.getAttribute('data-domain') || '';
+    const u = item.getAttribute('data-user') || '';
+    const c = item.getAttribute('data-channel') || '';
+    item.classList.toggle('filtered', isItemFiltered(d, u, c));
+  };
+  function onEnd(e) {
+    if (e.target === item && e.propertyName === 'opacity') finalize();
+  }
+  item.addEventListener('transitionend', onEnd);
+  setTimeout(finalize, 200 + delay + 120);                       // fallback
+}
+
+// Animate the nav filter badge as the active-filter count changes: a one-shot
+// pop on increment/decrement, a fade-out when it returns to 0. The first call
+// (page load) sets the value without animating (skip-animation-on-load).
+let badgePrevCount = 0;
+let badgeInitialized = false;
+function updateFilterBadge(count) {
+  const badge = el.filterCount;
+  const prev = badgePrevCount;
+  badgePrevCount = count;
+  const reduce = prefersReducedMotion();
+  if (count > 0) badge.textContent = String(count);
+
+  if (count === 0) {
+    if (badgeInitialized && prev > 0 && !reduce) {
+      badge.classList.add('hiding');
+      let hidden = false;
+      const hide = () => { if (hidden) return; hidden = true; badge.hidden = true; badge.classList.remove('hiding'); };
+      badge.addEventListener('transitionend', function h(e) {
+        if (e.propertyName !== 'opacity') return;
+        badge.removeEventListener('transitionend', h);
+        hide();
+      });
+      setTimeout(hide, 240); // fallback
+    } else {
+      badge.hidden = true;
+    }
+  } else {
+    badge.classList.remove('hiding');
+    badge.hidden = false;
+    if (badgeInitialized && prev !== count && !reduce) {
+      badge.classList.remove('pop');
+      void badge.offsetWidth; // restart the keyframe
+      badge.classList.add('pop');
+      badge.addEventListener('animationend', () => badge.classList.remove('pop'), { once: true });
+    }
+  }
+  badgeInitialized = true;
 }
 
 function renderFilterUI() {
@@ -346,8 +458,7 @@ function renderFilterUI() {
   const channelKeys = Object.keys(state.filters.channels);
   const count = domainKeys.length + userKeys.length + channelKeys.length;
 
-  el.filterCount.hidden = count === 0;
-  el.filterCount.textContent = count;
+  updateFilterBadge(count);
   el.filterCount.classList.toggle('disabled', !state.filters.enabled);
   el.filterToggle.textContent = state.filters.enabled ? 'On' : 'Off';
 
@@ -357,7 +468,7 @@ function renderFilterUI() {
   if (count === 0) {
     const empty = document.createElement('div');
     empty.className = 'filter-empty';
-    empty.textContent = 'No filters created.\n\nFilters temporarily mute domains, users, and channels.';
+    empty.textContent = 'No filters created.\n\nFilters mute domains, users, and channels.';
     el.filterList.appendChild(empty);
   }
 
@@ -554,7 +665,7 @@ function renderItem(b) {
 
   item.appendChild(thumbWrap);
 
-  // Author line: avatar, name …spacer… ✶✶ · timestamp
+  // Author line: avatar, name
   const authorLine = document.createElement('div');
   authorLine.className = 'item-author';
   if (avatar) {
@@ -568,12 +679,12 @@ function renderItem(b) {
     authorLine.appendChild(avFallback);
   }
   authorLine.appendChild(metaLink(name, uUrl));
-  const authorSpacer = document.createElement('span');
-  authorSpacer.className = 'meta-spacer';
-  authorLine.appendChild(authorSpacer);
   item.appendChild(authorLine);
 
-  // Meta bottom: channel …spacer… actions menu
+  // Meta bottom: channel …spacer… [ timestamp · ✶✶ source · actions menu ].
+  // The timestamp, Are.na source button, and filter/actions button share one
+  // right-aligned group (.meta-actions), with the source and filter rendered
+  // as matching icon buttons.
   const meta = document.createElement('div');
   meta.className = 'item-meta';
   const metaLine = document.createElement('div');
@@ -585,14 +696,25 @@ function renderItem(b) {
   const mSpacer = document.createElement('span');
   mSpacer.className = 'meta-spacer';
   metaLine.appendChild(mSpacer);
+
+  const metaActions = document.createElement('div');
+  metaActions.className = 'meta-actions';
   const time = document.createElement('time');
   time.dateTime = created || '';
   time.textContent = relativeTime(created);
   time.title = absoluteTime(created);
-  metaLine.appendChild(time);
-  const arenaLink = metaLink('✶✶', blockUrl(b));
-  arenaLink.title = 'View on Are.na';
-  metaLine.appendChild(arenaLink);
+  metaActions.appendChild(time);
+
+  // Are.na source, now an icon button (matches the actions button styling)
+  const arenaBtn = document.createElement('a');
+  arenaBtn.className = 'item-icon-btn';
+  arenaBtn.href = blockUrl(b);
+  arenaBtn.target = '_blank';
+  arenaBtn.rel = 'noopener';
+  arenaBtn.textContent = '✶✶';
+  arenaBtn.title = 'View on Are.na';
+  arenaBtn.setAttribute('aria-label', 'View on Are.na');
+  metaActions.appendChild(arenaBtn);
 
   if (domain || slug) {
     const actions = document.createElement('div');
@@ -625,9 +747,10 @@ function renderItem(b) {
         () => unfilterUser(slug));
     }
     actions.appendChild(actMenu);
-    authorLine.appendChild(actions);
+    metaActions.appendChild(actions);
   }
 
+  metaLine.appendChild(metaActions);
   meta.appendChild(metaLine);
   item.appendChild(meta);
 
@@ -791,24 +914,102 @@ function renderAuthUser() {
   else el.authAvatarFallback.textContent = (state.user.name || '?').charAt(0).toUpperCase();
 }
 
+/* ---------- skeleton ---------- */
+// A single placeholder primitive (see .skeleton in styles.css). Flat gray is
+// "preview/placeholder" (behind the locked sign-in modal); shimmer is "content
+// is loading" (first load, media-type/filter transitions). The same markup
+// mirrors the feed's list and grid layouts so swapping to real items is clean.
+const SKELETON_COUNT = 8;
+
+function buildSkeletonItem() {
+  const item = document.createElement('div');
+  item.className = 'sk-item';
+  item.innerHTML =
+    '<div class="sk-body">' +
+      '<div class="sk-line sk-line-title"></div>' +
+      '<div class="sk-line sk-line-source"></div>' +
+      '<div class="sk-line"></div>' +
+      '<div class="sk-line"></div>' +
+      '<div class="sk-line sk-line-desc-end"></div>' +
+    '</div>' +
+    '<div class="sk-thumb"></div>' +
+    '<div class="sk-foot">' +
+      '<div class="sk-dot"></div>' +
+      '<div class="sk-line sk-line-meta"></div>' +
+    '</div>';
+  return item;
+}
+
+function showSkeleton({ shimmer }) {
+  if (!el.skeleton.children.length) {
+    const frag = document.createDocumentFragment();
+    for (let i = 0; i < SKELETON_COUNT; i += 1) frag.appendChild(buildSkeletonItem());
+    el.skeleton.appendChild(frag);
+  }
+  el.skeleton.classList.toggle('grid', state.view === 'grid');
+  el.skeleton.classList.toggle('skeleton--loading', !!shimmer);
+  el.skeleton.hidden = false;
+}
+
+function hideSkeleton() {
+  el.skeleton.hidden = true;
+  el.skeleton.classList.remove('skeleton--loading');
+}
+
+/* ---------- infinite scroll ---------- */
+// Auto-load the next page as the bottom of the feed nears the viewport. The
+// "Load more" button stays as an explicit fallback (and degrades gracefully
+// where IntersectionObserver is unavailable).
+const SENTINEL_MARGIN = 400; // px ahead of the sentinel to begin fetching
+
+function sentinelNearViewport() {
+  const r = el.sentinel.getBoundingClientRect();
+  return r.top <= window.innerHeight + SENTINEL_MARGIN;
+}
+
+function maybeLoadMore() {
+  if (!state.token || !state.hasMore || state.loading) return;
+  if (!sentinelNearViewport()) return;
+  loadFeed({ reset: false });
+}
+
+const feedObserver = ('IntersectionObserver' in window)
+  ? new IntersectionObserver((entries) => {
+      if (entries.some((e) => e.isIntersecting)) maybeLoadMore();
+    }, { rootMargin: `${SENTINEL_MARGIN}px 0px` })
+  : null;
+if (feedObserver) feedObserver.observe(el.sentinel);
+
+// While a "load more" is in flight the spinner stands in for the button.
+function setLoadingMore(on) {
+  el.loadmoreSpinner.hidden = !on;
+  el.loadmore.hidden = on || !state.hasMore;
+}
+
 /* ---------- feed loading ---------- */
 async function loadFeed({ reset }) {
   if (state.loading) return;
   state.loading = true;
+  el.feed.setAttribute('aria-busy', 'true');
 
   if (reset) {
     state.page = 1;
     el.feed.innerHTML = '';
     el.loadmore.hidden = true;
+    showSkeleton({ shimmer: true });
+  } else {
+    setLoadingMore(true);
   }
 
   el.loadmore.disabled = true;
-  setStatus(reset ? 'Loading…' : 'Loading more…', 'loading');
+  setStatus('');
 
   try {
     const data = await fetchPage(state.page);
     const blocks = Array.isArray(data.data) ? data.data : [];
     const meta = data.meta || {};
+
+    if (reset) hideSkeleton();
 
     const frag = document.createDocumentFragment();
     for (const b of blocks) frag.appendChild(renderItem(b));
@@ -816,7 +1017,6 @@ async function loadFeed({ reset }) {
 
     state.hasMore = meta.has_more_pages ?? (blocks.length === PER_PAGE);
     if (state.hasMore) state.page += 1;
-    setStatus('');
 
     if (el.feed.children.length === 0) {
       const empty = document.createElement('div');
@@ -824,6 +1024,7 @@ async function loadFeed({ reset }) {
       empty.textContent = 'Nothing here.';
       el.feed.appendChild(empty);
       el.loadmore.hidden = true;
+      state.hasMore = false;
     } else {
       el.loadmore.hidden = !state.hasMore;
     }
@@ -831,16 +1032,24 @@ async function loadFeed({ reset }) {
     // Enrich in background (don't block UI); counts ride along when the
     // sort is 'popular'.
     enrichChannels();
+
+    // Keep filling while the sentinel is still in view (e.g. a short first
+    // page, or many items hidden by filters).
+    if (state.hasMore) requestAnimationFrame(maybeLoadMore);
   } catch (err) {
+    if (reset) hideSkeleton();
     setStatus(friendlyError(err), 'error');
     if (err instanceof ApiError && err.status === 401) {
       state.token = '';
       clearToken();
       showAuth(true);
+      showSkeleton({ shimmer: false });
     }
   } finally {
     state.loading = false;
     el.loadmore.disabled = false;
+    el.feed.removeAttribute('aria-busy');
+    setLoadingMore(false);
   }
 }
 
@@ -865,6 +1074,7 @@ function setView(mode) {
   const applyLayout = () => {
     const isGrid = mode === 'grid';
     el.feed.classList.toggle('grid', isGrid);
+    el.skeleton.classList.toggle('grid', isGrid);
     el.container.classList.toggle('wide', isGrid);
   };
 
@@ -903,6 +1113,15 @@ function clearToken() {
 function showAuth(show) {
   el.auth.classList.toggle('open', show);
   el.authOverlay.classList.toggle('open', show);
+  // Lock background scroll while the modal is open (see :root.modal-open).
+  // Measure the live scrollbar width *before* locking so padding can backfill
+  // the space it gives up (0 with overlay scrollbars) and the layout holds.
+  const root = document.documentElement;
+  if (show) {
+    const comp = window.innerWidth - root.clientWidth;
+    root.style.setProperty('--scrollbar-comp', `${comp}px`);
+  }
+  root.classList.toggle('modal-open', show);
   const hasToken = !!state.token;
   // Only hide controls on first visit (no token yet)
   el.controls.hidden = !hasToken;
@@ -912,7 +1131,6 @@ function showAuth(show) {
   el.manageApps.hidden = !hasToken;
   el.authActions.hidden = !hasToken;
   el.settingsToggle.classList.toggle('connected', hasToken);
-  el.authClose.hidden = !hasToken;
 
   // User info
   if (hasToken && state.user) {
@@ -942,6 +1160,14 @@ function showAuth(show) {
 }
 
 async function start() {
+  // Paint a skeleton before any awaits so there's no blank flash while the
+  // OAuth token exchange or first feed fetch is in flight: shimmer when a feed
+  // load is expected (stored token, or returning from the OAuth redirect),
+  // flat when the sign-in modal is about to lock the view.
+  const params = new URLSearchParams(location.search);
+  const expectFeed = state.token || params.has('code') || params.has('error');
+  showSkeleton({ shimmer: !!expectFeed });
+
   // Complete an in-flight OAuth redirect before anything else (oauth.js).
   const oauthResult = await handleOAuthCallback();
   if (oauthResult) {
@@ -969,6 +1195,8 @@ async function start() {
     loadFeed({ reset: true });
   } else {
     showAuth(true);
+    // Flat gray skeleton sits behind the locked modal (no shimmer).
+    showSkeleton({ shimmer: false });
   }
 }
 
@@ -978,16 +1206,19 @@ el.oauthSignin.addEventListener('click', () => {
 });
 
 el.settingsToggle.addEventListener('click', () => showAuth(!el.auth.classList.contains('open')));
-el.authClose.addEventListener('click', () => { if (state.token) showAuth(false); });
 el.authOverlay.addEventListener('click', () => { if (state.token) showAuth(false); });
 
 document.getElementById('sign-out').addEventListener('click', () => {
   state.token = '';
   state.user = null;
+  state.hasMore = false;
   clearToken();
   el.feed.innerHTML = '';
   el.loadmore.hidden = true;
+  el.loadmoreSpinner.hidden = true;
   showAuth(true);
+  // Return to the flat preview skeleton behind the modal.
+  showSkeleton({ shimmer: false });
 });
 
 el.scope.addEventListener('change', () => {
