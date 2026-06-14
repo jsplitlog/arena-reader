@@ -55,6 +55,7 @@ const el = {
   refresh: document.getElementById('refresh'),
   settingsToggle: document.getElementById('settings-toggle'),
   auth: document.getElementById('auth'),
+  authClose: document.getElementById('auth-close'),
   oauthConnect: document.getElementById('oauth-connect'),
   oauthSignin: document.getElementById('oauth-signin'),
   rememberToken: document.getElementById('remember-token'),
@@ -538,7 +539,7 @@ const PLUS_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" s
 const X_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
 
 // A label + value row in the per-item actions menu. The trailing icon
-// button adds the filter (+) or removes it (x) depending on current state.
+// button adds the filter (+).
 function actionsMenuRow(menu, sectionLabel, value, isFiltered, onAdd, onRemove) {
   const label = document.createElement('span');
   label.className = 'actions-menu-label';
@@ -551,11 +552,11 @@ function actionsMenuRow(menu, sectionLabel, value, isFiltered, onAdd, onRemove) 
   row.appendChild(span);
   const btn = document.createElement('button');
   btn.type = 'button';
-  btn.innerHTML = isFiltered() ? X_ICON : PLUS_ICON;
-  btn.setAttribute('aria-label', `${isFiltered() ? 'Unmute' : 'Mute'} ${value}`);
-  btn.title = isFiltered() ? 'Unmute' : 'Mute';
+  btn.innerHTML = PLUS_ICON;
+  btn.setAttribute('aria-label', `Mute ${value}`);
+  btn.title = 'Mute';
   btn.addEventListener('click', () => {
-    if (isFiltered()) onRemove(); else onAdd();
+    onAdd();
     menu.hidePopover();
   });
   row.appendChild(btn);
@@ -1128,6 +1129,7 @@ function showAuth(show) {
   el.rememberLabel.hidden = hasToken;
   el.manageApps.hidden = !hasToken;
   el.authActions.hidden = !hasToken;
+  el.authClose.hidden = !hasToken;
   el.settingsToggle.classList.toggle('connected', hasToken);
 
   // User info
@@ -1205,6 +1207,7 @@ el.oauthSignin.addEventListener('click', () => {
 
 el.settingsToggle.addEventListener('click', () => showAuth(!el.auth.classList.contains('open')));
 el.authOverlay.addEventListener('click', () => { if (state.token) showAuth(false); });
+el.authClose.addEventListener('click', () => { if (state.token) showAuth(false); });
 
 document.getElementById('sign-out').addEventListener('click', () => {
   state.token = '';
@@ -1307,5 +1310,40 @@ el.loadmore.addEventListener('click', () => loadFeed({ reset: false }));
     if (e.clientY <= HOVER_ZONE) el.topbar.classList.remove('nav-hidden');
   }, { passive: true });
 })();
+
+// Keyboard navigation (j/k) for feed item headlines
+window.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA' || e.isContentEditable) return;
+  if (e.altKey || e.ctrlKey || e.metaKey) return;
+
+  if (e.key === 'j' || e.key === 'k') {
+    const items = Array.from(document.querySelectorAll('.item:not(.filtered) .item-title a'));
+    if (!items.length) return;
+
+    e.preventDefault();
+    const active = document.activeElement;
+    let index = items.indexOf(active);
+
+    if (index === -1) {
+      const closestItem = active ? active.closest('.item') : null;
+      if (closestItem) {
+        const headline = closestItem.querySelector('.item-title a');
+        index = items.indexOf(headline);
+      }
+    }
+
+    if (e.key === 'j') {
+      index = index === -1 ? 0 : Math.min(index + 1, items.length - 1);
+    } else if (e.key === 'k') {
+      index = index === -1 ? items.length - 1 : Math.max(index - 1, 0);
+    }
+
+    const target = items[index];
+    if (target) {
+      target.focus();
+      target.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+  }
+});
 
 start();
