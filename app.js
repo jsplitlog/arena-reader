@@ -1119,8 +1119,18 @@ function showAuth(show) {
   if (show) {
     const comp = window.innerWidth - root.clientWidth;
     root.style.setProperty('--scrollbar-comp', `${comp}px`);
+    root.classList.add('modal-open');
+  } else {
+    if (prefersReducedMotion()) {
+      root.classList.remove('modal-open');
+    } else {
+      setTimeout(() => {
+        if (!el.auth.classList.contains('open')) {
+          root.classList.remove('modal-open');
+        }
+      }, 150); // 150ms matches the exit transition duration
+    }
   }
-  root.classList.toggle('modal-open', show);
   const hasToken = !!state.token;
   // Only hide controls on first visit (no token yet)
   el.controls.hidden = !hasToken;
