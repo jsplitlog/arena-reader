@@ -495,8 +495,15 @@ code {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 8px 16px;
+  /* On very narrow modals, stack the two links onto their own lines instead of
+     letting their text labels wrap mid-phrase. The labels are kept on one line
+     (white-space: nowrap below), so the break happens at the item level only
+     once they no longer fit side by side. */
+  flex-wrap: wrap;
 }
+.auth-footer .remember-label,
+.auth-footer .auth-source { white-space: nowrap; }
 .auth-source {
   display: inline-flex;
   align-items: center;
