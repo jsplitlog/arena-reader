@@ -89,6 +89,17 @@ code {
   font-size: 0.8125em;
 }
 
+/* Honor reduced-motion globally: collapse every transition to instant. This
+   covers the interactive animations (modal, popovers, scale-on-press, view
+   switch, toast, item exit, badge). Keyframe loaders (skeleton, spinner) keep
+   gentle, non-vestibular motion via their own reduced-motion rules below. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* ---- topbar ---- */
 .topbar {
   position: sticky;
@@ -1027,6 +1038,17 @@ code {
 }
 
 /* ---- filtered items ---- */
+/* Subtle exit when a new filter catches an item: fade + small upward drift
+   (softer than an enter), then .filtered removes it from layout. Placed after
+   the grid rules so its transition-property wins over .feed.grid .item. */
+.item.removing {
+  opacity: 0;
+  transform: translateY(-8px);
+  transition-property: opacity, transform;
+  transition-duration: 200ms;
+  transition-timing-function: ease-in;
+  pointer-events: none;
+}
 .item.filtered { display: none !important; }
 
 /* ---- icon buttons (filter, settings) ---- */
@@ -1078,10 +1100,33 @@ code {
   border-radius: 7px;
   padding: 0 3px;
   font-weight: 700;
+  /* Tabular figures so a 1→2 digit change doesn't shift the badge width */
+  font-variant-numeric: tabular-nums;
+  /* Smooth fade/scale when the count hits zero (see .hiding) */
+  transition-property: opacity, scale;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
 }
 .icon-badge.disabled {
   background: var(--border);
   color: var(--fg-muted);
+}
+/* Fade + shrink out when the active-filter count returns to 0 */
+.icon-badge.hiding {
+  opacity: 0;
+  scale: 0.6;
+}
+/* One-shot pop when the count increments/decrements */
+.icon-badge.pop {
+  animation: badge-pop 280ms ease-out;
+}
+@keyframes badge-pop {
+  0% { scale: 1; }
+  35% { scale: 1.4; }
+  100% { scale: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .icon-badge.pop { animation: none; }
 }
 
 /* ---- filter dropdown ---- */
@@ -1096,7 +1141,11 @@ code {
   right: anchor(right);
   width: 220px;
   max-height: 260px;
-  overflow-y: auto;
+  /* Flex column with a clipped body so the header pins and only the list
+     scrolls (see .filter-list). */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -1127,6 +1176,7 @@ code {
   }
 }
 .filter-dropdown-head {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1148,7 +1198,14 @@ code {
   cursor: pointer;
 }
 .filter-toggle-btn:hover { border-color: var(--fg-muted); }
-.filter-list { padding: 2px 0; }
+.filter-list {
+  padding: 2px 0;
+  /* Only the list scrolls (header stays pinned above); thin, themed scrollbar
+     to match the app's native-minimal treatment. */
+  overflow-y: auto;
+  min-height: 0;
+  scrollbar-width: thin;
+}
 .filter-empty {
   padding: 10px;
   font-size: 0.75rem;
@@ -1203,4 +1260,47 @@ code {
   .topbar-inner {
     gap: 0.1875em;
   }
+}
+
+/* ---- toast ---- */
+/* Brief, non-blocking confirmation for filter add/remove (issue #35). Stacks
+   bottom-center; each toast auto-dismisses. Shadow over border for depth. */
+.toast-region {
+  position: fixed;
+  left: 50%;
+  bottom: calc(1.25em + env(safe-area-inset-bottom, 0));
+  transform: translateX(-50%);
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+.toast {
+  pointer-events: auto;
+  max-width: min(90vw, 320px);
+  padding: 8px 14px;
+  background: var(--bg);
+  color: var(--fg);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-elevated);
+  font-size: 0.75rem;
+  line-height: 1.3;
+  text-align: center;
+  /* Enter combines opacity + translateY + blur; base state doubles as the exit
+     target (shorter duration than the enter, per the subtle-exit guideline). */
+  opacity: 0;
+  transform: translateY(8px);
+  filter: blur(4px);
+  transition-property: opacity, transform, filter;
+  transition-duration: 180ms;
+  transition-timing-function: ease-in;
+}
+.toast.show {
+  opacity: 1;
+  transform: translateY(0);
+  filter: blur(0);
+  transition-duration: 260ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
 }

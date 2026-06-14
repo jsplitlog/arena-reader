@@ -80,11 +80,36 @@ const el = {
   filterDropdown: document.getElementById('filter-dropdown'),
   filterList: document.getElementById('filter-list'),
   filterToggle: document.getElementById('filter-toggle'),
+  toastRegion: document.getElementById('toast-region'),
   container: document.querySelector('.container'),
   topbar: document.querySelector('.topbar'),
   topbarInner: document.querySelector('.topbar-inner'),
   selectRow: document.querySelector('.select-row'),
 };
+
+// Single source of truth for motion gating; CSS handles the rest globally.
+const reduceMotionMQ = window.matchMedia('(prefers-reduced-motion: reduce)');
+function prefersReducedMotion() { return reduceMotionMQ.matches; }
+
+/* ---------- toast ---------- */
+// Brief, non-blocking confirmation (issue #35). Reusable for any future toast.
+function showToast(message) {
+  if (!message) return;
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = message;
+  el.toastRegion.appendChild(toast);
+  // Enter on the next frame so the transition runs from the base state. Under
+  // reduced motion the global rule makes these transitions instant.
+  requestAnimationFrame(() => toast.classList.add('show'));
+  setTimeout(() => {
+    toast.classList.remove('show');
+    let removed = false;
+    const drop = () => { if (removed) return; removed = true; toast.remove(); };
+    toast.addEventListener('transitionend', drop, { once: true });
+    setTimeout(drop, 400); // fallback if no transition fires
+  }, 2400);
+}
 
 // On mobile the three selects are equal-width thirds whose label size
 // scales to fit (see .select-row in styles.css). The CSS divisor encodes
@@ -292,54 +317,139 @@ function filterDomain(domain, displayName) {
   if (!domain) return;
   state.filters.domains[domain] = displayName || domain;
   saveFilters();
-  applyFilters();
+  applyFilters({ animate: true });
   renderFilterUI();
+  showToast(`${displayName || domain} muted`);
 }
 
 function unfilterDomain(domain) {
+  const label = state.filters.domains[domain];
   delete state.filters.domains[domain];
   saveFilters();
   applyFilters();
   renderFilterUI();
+  showToast(`${(typeof label === 'string' && label) || domain} unmuted`);
 }
 
 function filterUser(slug, name) {
   if (!slug) return;
   state.filters.users[slug] = name || slug;
   saveFilters();
-  applyFilters();
+  applyFilters({ animate: true });
   renderFilterUI();
+  showToast(`${name || slug} muted`);
 }
 
 function unfilterUser(slug) {
+  const label = state.filters.users[slug];
   delete state.filters.users[slug];
   saveFilters();
   applyFilters();
   renderFilterUI();
+  showToast(`${label || slug} unmuted`);
 }
 
 function filterChannel(slug, title) {
   if (!slug) return;
   state.filters.channels[slug] = title || slug;
   saveFilters();
-  applyFilters();
+  applyFilters({ animate: true });
   renderFilterUI();
+  showToast(`${title || slug} muted`);
 }
 
 function unfilterChannel(slug) {
+  const label = state.filters.channels[slug];
   delete state.filters.channels[slug];
   saveFilters();
   applyFilters();
   renderFilterUI();
+  showToast(`${label || slug} unmuted`);
 }
 
-function applyFilters() {
+function applyFilters(opts) {
+  const animate = !!(opts && opts.animate) && !prefersReducedMotion();
+  let outIndex = 0;
   el.feed.querySelectorAll('.item').forEach((item) => {
     const d = item.getAttribute('data-domain') || '';
     const u = item.getAttribute('data-user') || '';
     const c = item.getAttribute('data-channel') || '';
-    item.classList.toggle('filtered', isItemFiltered(d, u, c));
+    const filtered = isItemFiltered(d, u, c);
+    if (filtered) {
+      if (item.classList.contains('removing')) return;            // already exiting
+      if (!item.classList.contains('filtered') && animate) animateItemOut(item, outIndex++);
+      else item.classList.add('filtered');
+    } else {
+      // Unfiltered (or filters toggled off): cancel any in-flight exit and show.
+      item.classList.remove('filtered', 'removing');
+      item.style.transitionDelay = '';
+    }
   });
+}
+
+// Animate a newly-filtered item out (subtle fade + upward drift), then drop it
+// from layout via .filtered. Tight, capped stagger so a prolific domain still
+// settles quickly. Re-checks filter state on completion in case it was undone.
+function animateItemOut(item, index) {
+  const delay = Math.min(index, 6) * 25;
+  item.style.transitionDelay = `${delay}ms`;
+  item.classList.add('removing');
+  let done = false;
+  const finalize = () => {
+    if (done) return;
+    done = true;
+    item.removeEventListener('transitionend', onEnd);
+    item.classList.remove('removing');
+    item.style.transitionDelay = '';
+    const d = item.getAttribute('data-domain') || '';
+    const u = item.getAttribute('data-user') || '';
+    const c = item.getAttribute('data-channel') || '';
+    item.classList.toggle('filtered', isItemFiltered(d, u, c));
+  };
+  function onEnd(e) {
+    if (e.target === item && e.propertyName === 'opacity') finalize();
+  }
+  item.addEventListener('transitionend', onEnd);
+  setTimeout(finalize, 200 + delay + 120);                       // fallback
+}
+
+// Animate the nav filter badge as the active-filter count changes: a one-shot
+// pop on increment/decrement, a fade-out when it returns to 0. The first call
+// (page load) sets the value without animating (skip-animation-on-load).
+let badgePrevCount = 0;
+let badgeInitialized = false;
+function updateFilterBadge(count) {
+  const badge = el.filterCount;
+  const prev = badgePrevCount;
+  badgePrevCount = count;
+  const reduce = prefersReducedMotion();
+  if (count > 0) badge.textContent = String(count);
+
+  if (count === 0) {
+    if (badgeInitialized && prev > 0 && !reduce) {
+      badge.classList.add('hiding');
+      let hidden = false;
+      const hide = () => { if (hidden) return; hidden = true; badge.hidden = true; badge.classList.remove('hiding'); };
+      badge.addEventListener('transitionend', function h(e) {
+        if (e.propertyName !== 'opacity') return;
+        badge.removeEventListener('transitionend', h);
+        hide();
+      });
+      setTimeout(hide, 240); // fallback
+    } else {
+      badge.hidden = true;
+    }
+  } else {
+    badge.classList.remove('hiding');
+    badge.hidden = false;
+    if (badgeInitialized && prev !== count && !reduce) {
+      badge.classList.remove('pop');
+      void badge.offsetWidth; // restart the keyframe
+      badge.classList.add('pop');
+      badge.addEventListener('animationend', () => badge.classList.remove('pop'), { once: true });
+    }
+  }
+  badgeInitialized = true;
 }
 
 function renderFilterUI() {
@@ -348,8 +458,7 @@ function renderFilterUI() {
   const channelKeys = Object.keys(state.filters.channels);
   const count = domainKeys.length + userKeys.length + channelKeys.length;
 
-  el.filterCount.hidden = count === 0;
-  el.filterCount.textContent = count;
+  updateFilterBadge(count);
   el.filterCount.classList.toggle('disabled', !state.filters.enabled);
   el.filterToggle.textContent = state.filters.enabled ? 'On' : 'Off';
 
@@ -359,7 +468,7 @@ function renderFilterUI() {
   if (count === 0) {
     const empty = document.createElement('div');
     empty.className = 'filter-empty';
-    empty.textContent = 'No filters created.\n\nFilters temporarily mute domains, users, and channels.';
+    empty.textContent = 'No filters created.\n\nFilters mute domains, users, and channels.';
     el.filterList.appendChild(empty);
   }
 
