@@ -802,6 +802,7 @@ code {
 .item-actions-menu:not(:popover-open) {
   opacity: 0;
   transform: translateY(4px);
+  display: none;
 }
 .item-actions-menu:popover-open {
   transition-duration: 200ms;
@@ -1176,6 +1177,7 @@ code {
 .filter-dropdown:not(:popover-open) {
   opacity: 0;
   transform: translateY(-4px);
+  display: none;
 }
 .filter-dropdown:popover-open {
   transition-duration: 200ms;
