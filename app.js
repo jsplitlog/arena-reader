@@ -360,7 +360,7 @@ function filterDomain(domain, displayName) {
   saveFilters();
   applyFilters({ animate: true });
   renderFilterUI();
-  showToast(`${displayName || domain} muted`, 'mute', () => unfilterDomain(domain));
+  showToast(displayName || domain, 'mute', () => unfilterDomain(domain));
 }
 
 function unfilterDomain(domain) {
@@ -370,7 +370,7 @@ function unfilterDomain(domain) {
   saveFilters();
   applyFilters();
   renderFilterUI();
-  showToast(`${(typeof label === 'string' && label) || domain} unmuted`, 'unmute');
+  showToast((typeof label === 'string' && label) || domain, 'unmute');
 }
 
 function filterUser(slug, name) {
@@ -380,7 +380,7 @@ function filterUser(slug, name) {
   saveFilters();
   applyFilters({ animate: true });
   renderFilterUI();
-  showToast(`${name || slug} muted`, 'mute', () => unfilterUser(slug));
+  showToast(name || slug, 'mute', () => unfilterUser(slug));
 }
 
 function unfilterUser(slug) {
@@ -390,7 +390,7 @@ function unfilterUser(slug) {
   saveFilters();
   applyFilters();
   renderFilterUI();
-  showToast(`${label || slug} unmuted`, 'unmute');
+  showToast(label || slug, 'unmute');
 }
 
 function filterChannel(slug, title) {
@@ -400,7 +400,7 @@ function filterChannel(slug, title) {
   saveFilters();
   applyFilters({ animate: true });
   renderFilterUI();
-  showToast(`${title || slug} muted`, 'mute', () => unfilterChannel(slug));
+  showToast(title || slug, 'mute', () => unfilterChannel(slug));
 }
 
 function unfilterChannel(slug) {
@@ -410,7 +410,7 @@ function unfilterChannel(slug) {
   saveFilters();
   applyFilters();
   renderFilterUI();
-  showToast(`${label || slug} unmuted`, 'unmute');
+  showToast(label || slug, 'unmute');
 }
 
 function applyFilters(opts) {

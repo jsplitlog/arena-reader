@@ -22,6 +22,10 @@
   --radius-lg: 0.5rem;
   --block-w: 315px;
   --gutter: 14px;
+  /* Navigation spacing — mirrors the Figma "Semantics" spacing tokens:
+     --nav-gap = spacing/item-padding-v (16), --nav-gap-sm = spacing/item-gap (8). */
+  --nav-gap: 16px;
+  --nav-gap-sm: 8px;
   --control-h: calc(0.75rem * 1.8125 + 2px);
   --maxw: 720px;
   --maxw-grid: 1000px;
@@ -145,7 +149,7 @@ code {
 .controls {
   display: flex;
   flex-wrap: nowrap;
-  gap: 0.34375em;
+  gap: var(--nav-gap);
   align-items: center;
   flex: 1;
   min-width: 0;
@@ -991,6 +995,7 @@ code {
     flex: 1 1 100%;
     min-width: 0;
     gap: 4px;
+    margin-top: var(--nav-gap);
     container-type: inline-size;
   }
   .select-row select {
@@ -1000,7 +1005,10 @@ code {
   /* Icons stay on title row; push icon cluster to the right */
   #settings-toggle { margin-left: auto; }
   .controls .spacer { display: none; }
-  .topbar-inner { gap: 0.34375em; }
+  /* Tight horizontal gap between the title-row icons. Row-gap is 0 because the
+     full-width ::after wrap-break counts as its own (zero-height) flex line, so
+     a row-gap would apply twice; the select row's margin-top sets the line gap. */
+  .topbar-inner { column-gap: var(--nav-gap-sm); row-gap: 0; }
 
   /* Larger touch targets on mobile */
   .controls select,
