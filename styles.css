@@ -22,6 +22,10 @@
   --radius-lg: 0.5rem;
   --block-w: 315px;
   --gutter: 14px;
+  /* Navigation spacing — mirrors the Figma "Semantics" spacing tokens:
+     --nav-gap = spacing/item-padding-v (16), --nav-gap-sm = spacing/item-gap (8). */
+  --nav-gap: 16px;
+  --nav-gap-sm: 8px;
   --control-h: calc(0.75rem * 1.8125 + 2px);
   --maxw: 720px;
   --maxw-grid: 1000px;
@@ -145,7 +149,7 @@ code {
 .controls {
   display: flex;
   flex-wrap: nowrap;
-  gap: 0.34375em;
+  gap: var(--nav-gap);
   align-items: center;
   flex: 1;
   min-width: 0;
@@ -228,7 +232,8 @@ code {
 /* overlay + modal: animated open/close
    Base = closed/exit state (shorter, ease-in).
    .open = enter state (longer, spring-like curve). */
-.auth-overlay {
+.auth-overlay,
+.modal-overlay {
   position: fixed;
   inset: 0;
   z-index: 50;
@@ -239,16 +244,19 @@ code {
   transition-duration: 150ms;
   transition-timing-function: ease-in;
 }
-.auth-overlay.open {
+.auth-overlay.open,
+.modal-overlay.open {
   opacity: 1;
   visibility: visible;
   transition-duration: 200ms;
   transition-timing-function: ease-out;
 }
 @media (prefers-color-scheme: dark) {
-  .auth-overlay { background: rgba(0, 0, 0, 0.5); }
+  .auth-overlay,
+  .modal-overlay { background: rgba(0, 0, 0, 0.5); }
 }
-.auth {
+.auth,
+.shortcuts-modal {
   position: fixed;
   z-index: 51;
   top: 50%;
@@ -271,7 +279,8 @@ code {
   transition-duration: 150ms;
   transition-timing-function: ease-in;
 }
-.auth.open {
+.auth.open,
+.shortcuts-modal.open {
   opacity: 1;
   transform: translate(-50%, -50%) translateY(0);
   filter: blur(0px);
@@ -280,8 +289,74 @@ code {
   transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
 }
 @media (prefers-color-scheme: dark) {
-  .auth { box-shadow: var(--shadow-elevated), 0 4px 24px rgba(0, 0, 0, 0.5); }
+  .auth,
+  .shortcuts-modal { box-shadow: var(--shadow-elevated), 0 4px 24px rgba(0, 0, 0, 0.5); }
 }
+/* ---- keyboard shortcut sheet ---- */
+/* Cap height to the viewport (1em breathing room top/bottom) so the centered
+   box never grows taller than the screen and clips off the top edge on short
+   breakpoints; the list scrolls internally while the header/close stay pinned.
+   svh (smallest viewport height) keeps it fitting even while mobile browser
+   chrome is visible; vh is the fallback for browsers without svh support. */
+.shortcuts-modal {
+  max-height: calc(100vh - 2em);
+  max-height: calc(100svh - 2em);
+}
+.shortcuts-head strong { font-size: 0.9rem; }
+.shortcuts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  overflow-y: auto;
+  min-height: 0;
+}
+.shortcut-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.shortcut-group-label {
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--fg-muted);
+}
+.shortcut-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.shortcut-label {
+  font-size: 0.8rem;
+  color: var(--fg-secondary);
+}
+.shortcut-keys {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.shortcut-key-sep {
+  font-size: 0.7rem;
+  color: var(--fg-muted);
+}
+.shortcuts-list kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  font-family: inherit;
+  font-size: 0.75rem;
+  line-height: 1;
+  color: var(--fg);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
 .auth-close {
   position: absolute;
   top: 16px;
@@ -431,8 +506,15 @@ code {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 8px 16px;
+  /* On very narrow modals, stack the two links onto their own lines instead of
+     letting their text labels wrap mid-phrase. The labels are kept on one line
+     (white-space: nowrap below), so the break happens at the item level only
+     once they no longer fit side by side. */
+  flex-wrap: wrap;
 }
+.auth-footer .remember-label,
+.auth-footer .auth-source { white-space: nowrap; }
 .auth-source {
   display: inline-flex;
   align-items: center;
@@ -931,6 +1013,7 @@ code {
     flex: 1 1 100%;
     min-width: 0;
     gap: 4px;
+    margin-top: var(--nav-gap);
     container-type: inline-size;
   }
   .select-row select {
@@ -940,7 +1023,10 @@ code {
   /* Icons stay on title row; push icon cluster to the right */
   #settings-toggle { margin-left: auto; }
   .controls .spacer { display: none; }
-  .topbar-inner { gap: 0.34375em; }
+  /* Tight horizontal gap between the title-row icons. Row-gap is 0 because the
+     full-width ::after wrap-break counts as its own (zero-height) flex line, so
+     a row-gap would apply twice; the select row's margin-top sets the line gap. */
+  .topbar-inner { column-gap: var(--nav-gap-sm); row-gap: 0; }
 
   /* Larger touch targets on mobile */
   .controls select,
