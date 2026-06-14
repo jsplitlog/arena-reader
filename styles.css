@@ -293,11 +293,22 @@ code {
   .shortcuts-modal { box-shadow: var(--shadow-elevated), 0 4px 24px rgba(0, 0, 0, 0.5); }
 }
 /* ---- keyboard shortcut sheet ---- */
+/* Cap height to the viewport (1em breathing room top/bottom) so the centered
+   box never grows taller than the screen and clips off the top edge on short
+   breakpoints; the list scrolls internally while the header/close stay pinned.
+   svh (smallest viewport height) keeps it fitting even while mobile browser
+   chrome is visible; vh is the fallback for browsers without svh support. */
+.shortcuts-modal {
+  max-height: calc(100vh - 2em);
+  max-height: calc(100svh - 2em);
+}
 .shortcuts-head strong { font-size: 0.9rem; }
 .shortcuts-list {
   display: flex;
   flex-direction: column;
   gap: 18px;
+  overflow-y: auto;
+  min-height: 0;
 }
 .shortcut-group {
   display: flex;
