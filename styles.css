@@ -189,8 +189,10 @@ code {
 .controls > a:hover {
   border-color: var(--fg-muted);
 }
-.controls > button:active,
-.controls select:active {
+/* Press-scale on buttons only. Native <select> holds :active while its dropdown
+   popup is open and releases it oddly on close, which made the scale pop in/out
+   when opening a dropdown. */
+.controls > button:active {
   scale: 0.96;
 }
 .controls .ghost {
