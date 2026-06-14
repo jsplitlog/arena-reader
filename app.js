@@ -82,7 +82,6 @@ const el = {
   filterList: document.getElementById('filter-list'),
   filterToggle: document.getElementById('filter-toggle'),
   filterReset: document.getElementById('filter-reset'),
-  helpBtn: document.getElementById('help-btn'),
   shortcuts: document.getElementById('shortcuts'),
   shortcutsOverlay: document.getElementById('shortcuts-overlay'),
   shortcutsList: document.getElementById('shortcuts-list'),
@@ -1547,7 +1546,6 @@ function toggleShortcuts(show) {
   }
 }
 
-el.helpBtn.addEventListener('click', () => toggleShortcuts());
 el.shortcutsClose.addEventListener('click', () => toggleShortcuts(false));
 el.shortcutsOverlay.addEventListener('click', () => toggleShortcuts(false));
 
