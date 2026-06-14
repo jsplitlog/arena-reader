@@ -94,11 +94,44 @@ function prefersReducedMotion() { return reduceMotionMQ.matches; }
 
 /* ---------- toast ---------- */
 // Brief, non-blocking confirmation (issue #35). Reusable for any future toast.
-function showToast(message) {
+function showToast(message, type = 'mute', onUndo = null) {
   if (!message) return;
   const toast = document.createElement('div');
   toast.className = 'toast';
-  toast.textContent = message;
+
+  // Left icon (Lucide Eye/Eye-off)
+  const iconSpan = document.createElement('span');
+  iconSpan.className = 'toast-icon';
+  if (type === 'mute') {
+    iconSpan.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.52 13.52 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>`;
+  } else {
+    iconSpan.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0z"/><circle cx="12" cy="12" r="3"/></svg>`;
+  }
+  toast.appendChild(iconSpan);
+
+  // Text label
+  const textSpan = document.createElement('span');
+  textSpan.className = 'toast-label';
+  textSpan.textContent = message;
+  toast.appendChild(textSpan);
+
+  // Undo button (on the right if onUndo is provided)
+  if (type === 'mute' && onUndo) {
+    const undoBtn = document.createElement('button');
+    undoBtn.type = 'button';
+    undoBtn.className = 'toast-undo';
+    undoBtn.setAttribute('aria-label', 'Undo');
+    undoBtn.title = 'Undo';
+    undoBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>`;
+    undoBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      onUndo();
+      toast.classList.remove('show');
+      toast.remove();
+    });
+    toast.appendChild(undoBtn);
+  }
+
   el.toastRegion.appendChild(toast);
   // Enter on the next frame so the transition runs from the base state. Under
   // reduced motion the global rule makes these transitions instant.
@@ -320,7 +353,7 @@ function filterDomain(domain, displayName) {
   saveFilters();
   applyFilters({ animate: true });
   renderFilterUI();
-  showToast(`${displayName || domain} muted`);
+  showToast(`${displayName || domain} muted`, 'mute', () => unfilterDomain(domain));
 }
 
 function unfilterDomain(domain) {
@@ -329,7 +362,7 @@ function unfilterDomain(domain) {
   saveFilters();
   applyFilters();
   renderFilterUI();
-  showToast(`${(typeof label === 'string' && label) || domain} unmuted`);
+  showToast(`${(typeof label === 'string' && label) || domain} unmuted`, 'unmute');
 }
 
 function filterUser(slug, name) {
@@ -338,7 +371,7 @@ function filterUser(slug, name) {
   saveFilters();
   applyFilters({ animate: true });
   renderFilterUI();
-  showToast(`${name || slug} muted`);
+  showToast(`${name || slug} muted`, 'mute', () => unfilterUser(slug));
 }
 
 function unfilterUser(slug) {
@@ -347,7 +380,7 @@ function unfilterUser(slug) {
   saveFilters();
   applyFilters();
   renderFilterUI();
-  showToast(`${label || slug} unmuted`);
+  showToast(`${label || slug} unmuted`, 'unmute');
 }
 
 function filterChannel(slug, title) {
@@ -356,7 +389,7 @@ function filterChannel(slug, title) {
   saveFilters();
   applyFilters({ animate: true });
   renderFilterUI();
-  showToast(`${title || slug} muted`);
+  showToast(`${title || slug} muted`, 'mute', () => unfilterChannel(slug));
 }
 
 function unfilterChannel(slug) {
@@ -365,7 +398,7 @@ function unfilterChannel(slug) {
   saveFilters();
   applyFilters();
   renderFilterUI();
-  showToast(`${label || slug} unmuted`);
+  showToast(`${label || slug} unmuted`, 'unmute');
 }
 
 function applyFilters(opts) {
