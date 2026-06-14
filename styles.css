@@ -627,9 +627,14 @@ code {
   overflow: hidden;
   text-wrap: pretty;
 }
-.item-meta {
+/* Single attribution row: leading stack (sharer over channel) + trailing
+   timestamp/buttons group, vertically centered. */
+.item-attribution {
   grid-column: 1 / -1;
-  padding-top: 0.5em;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-top: 2em;
   font-size: 0.75rem;
   color: var(--fg-muted);
   font-variant-numeric: tabular-nums;
@@ -667,16 +672,41 @@ code {
 @media (prefers-color-scheme: dark) {
   .favicon, .avatar-fallback { outline-color: rgba(255, 255, 255, 0.1); }
 }
-.item-meta .dot { opacity: 0.4; }
-.item-meta a { color: var(--fg-muted); }
-.item-meta a:hover { color: var(--fg); }
-.meta-line {
+.item-attribution .dot { opacity: 0.4; }
+.item-attribution a { color: var(--fg-muted); }
+.item-attribution a:hover { color: var(--fg); }
+.item-attribution time { color: var(--fg-muted); }
+/* Leading stack: sharer row over the channel/collection line */
+.item-attr-lead {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.item-author {
   display: flex;
   align-items: center;
   gap: 0.34375em;
+  min-width: 0;
 }
-.meta-line + .meta-line { margin-top: 0.125em; }
-.meta-channel { display: contents; }
+.item-author a { color: var(--fg-secondary); }
+.item-author a:hover { color: var(--fg); text-decoration: underline; }
+/* Truncate a long sharer name (a link or a plain span) before it pushes the
+   trailing buttons */
+.item-author > :last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.meta-channel {
+  display: flex;
+  align-items: center;
+  gap: 0.34375em;
+  min-width: 0;
+}
+.meta-channel:empty { display: none; }
 .meta-channel a {
   color: var(--fg-muted);
   max-width: 24ch;
@@ -686,21 +716,6 @@ code {
   min-width: 0;
 }
 .meta-channel a:hover { color: var(--fg); }
-.meta-spacer { flex: 1; }
-.item-author {
-  grid-column: 1 / -1;
-  display: flex;
-  align-items: center;
-  gap: 0.34375em;
-  padding-top: 2em;
-  font-size: 0.75rem;
-}
-.item-author a { color: var(--fg-secondary); }
-.item-author time,
-.meta-line time { color: var(--fg-muted); }
-.item-author a:hover { color: var(--fg); text-decoration: underline; }
-.meta-line > a { color: var(--fg-secondary); }
-.meta-line > a:hover { color: var(--fg); text-decoration: underline; }
 
 .item-thumb-wrap {
   position: relative;
@@ -971,16 +986,13 @@ code {
 .feed.grid .item-body {
   padding: 0.5rem 0.5rem 0;
 }
-.feed.grid .item-author {
-  /* Pin the attribution + meta to the bottom of the (row-stretched) card so
-     they align across a row regardless of neighbours' title/description
-     length. The auto margin absorbs the extra height; the 2em padding-top
-     becomes the *minimum* gap above the attribution. */
+.feed.grid .item-attribution {
+  /* Pin the attribution to the bottom of the (row-stretched) card so cards
+     align across a row regardless of neighbours' title/description length.
+     The auto margin absorbs the extra height; the 2em padding-top becomes the
+     *minimum* gap above the attribution. */
   margin-top: auto;
-  padding: 2em 0.5rem 0;
-}
-.feed.grid .item-meta {
-  padding: 0.5em 0.5rem;
+  padding: 2em 0.5rem 0.5rem;
 }
 @media (max-width: 640px) {
   .feed.grid { grid-template-columns: 1fr; gap: 0.75em; }
@@ -1240,7 +1252,10 @@ code {
 
 /* ---- mobile touch targets (after base rules so overrides apply) ---- */
 @media (max-width: 640px) {
-  .controls .icon-btn {
+  /* Match the article-card icon buttons (✶✶ source, filter) to the nav's */
+  .controls .icon-btn,
+  .item-actions-btn,
+  .item-icon-btn {
     width: 36px;
     height: 36px;
   }
@@ -1250,7 +1265,9 @@ code {
 }
 /* Scale down controls on very narrow screens (< iPhone SE) */
 @media (max-width: 374px) {
-  .controls .icon-btn {
+  .controls .icon-btn,
+  .item-actions-btn,
+  .item-icon-btn {
     width: 30px;
     height: 30px;
   }

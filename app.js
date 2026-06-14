@@ -665,7 +665,14 @@ function renderItem(b) {
 
   item.appendChild(thumbWrap);
 
-  // Author line: avatar, name
+  // Attribution row: a leading stack (sharer over channel) and a trailing
+  // group (timestamp · ✶✶ source · actions menu), vertically centered.
+  const attribution = document.createElement('div');
+  attribution.className = 'item-attribution';
+
+  const lead = document.createElement('div');
+  lead.className = 'item-attr-lead';
+
   const authorLine = document.createElement('div');
   authorLine.className = 'item-author';
   if (avatar) {
@@ -679,24 +686,17 @@ function renderItem(b) {
     authorLine.appendChild(avFallback);
   }
   authorLine.appendChild(metaLink(name, uUrl));
-  item.appendChild(authorLine);
+  lead.appendChild(authorLine);
 
-  // Meta bottom: channel …spacer… [ timestamp · ✶✶ source · actions menu ].
-  // The timestamp, Are.na source button, and filter/actions button share one
-  // right-aligned group (.meta-actions), with the source and filter rendered
-  // as matching icon buttons.
-  const meta = document.createElement('div');
-  meta.className = 'item-meta';
-  const metaLine = document.createElement('div');
-  metaLine.className = 'meta-line';
+  // Channel/collection line — populated asynchronously by enrichChannels()
   const channelSpan = document.createElement('span');
   channelSpan.className = 'meta-channel';
   channelSpan.setAttribute('data-block-id', String(b.id));
-  metaLine.appendChild(channelSpan);
-  const mSpacer = document.createElement('span');
-  mSpacer.className = 'meta-spacer';
-  metaLine.appendChild(mSpacer);
+  lead.appendChild(channelSpan);
 
+  attribution.appendChild(lead);
+
+  // Trailing group: timestamp + source/filter icon buttons
   const metaActions = document.createElement('div');
   metaActions.className = 'meta-actions';
   const time = document.createElement('time');
@@ -750,9 +750,8 @@ function renderItem(b) {
     metaActions.appendChild(actions);
   }
 
-  metaLine.appendChild(metaActions);
-  meta.appendChild(metaLine);
-  item.appendChild(meta);
+  attribution.appendChild(metaActions);
+  item.appendChild(attribution);
 
   return item;
 }
@@ -813,38 +812,37 @@ async function enrichChannels() {
     const info = await fetchConnectionInfo(id);
     if (!info) return;
 
-    if (showCounts && info.count >= 2) {
-      const line = span.closest('.meta-line');
-      if (line) {
-        line.appendChild(dot());
-        const badge = document.createElement('span');
-        badge.className = 'connection-badge';
-        badge.textContent = String(info.count);
-        badge.title = `${info.count} connections`;
-        line.appendChild(badge);
+    const ch = info.channel;
+    if (ch) {
+      const link = document.createElement('a');
+      link.href = ch.userSlug
+        ? `https://www.are.na/${ch.userSlug}/${ch.slug}`
+        : `https://www.are.na/channel/${ch.slug || ''}`;
+      link.target = '_blank'; link.rel = 'noopener';
+      link.textContent = ch.title;
+      span.appendChild(link);
+
+      // The channel resolves after the item renders, so tag the item now,
+      // expose a "Filter [channel]" option, and re-evaluate filtering.
+      if (item && ch.slug) {
+        item.setAttribute('data-channel', ch.slug);
+        addChannelFilterOption(item, ch.slug, ch.title || ch.slug);
+        item.classList.toggle('filtered', isItemFiltered(
+          item.getAttribute('data-domain') || '',
+          item.getAttribute('data-user') || '',
+          ch.slug,
+        ));
       }
     }
 
-    const ch = info.channel;
-    if (!ch) return;
-    const link = document.createElement('a');
-    link.href = ch.userSlug
-      ? `https://www.are.na/${ch.userSlug}/${ch.slug}`
-      : `https://www.are.na/channel/${ch.slug || ''}`;
-    link.target = '_blank'; link.rel = 'noopener';
-    link.textContent = ch.title;
-    span.appendChild(link);
-
-    // The channel resolves after the item renders, so tag the item now,
-    // expose a "Filter [channel]" option, and re-evaluate filtering.
-    if (item && ch.slug) {
-      item.setAttribute('data-channel', ch.slug);
-      addChannelFilterOption(item, ch.slug, ch.title || ch.slug);
-      item.classList.toggle('filtered', isItemFiltered(
-        item.getAttribute('data-domain') || '',
-        item.getAttribute('data-user') || '',
-        ch.slug,
-      ));
+    // Connection count rides along on the channel line when sort is 'popular'.
+    if (showCounts && info.count >= 2) {
+      span.appendChild(dot());
+      const badge = document.createElement('span');
+      badge.className = 'connection-badge';
+      badge.textContent = String(info.count);
+      badge.title = `${info.count} connections`;
+      span.appendChild(badge);
     }
   }));
 }
