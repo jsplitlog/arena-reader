@@ -82,6 +82,11 @@ const el = {
   filterList: document.getElementById('filter-list'),
   filterToggle: document.getElementById('filter-toggle'),
   filterReset: document.getElementById('filter-reset'),
+  helpBtn: document.getElementById('help-btn'),
+  shortcuts: document.getElementById('shortcuts'),
+  shortcutsOverlay: document.getElementById('shortcuts-overlay'),
+  shortcutsList: document.getElementById('shortcuts-list'),
+  shortcutsClose: document.getElementById('shortcuts-close'),
   toastRegion: document.getElementById('toast-region'),
   container: document.querySelector('.container'),
   topbar: document.querySelector('.topbar'),
@@ -1323,10 +1328,34 @@ el.filterToggle.addEventListener('click', () => {
   renderFilterUI();
 });
 
+// Restore the snapshot stashed by the last reset. Shared by the header Undo
+// button and the toast Undo so they can't double-fire (the first to run clears
+// filtersBackup; the second no-ops).
+function restoreFilters() {
+  if (!filtersBackup) return;
+  state.filters.domains = filtersBackup.domains;
+  state.filters.users = filtersBackup.users;
+  state.filters.channels = filtersBackup.channels;
+  filtersBackup = null;
+  saveFilters();
+  applyFilters();
+  renderFilterUI();
+  showToast('Filters restored', 'unmute');
+}
+
 el.filterReset.addEventListener('click', () => {
-  const domainsBackup = { ...state.filters.domains };
-  const usersBackup = { ...state.filters.users };
-  const channelsBackup = { ...state.filters.channels };
+  // After a reset the button doubles as Undo (renderFilterUI swaps the label
+  // while a backup exists): restore instead of clearing again.
+  if (filtersBackup) {
+    restoreFilters();
+    return;
+  }
+
+  filtersBackup = {
+    domains: { ...state.filters.domains },
+    users: { ...state.filters.users },
+    channels: { ...state.filters.channels },
+  };
 
   state.filters.domains = {};
   state.filters.users = {};
@@ -1336,15 +1365,7 @@ el.filterReset.addEventListener('click', () => {
   applyFilters();
   renderFilterUI();
 
-  showToast('All filters reset', 'mute', () => {
-    state.filters.domains = domainsBackup;
-    state.filters.users = usersBackup;
-    state.filters.channels = channelsBackup;
-    saveFilters();
-    applyFilters();
-    renderFilterUI();
-    showToast('Filters restored', 'unmute');
-  });
+  showToast('All filters reset', 'mute', restoreFilters);
 });
 
 el.refresh.addEventListener('click', () => loadFeed({ reset: true }));
@@ -1395,61 +1416,139 @@ el.loadmore.addEventListener('click', () => loadFeed({ reset: false }));
   }, { passive: true });
 })();
 
-// Keyboard navigation (j/k) for feed item headlines and view toggling (g)
+/* ---------- keyboard shortcuts ---------- */
+// Single source of truth: drives both dispatch (below) and the cheat sheet
+// (renderShortcuts). The Enter/Space activation on #app-title stays a local
+// element handler — it's an activation key, not a global shortcut.
+const SHORTCUTS = [
+  { keys: ['?'],      group: 'General',    label: 'Show this shortcut sheet', run: () => toggleShortcuts() },
+  { keys: ['j', 'k'], group: 'Navigation', label: 'Next / previous item',     run: (e) => moveFocus(e.key) },
+  { keys: ['g'],      group: 'View',       label: 'Toggle grid / list view',  run: () => setView(state.view === 'grid' ? 'list' : 'grid') },
+  { keys: ['f'],      group: 'View',       label: 'Toggle filters',           run: () => toggleFilters() },
+  { keys: ['r'],      group: 'Feed',       label: 'Refresh feed',             run: () => loadFeed({ reset: true }) },
+];
+
+function toggleFilters() {
+  if (el.filterDropdown.matches(':popover-open')) el.filterDropdown.hidePopover();
+  else el.filterDropdown.showPopover();
+}
+
+// Move focus through unfiltered feed headlines (j = down, k = up).
+function moveFocus(key) {
+  const items = Array.from(document.querySelectorAll('.item:not(.filtered) .item-title a'));
+  if (!items.length) return;
+
+  const active = document.activeElement;
+  let index = items.indexOf(active);
+  if (index === -1) {
+    const closestItem = active ? active.closest('.item') : null;
+    if (closestItem) index = items.indexOf(closestItem.querySelector('.item-title a'));
+  }
+
+  if (key === 'j') index = index === -1 ? 0 : Math.min(index + 1, items.length - 1);
+  else index = index === -1 ? items.length - 1 : Math.max(index - 1, 0);
+
+  const target = items[index];
+  if (target) {
+    target.focus();
+    target.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  }
+}
+
 window.addEventListener('keydown', (e) => {
-  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA' || e.isContentEditable) return;
+  // Escape closes the shortcut sheet from anywhere (it isn't a native popover).
+  if (e.key === 'Escape' && el.shortcuts.classList.contains('open')) {
+    toggleShortcuts(false);
+    return;
+  }
+
   if (e.altKey || e.ctrlKey || e.metaKey) return;
 
-  if (e.key === 'g') {
-    e.preventDefault();
-    setView(state.view === 'grid' ? 'list' : 'grid');
-    return;
-  }
+  // Shortcuts don't fire from form fields — except 'f', which must still close
+  // the filter dropdown when focus is on one of its checkboxes.
+  const inField = e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' ||
+    e.target.tagName === 'TEXTAREA' || e.isContentEditable;
+  if (inField && !(e.key === 'f' && e.target.closest('#filter-dropdown'))) return;
 
-  if (e.key === 'f') {
-    e.preventDefault();
-    if (el.filterDropdown.matches(':popover-open')) {
-      el.filterDropdown.hidePopover();
-    } else {
-      el.filterDropdown.showPopover();
-    }
-    return;
-  }
-
-  if (e.key === 'r') {
-    e.preventDefault();
-    loadFeed({ reset: true });
-    return;
-  }
-
-  if (e.key === 'j' || e.key === 'k') {
-    const items = Array.from(document.querySelectorAll('.item:not(.filtered) .item-title a'));
-    if (!items.length) return;
-
-    e.preventDefault();
-    const active = document.activeElement;
-    let index = items.indexOf(active);
-
-    if (index === -1) {
-      const closestItem = active ? active.closest('.item') : null;
-      if (closestItem) {
-        const headline = closestItem.querySelector('.item-title a');
-        index = items.indexOf(headline);
-      }
-    }
-
-    if (e.key === 'j') {
-      index = index === -1 ? 0 : Math.min(index + 1, items.length - 1);
-    } else if (e.key === 'k') {
-      index = index === -1 ? items.length - 1 : Math.max(index - 1, 0);
-    }
-
-    const target = items[index];
-    if (target) {
-      target.focus();
-      target.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-    }
-  }
+  const shortcut = SHORTCUTS.find((s) => s.keys.includes(e.key));
+  if (!shortcut) return;
+  e.preventDefault();
+  shortcut.run(e);
 });
+
+/* ---------- shortcut cheat sheet ---------- */
+function renderShortcuts() {
+  const order = [];
+  const byGroup = {};
+  SHORTCUTS.forEach((s) => {
+    if (!byGroup[s.group]) { byGroup[s.group] = []; order.push(s.group); }
+    byGroup[s.group].push(s);
+  });
+
+  el.shortcutsList.innerHTML = '';
+  order.forEach((group) => {
+    const section = document.createElement('div');
+    section.className = 'shortcut-group';
+    const heading = document.createElement('div');
+    heading.className = 'shortcut-group-label';
+    heading.textContent = group;
+    section.appendChild(heading);
+
+    byGroup[group].forEach((s) => {
+      const row = document.createElement('div');
+      row.className = 'shortcut-row';
+      const label = document.createElement('span');
+      label.className = 'shortcut-label';
+      label.textContent = s.label;
+      const keys = document.createElement('span');
+      keys.className = 'shortcut-keys';
+      s.keys.forEach((k, i) => {
+        if (i > 0) {
+          const sep = document.createElement('span');
+          sep.className = 'shortcut-key-sep';
+          sep.textContent = '/';
+          keys.appendChild(sep);
+        }
+        const kbd = document.createElement('kbd');
+        kbd.textContent = k;
+        keys.appendChild(kbd);
+      });
+      row.append(label, keys);
+      section.appendChild(row);
+    });
+    el.shortcutsList.appendChild(section);
+  });
+}
+
+// Modeled on showAuth: same scroll-lock measurement, --scrollbar-comp backfill,
+// and reduced-motion-gated deferred release so the fade-out holds without shift.
+function toggleShortcuts(show) {
+  if (show === undefined) show = !el.shortcuts.classList.contains('open');
+  if (show && !el.shortcutsList.children.length) renderShortcuts();
+
+  el.shortcuts.classList.toggle('open', show);
+  el.shortcutsOverlay.classList.toggle('open', show);
+
+  const root = document.documentElement;
+  if (show) {
+    const comp = window.innerWidth - root.clientWidth;
+    root.style.setProperty('--scrollbar-comp', `${comp}px`);
+    root.classList.add('modal-open');
+    el.shortcutsClose.focus();
+  } else {
+    const release = () => {
+      // Keep the lock if another modal is still open.
+      if (!el.shortcuts.classList.contains('open') && !el.auth.classList.contains('open')) {
+        root.classList.remove('modal-open');
+      }
+    };
+    if (prefersReducedMotion()) release();
+    else setTimeout(release, 150); // matches the exit transition
+  }
+}
+
+el.helpBtn.addEventListener('click', () => toggleShortcuts());
+el.shortcutsClose.addEventListener('click', () => toggleShortcuts(false));
+el.shortcutsOverlay.addEventListener('click', () => toggleShortcuts(false));
 
 start();
