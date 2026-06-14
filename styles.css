@@ -4,6 +4,10 @@
  */
 
 :root {
+  /* Render native scrollbars, form controls, etc. in the OS theme so they
+     match the prefers-color-scheme palette below (otherwise the UA paints a
+     light scrollbar over the dark page). */
+  color-scheme: light dark;
   --bg: #fff;
   --fg: #333;
   --fg-secondary: #585858;
@@ -33,6 +37,9 @@
     0px 0px 0px 1px rgba(0, 0, 0, 0.06),
     0px 4px 12px -2px rgba(0, 0, 0, 0.08),
     0px 8px 24px 0px rgba(0, 0, 0, 0.06);
+  /* Skeleton placeholder fill + the lighter band the shimmer sweeps across */
+  --skeleton-base: #e9e9e9;
+  --skeleton-sheen: #f4f4f4;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -49,6 +56,8 @@
     --shadow-border: 0 0 0 1px rgba(255, 255, 255, 0.08);
     --shadow-border-hover: 0 0 0 1px rgba(255, 255, 255, 0.13);
     --shadow-elevated: 0 0 0 1px rgba(255, 255, 255, 0.08);
+    --skeleton-base: #1d1d1d;
+    --skeleton-sheen: #2a2a2a;
   }
 }
 
@@ -197,6 +206,14 @@ code {
 .container.wide { max-width: none; }
 
 /* ---- auth modal ---- */
+/* Lock page scroll while the modal is open so the feed/skeleton behind the
+   overlay can't scroll independently. --scrollbar-comp (set in showAuth right
+   before locking) backfills the width the vanishing scrollbar gave up, so the
+   layout doesn't shift sideways; it's 0px with overlay scrollbars. */
+:root.modal-open {
+  overflow: hidden;
+  padding-right: var(--scrollbar-comp, 0px);
+}
 /* overlay + modal: animated open/close
    Base = closed/exit state (shorter, ease-in).
    .open = enter state (longer, spring-like curve). */
@@ -254,28 +271,6 @@ code {
 @media (prefers-color-scheme: dark) {
   .auth { box-shadow: var(--shadow-elevated), 0 4px 24px rgba(0, 0, 0, 0.5); }
 }
-.auth-close {
-  position: absolute;
-  top: 10px;
-  right: 7px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 29px;
-  height: 29px;
-  color: var(--fg-muted);
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  cursor: pointer;
-  padding: 0;
-  transition-property: color, border-color, scale;
-  transition-duration: 150ms;
-  transition-timing-function: ease-out;
-}
-.auth-close[hidden] { display: none; }
-.auth-close:hover { color: var(--fg); border-color: var(--fg-muted); }
-.auth-close:active { scale: 0.96; }
 .auth-user {
   display: flex;
   align-items: center;
@@ -424,6 +419,128 @@ code {
   .status.error { border-color: #e24937; color: #e24937; }
 }
 .status.loading { color: var(--fg-muted); }
+
+/* ---- skeleton loading ---- */
+/* One placeholder primitive with two states: flat gray (a static preview of
+   the feed layout, shown behind the locked sign-in modal) and shimmering
+   (.skeleton--loading, an active "content is loading" signal during first
+   load and media-type/filter transitions). Mirrors the feed's list and grid
+   layouts so the swap to real items is seamless. */
+.skeleton {
+  display: flex;
+  flex-direction: column;
+}
+.skeleton[hidden] { display: none; }
+
+.sk-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  column-gap: var(--gutter);
+  padding: 0.75em 0;
+  border-bottom: 1px solid var(--border);
+}
+.sk-item:first-child { padding-top: 0; }
+.sk-item:last-child { border-bottom: 0; }
+
+.sk-body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+}
+.sk-foot {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  padding-top: 2em;
+}
+
+.sk-line, .sk-thumb, .sk-dot {
+  background: var(--skeleton-base);
+  border-radius: var(--radius);
+}
+.sk-line { height: 0.7em; width: 100%; }
+.sk-line-title { height: 0.9em; width: 72%; }
+.sk-line-source { width: 35%; }
+.sk-line-desc-end { width: 45%; }
+.sk-line-meta { width: 30%; }
+.sk-thumb {
+  width: 100px;
+  height: 100px;
+  border-radius: 0;
+}
+.sk-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .sk-item { grid-template-columns: 1fr 60px; }
+  .sk-thumb { width: 60px; height: 60px; }
+}
+
+/* grid view — match .feed.grid cards (thumb on top, footer pinned bottom) */
+.skeleton.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--block-w), 1fr));
+  gap: var(--gutter);
+  justify-content: center;
+}
+.skeleton.grid .sk-item {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.skeleton.grid .sk-thumb {
+  order: -1;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  border-bottom: 1px solid var(--border);
+}
+.skeleton.grid .sk-body { padding: 0.5rem 0.5rem 0; }
+.skeleton.grid .sk-foot {
+  margin-top: auto;
+  padding: 2em 0.5rem 0.5rem;
+}
+@media (max-width: 640px) {
+  .skeleton.grid { grid-template-columns: 1fr; gap: 0.75em; }
+}
+
+/* shimmer — a lighter band sweeping across the base fill */
+.skeleton--loading .sk-line,
+.skeleton--loading .sk-thumb,
+.skeleton--loading .sk-dot {
+  background-image: linear-gradient(
+    90deg,
+    var(--skeleton-base) 25%,
+    var(--skeleton-sheen) 50%,
+    var(--skeleton-base) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton--loading .sk-line,
+  .skeleton--loading .sk-thumb,
+  .skeleton--loading .sk-dot {
+    background-image: none;
+    animation: skeleton-pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes skeleton-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+}
 
 /* ---- text block preview (square, grid only) ---- */
 .item-preview { display: none; }
@@ -856,6 +973,30 @@ code {
 #loadmore:hover { border-color: var(--fg-muted); }
 #loadmore:active { scale: 0.96; }
 #loadmore:disabled { opacity: 0.4; cursor: default; }
+
+/* Zero-height tripwire watched by the IntersectionObserver; sits just above
+   the fallback button so scrolling near the end pre-fetches the next page. */
+.feed-sentinel {
+  height: 1px;
+  pointer-events: none;
+}
+/* Shown in place of the button while the next page is fetching */
+.loadmore-spinner {
+  width: 18px;
+  height: 18px;
+  margin: 0 auto;
+  border: 2px solid var(--border);
+  border-top-color: var(--fg-muted);
+  border-radius: 50%;
+  animation: loadmore-spin 0.7s linear infinite;
+}
+.loadmore-spinner[hidden] { display: none; }
+@keyframes loadmore-spin {
+  to { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .loadmore-spinner { animation-duration: 1.4s; }
+}
 
 .empty {
   text-align: center;

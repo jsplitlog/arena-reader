@@ -26,7 +26,7 @@
   <!-- Favicon -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect width='18' height='18' x='3' y='3' rx='2'/><path d='M7 7v10'/><path d='M11 7v10'/><path d='m15 7 2 10'/></svg>" />
 
-  <link rel="stylesheet" href="styles.css?v=51" />
+  <link rel="stylesheet" href="styles.css?v=52" />
 </head>
 <body>
   <header class="topbar">
@@ -84,7 +84,6 @@
 
   <div id="auth-overlay" class="auth-overlay"></div>
   <section id="auth" class="auth">
-    <button id="auth-close" type="button" class="auth-close" aria-label="Close"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
     <div class="auth-brand">
       <strong>✶✶ Reader</strong>
       <div id="auth-user" class="auth-user" hidden>
@@ -121,14 +120,18 @@
 
     <section id="status" class="status" hidden></section>
 
+    <div id="skeleton" class="skeleton" aria-hidden="true" hidden></div>
+
     <section id="feed" class="feed" aria-live="polite"></section>
 
     <div class="loadmore-wrap">
+      <div id="feed-sentinel" class="feed-sentinel" aria-hidden="true"></div>
       <button id="loadmore" type="button" hidden>Load more</button>
+      <div id="loadmore-spinner" class="loadmore-spinner" role="status" aria-label="Loading more" hidden></div>
     </div>
   </main>
 
   <script src="oauth.js?v=45"></script>
-  <script src="app.js?v=51"></script>
+  <script src="app.js?v=52"></script>
 </body>
 </html>
