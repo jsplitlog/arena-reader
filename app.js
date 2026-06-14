@@ -81,6 +81,7 @@ const el = {
   filterDropdown: document.getElementById('filter-dropdown'),
   filterList: document.getElementById('filter-list'),
   filterToggle: document.getElementById('filter-toggle'),
+  filterReset: document.getElementById('filter-reset'),
   toastRegion: document.getElementById('toast-region'),
   container: document.querySelector('.container'),
   topbar: document.querySelector('.topbar'),
@@ -495,6 +496,7 @@ function renderFilterUI() {
   updateFilterBadge(count);
   el.filterCount.classList.toggle('disabled', !state.filters.enabled);
   el.filterToggle.textContent = state.filters.enabled ? 'On' : 'Off';
+  el.filterReset.hidden = (count === 0);
 
   el.filterList.innerHTML = '';
 
@@ -1304,6 +1306,30 @@ el.filterToggle.addEventListener('click', () => {
   saveFilters();
   applyFilters();
   renderFilterUI();
+});
+
+el.filterReset.addEventListener('click', () => {
+  const domainsBackup = { ...state.filters.domains };
+  const usersBackup = { ...state.filters.users };
+  const channelsBackup = { ...state.filters.channels };
+
+  state.filters.domains = {};
+  state.filters.users = {};
+  state.filters.channels = {};
+
+  saveFilters();
+  applyFilters();
+  renderFilterUI();
+
+  showToast('All filters reset', 'mute', () => {
+    state.filters.domains = domainsBackup;
+    state.filters.users = usersBackup;
+    state.filters.channels = channelsBackup;
+    saveFilters();
+    applyFilters();
+    renderFilterUI();
+    showToast('Filters restored', 'unmute');
+  });
 });
 
 el.refresh.addEventListener('click', () => loadFeed({ reset: true }));

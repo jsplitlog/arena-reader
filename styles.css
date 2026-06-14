@@ -1238,6 +1238,25 @@ code {
   color: var(--fg-secondary);
 }
 .filter-dropdown-head[hidden] { display: none; }
+.filter-head-btns {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.filter-reset-btn {
+  font-family: inherit;
+  font-size: 0.6875rem;
+  line-height: 1;
+  color: var(--fg-muted);
+  background: none;
+  border: none;
+  padding: 8px 4px;
+  cursor: pointer;
+  transition: color 150ms ease-out, scale 150ms ease-out;
+}
+.filter-reset-btn:hover { color: var(--fg); }
+.filter-reset-btn:active { scale: 0.96; }
+.filter-reset-btn[hidden] { display: none; }
 .filter-toggle-btn {
   font-family: inherit;
   font-size: 0.6875rem;
@@ -1248,8 +1267,10 @@ code {
   border-radius: var(--radius);
   padding: 7px 16px;
   cursor: pointer;
+  transition: border-color 150ms ease-out, scale 150ms ease-out;
 }
 .filter-toggle-btn:hover { border-color: var(--fg-muted); }
+.filter-toggle-btn:active { scale: 0.96; }
 .filter-list {
   padding: 2px 0;
   /* Only the list scrolls (header stays pinned above); thin, themed scrollbar
