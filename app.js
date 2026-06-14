@@ -1416,6 +1416,12 @@ window.addEventListener('keydown', (e) => {
     return;
   }
 
+  if (e.key === 'r') {
+    e.preventDefault();
+    loadFeed({ reset: true });
+    return;
+  }
+
   if (e.key === 'j' || e.key === 'k') {
     const items = Array.from(document.querySelectorAll('.item:not(.filtered) .item-title a'));
     if (!items.length) return;
