@@ -1541,6 +1541,15 @@ el.filterReset.addEventListener('click', () => {
 el.refresh.addEventListener('click', () => loadFeed({ reset: true }));
 el.loadmore.addEventListener('click', () => loadFeed({ reset: false }));
 
+// Close every open dropdown menu (the scope/sort/type filter selects, the
+// funnel filter panel, and the per-item action menus all share these classes).
+// Called from the scroll handler to mirror native <select> dismiss-on-scroll.
+function closeMenusOnScroll() {
+  document
+    .querySelectorAll('.item-actions-menu:popover-open, .filter-dropdown:popover-open')
+    .forEach((m) => m.hidePopover());
+}
+
 /* Scroll-hide topbar: hide on scroll down, reveal on scroll up */
 (function () {
   // Open the page at the top with the nav visible. Without this, the browser
@@ -1563,6 +1572,13 @@ el.loadmore.addEventListener('click', () => loadFeed({ reset: false }));
       const delta = y - lastY;
       lastY = y;
 
+      // Dismiss any open dropdown the moment the page scrolls, in either
+      // direction — this is what the native <select> menus did before they
+      // became custom popovers. Anchored popovers are position:fixed, so they
+      // don't track their (now-moving) trigger and would otherwise hang
+      // detached in the middle of the feed.
+      if (delta !== 0) closeMenusOnScroll();
+
       if (y <= 0) {
         // Always show at top of page
         accum = 0;
@@ -1574,11 +1590,7 @@ el.loadmore.addEventListener('click', () => loadFeed({ reset: false }));
         // frame — which previously left the nav stranded on gentle scroll-ups.
         if (accum < 0) accum = 0; // reversed direction; restart the count
         accum += delta;
-        if (accum > THRESHOLD) {
-          setNavHidden(true);
-          // Close any open filter dropdown when hiding nav
-          if (el.filterDropdown.matches(':popover-open')) el.filterDropdown.hidePopover();
-        }
+        if (accum > THRESHOLD) setNavHidden(true);
       } else if (delta < 0) {
         // Moving up: same accumulation, mirrored.
         if (accum > 0) accum = 0; // reversed direction; restart the count
