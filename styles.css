@@ -175,7 +175,7 @@ code {
 /* Grouping wrapper for the three selects; transparent to layout except on
    mobile, where it becomes its own nowrap row (see media query below) */
 .select-row { display: contents; }
-.select-row select,
+.filter-select-btn,
 .controls > button,
 .controls > a {
   font: inherit;
@@ -191,26 +191,42 @@ code {
   transition-duration: 150ms;
   transition-timing-function: ease-out;
 }
-.select-row select {
-  appearance: none;
-  -webkit-appearance: none;
+/* Custom scope/sort/type dropdown trigger — looks like the old <select> box,
+   with the chevron now a real flex item so it can flip on open. */
+.filter-select { display: inline-flex; min-width: 0; }
+.filter-select-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
   min-width: 0;
-  padding-right: 1.75em;
-  /* lucide=chevron-down, viewBox cropped tight to the glyph so it renders at
-     the same size as the native chevron it replaces. */
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='5 8 14 8' fill='none' stroke='%23999' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right var(--space-3) center;
-  background-size: 0.5em;
+  /* Chevron sits inside as a flex item, so trim the right padding it used to
+     reserve as a background gutter. */
+  padding-right: var(--space-2);
 }
-.select-row select:hover,
+.filter-select-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.filter-select-chevron {
+  flex-shrink: 0;
+  display: inline-flex;
+  color: var(--fg-muted);
+}
+.filter-select-chevron span { display: inline-flex; }
+/* Small chevron sized like the old select's background glyph. */
+.filter-select-chevron svg { width: 0.875em; height: 0.875em; }
+/* chevron-down closed, chevron-up while the menu is open */
+.filter-select .chev-up { display: none; }
+.filter-select:has(> .filter-select-menu:popover-open) .chev-down { display: none; }
+.filter-select:has(> .filter-select-menu:popover-open) .chev-up { display: inline-flex; }
+.filter-select-btn:hover,
 .controls > button:hover,
 .controls > a:hover {
   border-color: var(--fg-muted);
 }
-/* Press-scale on buttons only. Native <select> holds :active while its dropdown
-   popup is open and releases it oddly on close, which made the scale pop in/out
-   when opening a dropdown. */
+.filter-select-btn:active,
 .controls > button:active {
   scale: 0.96;
 }
@@ -1014,6 +1030,42 @@ code {
   padding-top: var(--space-1);
 }
 
+/* ---- scope/sort/type dropdowns ---- */
+/* The menu reuses .item-actions-menu for its box + open/close animation; here
+   we only set the anchor direction (down on desktop) and the listbox rows.
+   .item-actions-menu anchors upward by default, so override to open downward;
+   the mobile media query flips it back to upward over the bottom bar.
+   position-try keeps the menu on-screen (e.g. the rightmost field flips inline). */
+.filter-select-menu {
+  top: calc(anchor(bottom) + 4px);
+  bottom: auto;
+  left: anchor(left);
+  right: auto;
+  position-try-fallbacks: flip-block, flip-inline;
+}
+/* Reset button defaults; layout/typography come from the shared .actions-menu-row
+   class (and .item-actions-menu's font-size) this button also carries. */
+.filter-select-option {
+  width: 100%;
+  border: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.filter-select-option:hover { background: var(--border); }
+/* The label span reuses .actions-menu-row span (flex:1 + ellipsis). Pin the
+   trailing check so it doesn't also claim flex space. */
+.filter-select-option .opt-check {
+  flex: 0 0 auto;
+  display: inline-flex;
+  color: var(--fg-muted);
+  visibility: hidden;
+}
+.filter-select-option[aria-selected="true"] .opt-check { visibility: visible; }
+.filter-select-option .opt-check svg { width: 1em; height: 1em; }
+
 @media (max-width: 640px) {
   /* Height of the fixed bottom filter bar: select height (30px, set below)
      plus its top+bottom padding. Used to pad the feed and lift the toast
@@ -1067,9 +1119,16 @@ code {
   /* Explicit display:flex above outranks the UA [hidden] rule, so restore it:
      the bar is hidden pre-auth (app.js mirrors .controls[hidden] onto it). */
   .select-row[hidden] { display: none; }
-  .select-row select {
+  .select-row .filter-select {
     flex: 1 1 0;
     min-width: 0;
+  }
+  .filter-select-btn { width: 100%; }
+  /* The fields sit in the fixed bottom bar, so open the menu UPWARD over it
+     (reinstating .item-actions-menu's default direction the desktop rule flips). */
+  .filter-select-menu {
+    top: auto;
+    bottom: calc(anchor(top) + 4px);
   }
   /* Icons stay on title row; push icon cluster to the right */
   #settings-toggle { margin-left: auto; }
@@ -1080,20 +1139,21 @@ code {
   .container { padding-bottom: calc(1em + var(--filter-bar-h) + env(safe-area-inset-bottom, 0)); }
 
   /* Larger touch targets on mobile */
-  .select-row select,
+  .filter-select-btn,
   .controls > button,
   .controls > a {
     font-size: var(--text-body);
     padding: var(--space-2) var(--space-3);
   }
-  .select-row select {
+  .filter-select-btn {
     /* See .select-row above: shrink all three labels together once an
-       equal-width third can't fit the widest selected label */
+       equal-width third can't fit the widest selected label. Left padding +
+       (gap + chevron + right padding ≈ 1.5em) reproduce the old <select> box
+       so the --select-fit-divisor constant (2.125em) still holds. */
     font-size: min(var(--text-body), calc((100cqw - 22px) / var(--select-fit-divisor, 23.25)));
     padding-left: var(--space-3);
-    padding-right: 1.5em;
-    background-position: right var(--space-2) center;
-    background-size: 0.5625em;
+    padding-right: var(--space-1);
+    gap: var(--space-1);
   }
 }
 
@@ -1457,7 +1517,7 @@ code {
     width: 36px;
     height: 36px;
   }
-  .select-row select {
+  .filter-select-btn {
     height: 36px;
   }
 }
@@ -1469,7 +1529,7 @@ code {
     width: 30px;
     height: 30px;
   }
-  .select-row select {
+  .filter-select-btn {
     height: 30px;
   }
   .topbar-inner {
