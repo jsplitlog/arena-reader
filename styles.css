@@ -220,10 +220,11 @@ code {
 .filter-select-chevron span { display: inline-flex; }
 /* Small chevron sized like the old select's background glyph. */
 .filter-select-chevron svg { width: 0.875em; height: 0.875em; }
-/* chevron-down closed, chevron-up while the menu is open */
-.filter-select .chev-up { display: none; }
-.filter-select:has(> .filter-select-menu:popover-open) .chev-down { display: none; }
-.filter-select:has(> .filter-select-menu:popover-open) .chev-up { display: inline-flex; }
+/* chevron-down closed, chevron-up while the menu is open (the trigger's
+   aria-expanded is kept in sync with the popover's open state in app.js). */
+.filter-select-btn .chev-up { display: none; }
+.filter-select-btn[aria-expanded="true"] .chev-down { display: none; }
+.filter-select-btn[aria-expanded="true"] .chev-up { display: inline-flex; }
 .filter-select-btn:hover,
 .controls > button:hover,
 .controls > a:hover {
@@ -1137,10 +1138,11 @@ code {
     top: auto;
     bottom: calc(anchor(top) + 4px);
   }
-  /* The rightmost field sits near the screen edge, so a left-anchored menu
-     would spill off-screen. Right-align it to its trigger instead; the other
-     two stay left-anchored with room to spare. */
-  .select-row .filter-select:last-child .filter-select-menu {
+  /* The rightmost field (type) sits near the screen edge, so a left-anchored
+     menu would spill off-screen. Right-align it to its trigger instead; the
+     other two stay left-anchored with room to spare. (The menus live on <body>
+     now, so target it by id rather than DOM position.) */
+  #filter-dd-type {
     left: auto;
     right: anchor(right);
   }

@@ -728,9 +728,16 @@ function buildFilterDropdown(key) {
     menu.appendChild(opt);
     return opt;
   });
-  wrap.append(btn, menu);
+  wrap.append(btn);
+  // Render the menu on <body>, not inside the (fixed, sometimes transformed)
+  // bottom bar. A popover is position:fixed; any ancestor with a transform,
+  // filter, containment, or container-type becomes its containing block, so on
+  // close — as it leaves the top layer — it would snap under the field for a
+  // frame. Anchored to the trigger by name, it positions identically from body.
+  document.body.append(menu);
 
-  // Reflect open state into aria-expanded (CSS flips the chevron on :popover-open).
+  // Reflect open state into aria-expanded; the chevron flip reads it (the menu
+  // is no longer a child of .filter-select, so CSS can't watch it via :has).
   menu.addEventListener('toggle', (e) => {
     btn.setAttribute('aria-expanded', e.newState === 'open' ? 'true' : 'false');
   });
