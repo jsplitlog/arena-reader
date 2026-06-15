@@ -124,14 +124,9 @@ const el = {
   selectRow: document.querySelector('.select-row'),
 };
 
-// Build the custom scope/sort/type dropdowns and drop them into .select-row,
-// exactly where the native <select>s used to sit. el.scope/sort/type now hold
-// controllers ({ wrap, btn, menu, setValue, currentLabel }) — see
-// buildFilterDropdown. (Hoisted; its closures read mobileNavMQ/onSelect lazily.)
-el.scope = buildFilterDropdown('scope');
-el.sort = buildFilterDropdown('sort');
-el.type = buildFilterDropdown('type');
-el.selectRow.append(el.scope.wrap, el.sort.wrap, el.type.wrap);
+// scope/sort/type are assigned dropdown controllers once buildFilterDropdown and
+// its dependencies (icon consts, anchorFallback/SUPPORTS_ANCHOR) are defined —
+// see the build call further below.
 
 // Single source of truth for motion gating; CSS handles the rest globally.
 const reduceMotionMQ = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -802,6 +797,16 @@ function anchorFallback(btn, pop, dir) {
     }
   });
 }
+
+// Build the custom scope/sort/type dropdowns and drop them into .select-row,
+// exactly where the native <select>s used to sit. Must run after the icon
+// consts and anchorFallback/SUPPORTS_ANCHOR above are initialized (they're
+// const, so referencing them earlier hits the temporal dead zone). el.scope/
+// sort/type now hold controllers ({ wrap, btn, setValue, currentLabel }).
+el.scope = buildFilterDropdown('scope');
+el.sort = buildFilterDropdown('sort');
+el.type = buildFilterDropdown('type');
+el.selectRow.append(el.scope.wrap, el.sort.wrap, el.type.wrap);
 
 function renderItem(b) {
   const item = document.createElement('article');
