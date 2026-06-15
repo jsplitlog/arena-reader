@@ -877,6 +877,9 @@ code {
   gap: var(--space-2);
   flex-shrink: 0;
 }
+/* Double only the timestamp → ✶✶ source gap back to 16px; the 8px flex gap
+   handles every other pair in the group. 8px gap + 8px margin = 16px. */
+.meta-actions time { margin-right: var(--space-2); }
 /* inline actions button (... ellipsis) in meta line */
 .item-actions {
   position: relative;
