@@ -1106,7 +1106,10 @@ code {
              max(var(--space-4), env(safe-area-inset-left, 0));
     background: var(--bg);
     border-top: 1px solid var(--border);
-    container-type: inline-size;
+    /* No container-type here: it would make this fixed bar the containing block
+       for the dropdown popovers (position:fixed), so on close — as they leave
+       the top layer — they'd snap under the field for a frame. The label-fit
+       below uses the viewport width instead of a container query. */
     /* Slides down out of view in concert with the top bar (see .nav-hidden). */
     transition-property: transform;
     transition-duration: 200ms;
@@ -1134,13 +1137,6 @@ code {
     top: auto;
     bottom: calc(anchor(top) + 4px);
   }
-  /* The inherited exit slides the menu DOWN (translateY(4px)) — over a wide
-     bottom-bar field that dip flashes across the field on close. Slide it up,
-     away from the bar, on both enter start and exit instead. */
-  .filter-select-menu:not(:popover-open) { transform: translateY(-4px); }
-  @starting-style {
-    .filter-select-menu:popover-open { transform: translateY(-4px); }
-  }
   /* The rightmost field sits near the screen edge, so a left-anchored menu
      would spill off-screen. Right-align it to its trigger instead; the other
      two stay left-anchored with room to spare. */
@@ -1167,8 +1163,10 @@ code {
     /* See .select-row above: shrink all three labels together once an
        equal-width third can't fit the widest selected label. Left padding +
        (gap + chevron + right padding ≈ 1.5em) reproduce the old <select> box
-       so the --select-fit-divisor constant (2.125em) still holds. */
-    font-size: min(var(--text-body), calc((100cqw - 22px) / var(--select-fit-divisor, 23.25)));
+       so the --select-fit-divisor constant (2.125em) still holds.
+       100vw − 2×--space-4 is the bar's content width (it spans the viewport
+       with --space-4 side padding) — the same value the old 100cqw resolved to. */
+    font-size: min(var(--text-body), calc((100vw - 2 * var(--space-4) - 22px) / var(--select-fit-divisor, 23.25)));
     padding-left: var(--space-3);
     padding-right: var(--space-1);
     gap: var(--space-1);
