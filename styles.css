@@ -185,9 +185,13 @@ code {
   gap: var(--space-2);
 }
 /* Equal-width buttons on desktop: JS sets --desktop-btn-w to the widest option
-   label across all three dropdowns so they all match without hardcoding sizes. */
-.select-row .filter-select-btn {
-  min-width: var(--desktop-btn-w, auto);
+   label across all three dropdowns so they all match without hardcoding sizes.
+   Scoped to desktop-only so the variable doesn't bleed into the mobile bottom
+   bar after an orientation change (portrait third ≈ 114px < landscape ~120px). */
+@media (min-width: 641px) {
+  .select-row .filter-select-btn {
+    min-width: var(--desktop-btn-w, auto);
+  }
 }
 .filter-select-btn,
 .controls > button,
