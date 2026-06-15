@@ -1550,6 +1550,7 @@ el.loadmore.addEventListener('click', () => loadFeed({ reset: false }));
   setNavHidden(false);
 
   let lastY = window.scrollY;
+  let accum = 0; // signed travel since the last direction change
   let ticking = false;
   const THRESHOLD = 10; // ignore micro-scrolls
   const HOVER_ZONE = 24; // px from the top edge that re-reveals the bar
@@ -1560,21 +1561,31 @@ el.loadmore.addEventListener('click', () => loadFeed({ reset: false }));
     requestAnimationFrame(() => {
       const y = window.scrollY;
       const delta = y - lastY;
+      lastY = y;
 
       if (y <= 0) {
         // Always show at top of page
+        accum = 0;
         setNavHidden(false);
-      } else if (delta > THRESHOLD) {
-        // Scrolling down past threshold
-        setNavHidden(true);
-        // Close any open filter dropdown when hiding nav
-        if (el.filterDropdown.matches(':popover-open')) el.filterDropdown.hidePopover();
-      } else if (delta < -THRESHOLD) {
-        // Scrolling up past threshold
-        setNavHidden(false);
+      } else if (delta > 0) {
+        // Moving down: accumulate travel since the last upward move. Comparing
+        // total travel (not a single frame's delta) means a slow, deliberate
+        // scroll still crosses the threshold instead of being ignored frame by
+        // frame — which previously left the nav stranded on gentle scroll-ups.
+        if (accum < 0) accum = 0; // reversed direction; restart the count
+        accum += delta;
+        if (accum > THRESHOLD) {
+          setNavHidden(true);
+          // Close any open filter dropdown when hiding nav
+          if (el.filterDropdown.matches(':popover-open')) el.filterDropdown.hidePopover();
+        }
+      } else if (delta < 0) {
+        // Moving up: same accumulation, mirrored.
+        if (accum > 0) accum = 0; // reversed direction; restart the count
+        accum += delta;
+        if (accum < -THRESHOLD) setNavHidden(false);
       }
 
-      lastY = y;
       ticking = false;
     });
   }, { passive: true });
