@@ -20,6 +20,39 @@ const DEFAULT_SCOPE = 'network';
 const DEFAULT_SORT = 'created_at_desc';
 const DEFAULT_TYPE = 'Link';
 
+// Option lists for the custom scope/sort/type dropdowns that replace the native
+// <select>s. Value + label, in display order — mirrors the old <option> markup.
+// `label` names the control for the trigger's aria-label.
+const FILTER_DROPDOWNS = {
+  scope: {
+    label: 'Source',
+    options: [
+      { v: 'network', t: 'My Network' },
+      { v: 'me', t: 'My Are.na' },
+      { v: 'all', t: 'All Are.na' },
+    ],
+  },
+  sort: {
+    label: 'Sort',
+    options: [
+      { v: 'created_at_desc', t: 'Created' },
+      { v: 'updated_at_desc', t: 'Updated' },
+      { v: 'random', t: 'Random' },
+    ],
+  },
+  type: {
+    label: 'Type',
+    options: [
+      { v: 'Link', t: 'Links' },
+      { v: 'Image', t: 'Images' },
+      { v: 'Embed', t: 'Embeds' },
+      { v: 'Attachment', t: 'Attachments' },
+      { v: 'Text', t: 'Text' },
+      { v: 'Block', t: 'All' },
+    ],
+  },
+};
+
 const state = {
   // Both auth paths store via saveToken(): sessionStorage by default,
   // localStorage when "Remember on this device" is checked.
@@ -49,9 +82,7 @@ localStorage.removeItem('arena_link_reader_hotlinks');
 const el = {
   title: document.getElementById('app-title'),
   controls: document.getElementById('controls'),
-  scope: document.getElementById('scope'),
-  sort: document.getElementById('sort'),
-  type: document.getElementById('type'),
+  // scope/sort/type are assigned below to dropdown controllers, not DOM nodes.
   refresh: document.getElementById('refresh'),
   settingsToggle: document.getElementById('settings-toggle'),
   auth: document.getElementById('auth'),
@@ -92,6 +123,15 @@ const el = {
   topbarInner: document.querySelector('.topbar-inner'),
   selectRow: document.querySelector('.select-row'),
 };
+
+// Build the custom scope/sort/type dropdowns and drop them into .select-row,
+// exactly where the native <select>s used to sit. el.scope/sort/type now hold
+// controllers ({ wrap, btn, menu, setValue, currentLabel }) — see
+// buildFilterDropdown. (Hoisted; its closures read mobileNavMQ/onSelect lazily.)
+el.scope = buildFilterDropdown('scope');
+el.sort = buildFilterDropdown('sort');
+el.type = buildFilterDropdown('type');
+el.selectRow.append(el.scope.wrap, el.sort.wrap, el.type.wrap);
 
 // Single source of truth for motion gating; CSS handles the rest globally.
 const reduceMotionMQ = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -190,10 +230,10 @@ function showToast(message, type = 'mute', onUndo = null) {
 // between the canvas measurement and the real select.
 const labelMeasureCtx = document.createElement('canvas').getContext('2d');
 function fitSelectLabels() {
-  const { fontWeight, fontFamily } = getComputedStyle(el.scope);
+  const { fontWeight, fontFamily } = getComputedStyle(el.scope.btn);
   labelMeasureCtx.font = `${fontWeight} 100px ${fontFamily}`;
   const widest = Math.max(...[el.scope, el.sort, el.type].map(
-    (s) => labelMeasureCtx.measureText(s.options[s.selectedIndex]?.text || '').width / 100
+    (c) => labelMeasureCtx.measureText(c.currentLabel()).width / 100
   ));
   el.selectRow.style.setProperty('--select-fit-divisor', (3 * (widest * 1.02 + 2.125)).toFixed(2));
 }
@@ -623,6 +663,93 @@ function filterRow(label, onRemove, isDomain, host) {
 
 const PLUS_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>';
 const X_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
+// lucide chevron-down / chevron-up (closed / open) and check (selected option).
+const CHEVRON_DOWN = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
+const CHEVRON_UP = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>';
+const MENU_CHECK = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+
+// Apply a filter-dropdown selection: update state + the trigger's label/check,
+// refit the mobile labels, and reload. Replaces the old <select> 'change' wiring.
+function onSelect(key, value) {
+  state[key] = value;
+  el[key].setValue(value);
+  fitSelectLabels();
+  loadFeed({ reset: true });
+}
+
+// Build one custom popover dropdown to replace a native <select> (scope/sort/
+// type). Mirrors the per-item actions menu: a trigger button toggles a [popover]
+// menu via the Popover API, positioned with CSS anchor positioning (down on
+// desktop, up over the mobile bottom bar; anchorFallback covers browsers without
+// anchor support). Returns a controller used in place of the old <select>.
+function buildFilterDropdown(key) {
+  const { label, options } = FILTER_DROPDOWNS[key];
+  const menuId = `filter-dd-${key}`;
+  const anchorName = `--dd-${key}`;
+
+  const wrap = document.createElement('div');
+  wrap.className = 'filter-select';
+
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'filter-select-btn';
+  btn.setAttribute('popovertarget', menuId);
+  btn.setAttribute('aria-haspopup', 'listbox');
+  btn.setAttribute('aria-expanded', 'false');
+  btn.setAttribute('aria-label', `${label} filter`);
+  btn.style.setProperty('anchor-name', anchorName);
+  const labelSpan = document.createElement('span');
+  labelSpan.className = 'filter-select-label';
+  const chevron = document.createElement('span');
+  chevron.className = 'filter-select-chevron';
+  chevron.innerHTML = `<span class="chev-down">${CHEVRON_DOWN}</span><span class="chev-up">${CHEVRON_UP}</span>`;
+  btn.append(labelSpan, chevron);
+
+  const menu = document.createElement('div');
+  // Reuse .item-actions-menu for the box + open/close animation; .filter-select-
+  // menu only adds anchor direction and listbox tweaks.
+  menu.className = 'item-actions-menu filter-select-menu';
+  menu.id = menuId;
+  menu.popover = 'auto';
+  menu.setAttribute('role', 'listbox');
+  menu.style.setProperty('position-anchor', anchorName);
+
+  const optBtns = options.map(({ v, t }) => {
+    const opt = document.createElement('button');
+    opt.type = 'button';
+    opt.className = 'actions-menu-row filter-select-option';
+    opt.dataset.value = v;
+    opt.setAttribute('role', 'option');
+    const span = document.createElement('span');
+    span.textContent = t;
+    const check = document.createElement('span');
+    check.className = 'opt-check';
+    check.innerHTML = MENU_CHECK;
+    opt.append(span, check);
+    opt.addEventListener('click', () => {
+      onSelect(key, v);
+      menu.hidePopover();
+    });
+    menu.appendChild(opt);
+    return opt;
+  });
+  wrap.append(btn, menu);
+
+  // Reflect open state into aria-expanded (CSS flips the chevron on :popover-open).
+  menu.addEventListener('toggle', (e) => {
+    btn.setAttribute('aria-expanded', e.newState === 'open' ? 'true' : 'false');
+  });
+  // Desktop opens downward, the fixed mobile bottom bar upward — decide per open.
+  anchorFallback(btn, menu, () => (mobileNavMQ.matches ? 'up' : 'down'));
+
+  function setValue(v) {
+    const opt = options.find((o) => o.v === v);
+    labelSpan.textContent = opt ? opt.t : v;
+    optBtns.forEach((o) => o.setAttribute('aria-selected', String(o.dataset.value === v)));
+  }
+
+  return { wrap, btn, setValue, currentLabel: () => labelSpan.textContent };
+}
 
 // A label + value row in the per-item actions menu. The trailing icon
 // button adds the filter (+).
@@ -655,15 +782,18 @@ function actionsMenuRow(menu, sectionLabel, value, isFiltered, onAdd, onRemove) 
 // drop popovers into the viewport center (top-layer UA default), so compute
 // the position from the trigger on open instead.
 const SUPPORTS_ANCHOR = CSS.supports('anchor-name: --a');
+// `dir` is 'up'/'down', or a function returning one (evaluated at open time so
+// the filter dropdowns can flip direction at the mobile breakpoint).
 function anchorFallback(btn, pop, dir) {
   if (SUPPORTS_ANCHOR) return;
   pop.addEventListener('toggle', (e) => {
     if (e.newState !== 'open') return;
+    const d = typeof dir === 'function' ? dir() : dir;
     const r = btn.getBoundingClientRect();
     pop.style.position = 'fixed';
     pop.style.left = 'auto';
     pop.style.right = `${Math.max(4, window.innerWidth - r.right)}px`;
-    if (dir === 'up') {
+    if (d === 'up') {
       pop.style.top = 'auto';
       pop.style.bottom = `${window.innerHeight - r.top + 4}px`;
     } else {
@@ -1277,9 +1407,9 @@ async function start() {
     }
   }
 
-  el.scope.value = state.scope;
-  el.sort.value = state.sort;
-  el.type.value = state.type;
+  el.scope.setValue(state.scope);
+  el.sort.setValue(state.sort);
+  el.type.setValue(state.type);
   fitSelectLabels();
   setView(state.view);
 
@@ -1320,23 +1450,18 @@ document.getElementById('sign-out').addEventListener('click', () => {
   showSkeleton({ shimmer: false });
 });
 
-el.scope.addEventListener('change', () => {
-  state.scope = el.scope.value;
-  loadFeed({ reset: true });
-});
-el.sort.addEventListener('change', () => { state.sort = el.sort.value; loadFeed({ reset: true }); });
-el.type.addEventListener('change', () => { state.type = el.type.value; loadFeed({ reset: true }); });
-// change events from all three selects bubble through their row wrapper
-el.selectRow.addEventListener('change', fitSelectLabels);
+// scope/sort/type selection is handled by onSelect (wired per option in
+// buildFilterDropdown): it updates state, the trigger label, the label fit,
+// and reloads.
 
 // Clicking the title returns to the default landing filter: My Network · Created · Links
 function goToDefaultFeed() {
   state.scope = DEFAULT_SCOPE;
   state.sort = DEFAULT_SORT;
   state.type = DEFAULT_TYPE;
-  el.scope.value = state.scope;
-  el.sort.value = state.sort;
-  el.type.value = state.type;
+  el.scope.setValue(state.scope);
+  el.sort.setValue(state.sort);
+  el.type.setValue(state.type);
   fitSelectLabels();
   window.scrollTo({ top: 0 });
   if (state.token) loadFeed({ reset: true });
@@ -1498,9 +1623,11 @@ window.addEventListener('keydown', (e) => {
   if (e.altKey || e.ctrlKey || e.metaKey) return;
 
   // Shortcuts don't fire from form fields — except 'f', which must still close
-  // the filter dropdown when focus is on one of its checkboxes.
+  // the filter dropdown when focus is on one of its checkboxes. The custom
+  // scope/sort/type dropdowns count as fields too (they replaced <select>s).
   const inField = e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' ||
-    e.target.tagName === 'TEXTAREA' || e.isContentEditable;
+    e.target.tagName === 'TEXTAREA' || e.isContentEditable ||
+    e.target.closest('.filter-select');
   if (inField && !(e.key === 'f' && e.target.closest('#filter-dropdown'))) return;
 
   const shortcut = SHORTCUTS.find((s) => s.keys.includes(e.key));
