@@ -197,6 +197,9 @@ code {
 .filter-select-btn {
   display: inline-flex;
   align-items: center;
+  /* Label left, chevron pinned right (gap is the minimum spacing when the
+     button is content-sized on desktop). */
+  justify-content: space-between;
   gap: var(--space-2);
   min-width: 0;
   /* Chevron sits inside as a flex item, so trim the right padding it used to
@@ -1034,14 +1037,15 @@ code {
 /* The menu reuses .item-actions-menu for its box + open/close animation; here
    we only set the anchor direction (down on desktop) and the listbox rows.
    .item-actions-menu anchors upward by default, so override to open downward;
-   the mobile media query flips it back to upward over the bottom bar.
-   position-try keeps the menu on-screen (e.g. the rightmost field flips inline). */
+   the mobile media query flips it back to upward over the bottom bar. We avoid
+   position-try here: re-evaluating fallbacks against the menu's open/close
+   transform made it flicker and jump off-screen, unlike the other popovers.
+   The rightmost field's menu is right-aligned in the media query to stay on-screen. */
 .filter-select-menu {
   top: calc(anchor(bottom) + 4px);
   bottom: auto;
   left: anchor(left);
   right: auto;
-  position-try-fallbacks: flip-block, flip-inline;
 }
 /* Reset button defaults; layout/typography come from the shared .actions-menu-row
    class (and .item-actions-menu's font-size) this button also carries. */
@@ -1129,6 +1133,13 @@ code {
   .filter-select-menu {
     top: auto;
     bottom: calc(anchor(top) + 4px);
+  }
+  /* The rightmost field sits near the screen edge, so a left-anchored menu
+     would spill off-screen. Right-align it to its trigger instead; the other
+     two stay left-anchored with room to spare. */
+  .select-row .filter-select:last-child .filter-select-menu {
+    left: auto;
+    right: anchor(right);
   }
   /* Icons stay on title row; push icon cluster to the right */
   #settings-toggle { margin-left: auto; }
