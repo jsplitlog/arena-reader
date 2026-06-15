@@ -1134,6 +1134,13 @@ code {
     top: auto;
     bottom: calc(anchor(top) + 4px);
   }
+  /* The inherited exit slides the menu DOWN (translateY(4px)) — over a wide
+     bottom-bar field that dip flashes across the field on close. Slide it up,
+     away from the bar, on both enter start and exit instead. */
+  .filter-select-menu:not(:popover-open) { transform: translateY(-4px); }
+  @starting-style {
+    .filter-select-menu:popover-open { transform: translateY(-4px); }
+  }
   /* The rightmost field sits near the screen edge, so a left-anchored menu
      would spill off-screen. Right-align it to its trigger instead; the other
      two stay left-anchored with room to spare. */
