@@ -155,7 +155,10 @@ function syncSelectRowPlacement() {
   }
 }
 syncSelectRowPlacement();
-mobileNavMQ.addEventListener('change', syncSelectRowPlacement);
+mobileNavMQ.addEventListener('change', () => {
+  syncSelectRowPlacement();
+  fitSelectLabels();
+});
 
 // Hide/reveal the top bar and the mobile bottom filter bar together: the top
 // bar slides up, the bottom bar slides down (both via .nav-hidden).
@@ -223,14 +226,30 @@ function showToast(message, type = 'mute', onUndo = null) {
 // *selected* options so e.g. showing "Links" doesn't reserve room for
 // "Attachments". The 1.02 factor absorbs font rendering differences
 // between the canvas measurement and the real select.
+// On desktop the three buttons get an equal min-width (--desktop-btn-w)
+// sized to the widest option label across all three dropdowns so they
+// stay the same width regardless of which option is currently selected.
 const labelMeasureCtx = document.createElement('canvas').getContext('2d');
 function fitSelectLabels() {
-  const { fontWeight, fontFamily } = getComputedStyle(el.scope.btn);
-  labelMeasureCtx.font = `${fontWeight} 100px ${fontFamily}`;
-  const widest = Math.max(...[el.scope, el.sort, el.type].map(
-    (c) => labelMeasureCtx.measureText(c.currentLabel()).width / 100
-  ));
-  el.selectRow.style.setProperty('--select-fit-divisor', (3 * (widest * 1.02 + 2.125)).toFixed(2));
+  const cs = getComputedStyle(el.scope.btn);
+  const { fontWeight, fontFamily } = cs;
+  if (mobileNavMQ.matches) {
+    labelMeasureCtx.font = `${fontWeight} 100px ${fontFamily}`;
+    const widest = Math.max(...[el.scope, el.sort, el.type].map(
+      (c) => labelMeasureCtx.measureText(c.currentLabel()).width / 100
+    ));
+    el.selectRow.style.setProperty('--select-fit-divisor', (3 * (widest * 1.02 + 2.125)).toFixed(2));
+  } else {
+    const fsNum = parseFloat(cs.fontSize);
+    labelMeasureCtx.font = `${fontWeight} ${fsNum}px ${fontFamily}`;
+    const allLabels = Object.values(FILTER_DROPDOWNS).flatMap(d => d.options.map(o => o.t));
+    const widestPx = Math.max(...allLabels.map(t => labelMeasureCtx.measureText(t).width));
+    const pl = parseFloat(cs.paddingLeft);
+    const pr = parseFloat(cs.paddingRight);
+    const gap = parseFloat(cs.columnGap) || 8;
+    const minW = Math.ceil(widestPx * 1.02 + pl + gap + (0.875 * fsNum) + pr);
+    el.selectRow.style.setProperty('--desktop-btn-w', `${minW}px`);
+  }
 }
 
 /* ---------- API ---------- */

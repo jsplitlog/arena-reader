@@ -145,6 +145,7 @@ code {
   align-items: center;
   gap: var(--space-4);
   flex-wrap: wrap;
+  position: relative;
 }
 .topbar h1 {
   font-size: var(--text-title);
@@ -172,9 +173,22 @@ code {
   min-width: 0;
 }
 .controls[hidden] { display: none; }
-/* Grouping wrapper for the three selects; transparent to layout except on
-   mobile, where it becomes its own nowrap row (see media query below) */
-.select-row { display: contents; }
+/* On desktop: absolutely centred in the topbar so the group sits at the true
+   viewport midpoint regardless of the h1/icon-button widths on either side.
+   On mobile it becomes a fixed bottom bar (see media query below). */
+.select-row {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  gap: var(--space-2);
+}
+/* Equal-width buttons on desktop: JS sets --desktop-btn-w to the widest option
+   label across all three dropdowns so they all match without hardcoding sizes. */
+.select-row .filter-select-btn {
+  min-width: var(--desktop-btn-w, auto);
+}
 .filter-select-btn,
 .controls > button,
 .controls > a {
@@ -1048,6 +1062,17 @@ code {
   left: anchor(left);
   right: auto;
 }
+/* Desktop menu opens downward: animate as a drop (start slightly above,
+   fall into place). Reverses the default translateY(4px) from .item-actions-menu
+   which is tuned for upward-opening menus. */
+.filter-select-menu:not(:popover-open) {
+  transform: translateY(-4px);
+}
+@starting-style {
+  .filter-select-menu:popover-open {
+    transform: translateY(-4px);
+  }
+}
 /* Reset button defaults; layout/typography come from the shared .actions-menu-row
    class (and .item-actions-menu's font-size) this button also carries. */
 .filter-select-option {
@@ -1098,6 +1123,8 @@ code {
     left: 0;
     right: 0;
     bottom: 0;
+    top: auto;
+    transform: none;
     z-index: 10;
     display: flex;
     min-width: 0;
@@ -1137,6 +1164,15 @@ code {
   .filter-select-menu {
     top: auto;
     bottom: calc(anchor(top) + 4px);
+  }
+  /* Restore the upward-slide animation that the desktop rule overrides. */
+  .filter-select-menu:not(:popover-open) {
+    transform: translateY(4px);
+  }
+  @starting-style {
+    .filter-select-menu:popover-open {
+      transform: translateY(4px);
+    }
   }
   /* The rightmost field (type) sits near the screen edge, so a left-anchored
      menu would spill off-screen. Right-align it to its trigger instead; the
