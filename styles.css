@@ -173,16 +173,23 @@ code {
   min-width: 0;
 }
 .controls[hidden] { display: none; }
-/* On desktop: absolutely centred in the topbar so the group sits at the true
-   viewport midpoint regardless of the h1/icon-button widths on either side.
+/* On desktop: overlay that spans the full topbar width so the buttons sit at
+   the true viewport midpoint. pointer-events:none lets clicks through to the
+   h1/icon buttons on either side; the .filter-select children restore them.
+   Centering via inset:0 + justify-content avoids transform, which breaks CSS
+   anchor positioning in Safari (anchor coords are pre-transform in that engine).
    On mobile it becomes a fixed bottom bar (see media query below). */
 .select-row {
   position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
+  inset: 0;
   display: flex;
+  align-items: center;
+  justify-content: center;
   gap: var(--space-2);
+  pointer-events: none;
+}
+.select-row .filter-select {
+  pointer-events: auto;
 }
 /* Equal-width buttons on desktop: JS sets --desktop-btn-w to the widest option
    label across all three dropdowns so they all match without hardcoding sizes.
@@ -1124,13 +1131,15 @@ code {
      the fallback covers the widest selectable label ("Attachments"). */
   .select-row {
     position: fixed;
+    inset: auto;
     left: 0;
     right: 0;
     bottom: 0;
-    top: auto;
-    transform: none;
     z-index: 10;
     display: flex;
+    align-items: normal;
+    justify-content: normal;
+    pointer-events: auto;
     min-width: 0;
     gap: var(--space-2);
     padding: var(--space-4) max(var(--space-4), env(safe-area-inset-right, 0))
