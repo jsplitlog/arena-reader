@@ -1574,6 +1574,14 @@ code {
 @media (max-width: 640px) {
   .toast-region {
     bottom: calc(1.25em + var(--filter-bar-h) + env(safe-area-inset-bottom, 0));
+    /* Glide with the bar when it hides/reveals on scroll (see below). */
+    transition: bottom 200ms cubic-bezier(0.2, 0, 0, 1);
+  }
+  /* When the bar is hidden on scroll it slides off-screen (.select-row.nav-hidden,
+     reparented under <body> on mobile), so there's no bar to clear — drop toasts
+     back to the bottom instead of leaving them floating where the bar used to be. */
+  body:has(.select-row.nav-hidden) .toast-region {
+    bottom: calc(1.25em + env(safe-area-inset-bottom, 0));
   }
 }
 .toast {
