@@ -53,6 +53,17 @@ const FILTER_DROPDOWNS = {
   },
 };
 
+// A corrupted stored value must not throw here — this runs at module scope,
+// so an exception would take the whole app down before anything renders.
+function readStoredFilters() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(FILTERS_KEY) || '{}');
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch (_) {
+    return {};
+  }
+}
+
 const state = {
   // Both auth paths store via saveToken(): sessionStorage by default,
   // localStorage when "Remember on this device" is checked.
@@ -61,10 +72,10 @@ const state = {
   sort: DEFAULT_SORT,
   type: DEFAULT_TYPE,
   scope: DEFAULT_SCOPE,
-  view: localStorage.getItem(VIEW_KEY) || 'list',
+  view: localStorage.getItem(VIEW_KEY) === 'grid' ? 'grid' : 'list',
   filters: Object.assign(
     { enabled: true, domains: {}, users: {}, channels: {} },
-    JSON.parse(localStorage.getItem(FILTERS_KEY) || '{}'),
+    readStoredFilters(),
   ),
   loading: false,
   hasMore: false,
@@ -561,7 +572,15 @@ function updateFilterBadge(count) {
     if (badgeInitialized && prev > 0 && !reduce) {
       badge.classList.add('hiding');
       let hidden = false;
-      const hide = () => { if (hidden) return; hidden = true; badge.hidden = true; badge.classList.remove('hiding'); };
+      const hide = () => {
+        if (hidden) return;
+        hidden = true;
+        // The count may have gone back above 0 (e.g. toast Undo) before this
+        // deferred hide ran — the badge must stay visible then.
+        if (badgePrevCount > 0) return;
+        badge.hidden = true;
+        badge.classList.remove('hiding');
+      };
       badge.addEventListener('transitionend', function h(e) {
         if (e.propertyName !== 'opacity') return;
         badge.removeEventListener('transitionend', h);
@@ -685,6 +704,10 @@ const MENU_CHECK = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" 
 // Apply a filter-dropdown selection: update state + the trigger's label/check,
 // refit the mobile labels, and reload. Replaces the old <select> 'change' wiring.
 function onSelect(key, value) {
+  // Re-picking the already-selected option is a no-op, matching the native
+  // <select> these replaced (change only fired on an actual change) — without
+  // this, it needlessly reloads the feed and drops the scroll position.
+  if (state[key] === value) return;
   state[key] = value;
   el[key].setValue(value);
   fitSelectLabels();
@@ -1663,7 +1686,9 @@ function moveFocus(key) {
   const target = items[index];
   if (target) {
     target.focus();
-    target.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    // An explicit behavior option overrides the global reduced-motion CSS
+    // (scroll-behavior: auto), so gate the smooth scroll here too.
+    target.scrollIntoView({ block: 'nearest', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
   }
 }
 
@@ -1680,7 +1705,7 @@ window.addEventListener('keydown', (e) => {
   // the filter dropdown when focus is on one of its checkboxes. The custom
   // scope/sort/type dropdowns count as fields too (they replaced <select>s).
   const inField = e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' ||
-    e.target.tagName === 'TEXTAREA' || e.isContentEditable ||
+    e.target.tagName === 'TEXTAREA' || e.target.isContentEditable ||
     e.target.closest('.filter-select');
   if (inField && !(e.key === 'f' && e.target.closest('#filter-dropdown'))) return;
 
