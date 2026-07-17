@@ -3,3 +3,4 @@ filters.json
 .agents/
 skills-lock.json
 docs/
+__pycache__/

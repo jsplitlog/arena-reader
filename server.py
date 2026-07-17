@@ -11,7 +11,16 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_POST(self):
         if self.path == '/filters.json':
-            length = int(self.headers.get('Content-Length', 0))
+            try:
+                length = int(self.headers.get('Content-Length', 0))
+            except ValueError:
+                self.send_error(400, 'Invalid Content-Length')
+                return
+            if length < 0:
+                # A negative length would make rfile.read(-1) block until the
+                # client closes the connection.
+                self.send_error(400, 'Invalid Content-Length')
+                return
             if length > self.MAX_BODY:
                 self.send_error(413, 'Payload too large')
                 return
