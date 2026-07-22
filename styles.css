@@ -198,6 +198,13 @@ code {
 @media (min-width: 641px) {
   .select-row .filter-select-btn {
     min-width: var(--desktop-btn-w, auto);
+    /* Match the fixed-height icon buttons (see .controls .icon-btn): pin the
+       trigger to --control-h and drop the vertical padding it would otherwise
+       add, so the dropdowns line up with the icons instead of running taller.
+       Content stays centered via align-items:center above. */
+    height: var(--control-h);
+    padding-top: 0;
+    padding-bottom: 0;
   }
 }
 .filter-select-btn,
