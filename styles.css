@@ -1010,6 +1010,13 @@ code {
     transform: translateY(4px);
   }
 }
+/* Per-item add-filter menu only (the scope/sort/type dropdowns and the funnel
+   panel reuse .item-actions-menu but not these rows). Cap the width so a long
+   channel title or username truncates via the row span's ellipsis instead of
+   stretching the popover. */
+.item-actions-menu:has(.actions-menu-label) {
+  max-width: 260px;
+}
 .actions-menu-row {
   display: flex;
   align-items: center;
@@ -1059,8 +1066,13 @@ code {
   color: var(--fg-muted);
   padding: var(--space-2) var(--space-3) var(--space-1);
 }
+/* Even inset on all four edges of the popover: 12px sides come from the row/
+   label horizontal padding, so match it at the top and bottom too. */
 .actions-menu-label:first-child {
-  padding-top: var(--space-2);
+  padding-top: var(--space-3);
+}
+.actions-menu-row:last-child {
+  padding-bottom: var(--space-3);
 }
 .actions-menu-label + .actions-menu-row {
   padding-top: var(--space-1);
