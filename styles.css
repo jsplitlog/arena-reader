@@ -53,12 +53,9 @@
   --control-h: calc(var(--text-ui) * 1.8125 + 2px);
   --maxw: 720px;
   --maxw-grid: 1000px;
-  /* No elevation tokens by design: Are.na has no drop shadows anywhere. A panel
-     that floats free of its trigger gets ervell's BorderedBox treatment
-     instead — a 5px gray.semiLight mat around a gray.regular-bordered box.
-     It's a hard ring with zero blur, so it reads as a frame, not a shadow. */
-  --frame: #e8e8e8;
-  --frame-ring: 0 0 0 5px var(--frame);
+  /* No elevation tokens by design: Are.na has no drop shadows anywhere. Depth
+     is a 1px border, and that is the whole vocabulary — a floating panel gets
+     the same hairline edge as a docked one, nothing more. */
   /* Skeleton placeholder fill + the lighter band the shimmer sweeps across */
   --skeleton-base: #e9e9e9;
   --skeleton-sheen: #f4f4f4;
@@ -73,7 +70,6 @@
     --border: #2f2f2f;
     --border-control: #444;
     --border-active: #6e6e6e;
-    --frame: #1d1d1d;
     --surface: #131313;
     --input-bg: #080a0b;
     --accent: #d3d3d3;
@@ -347,7 +343,6 @@ code {
   flex-direction: column;
   gap: var(--space-4);
   background: var(--bg);
-  box-shadow: var(--frame-ring);
   /* The overlay behind it carries the transition; the dialog itself just
      appears. No slide, no blur — matching ervell's Modal, which has neither. */
   opacity: 0;
@@ -963,9 +958,6 @@ code {
   background: var(--bg);
   border: 1px solid var(--border-control);
   border-radius: var(--radius);
-  /* Floating panel → ervell BorderedBox frame (see --frame-ring). The joined
-     scope/sort/type panels drop it again below. */
-  box-shadow: var(--frame-ring);
   overflow: hidden;
   font-size: var(--text-ui);
   line-height: var(--leading);
@@ -1063,8 +1055,6 @@ code {
   border-top-color: var(--border-control);
   border-top-left-radius: 0;
   border-top-right-radius: 0;
-  /* Part of the field, not a floating panel — no frame. */
-  box-shadow: none;
 }
 /* Reset button defaults; layout/typography come from the shared .actions-menu-row
    class (and .item-actions-menu's font-size) this button also carries. */
@@ -1416,9 +1406,14 @@ code {
   background: var(--bg);
   border: 1px solid var(--border-control);
   border-radius: var(--radius);
-  box-shadow: var(--frame-ring);
   font-size: var(--text-ui);
   line-height: var(--leading);
+}
+/* The display:flex above outranks the UA's `[popover]:not(:popover-open) {
+   display: none }`, so the panel would never hide. Restore it explicitly —
+   this is load-bearing, not leftover animation state. */
+.filter-dropdown:not(:popover-open) {
+  display: none;
 }
 .filter-dropdown-head {
   flex-shrink: 0;
@@ -1566,7 +1561,6 @@ code {
   border: 1px solid var(--border-control);
   color: var(--fg);
   border-radius: var(--radius);
-  box-shadow: var(--frame-ring);
   font-size: var(--text-ui);
   line-height: var(--leading);
   display: flex;
