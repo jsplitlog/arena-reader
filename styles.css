@@ -12,14 +12,21 @@
   --fg: #333;
   --fg-secondary: #585858;
   --fg-muted: #999;
+  /* Rules and dividers (ervell gray.light). Control and container edges use
+     --border-control (gray.regular) — a hairline border, never a shadow, is
+     what separates a box from the page in Are.na. --border-active is the
+     darker edge a control takes while it's open (gray.medium). */
   --border: #eee;
+  --border-control: #ccc;
+  --border-active: #999;
   --surface: #f7f7f7;
   --input-bg: rgb(247, 245, 244);
   --accent: #333;
   --link: #333;
   --success: #22c55e;
+  /* ervell has exactly one radius (constants.borderRadius = 0.25em). There is
+     no large/soft variant — resist adding one. */
   --radius: 0.25rem;
-  --radius-lg: 0.5rem;
   --block-w: 315px;
 
   /* Spacing scale — 4px base. The single source of truth for gaps, padding,
@@ -46,18 +53,12 @@
   --control-h: calc(var(--text-ui) * 1.8125 + 2px);
   --maxw: 720px;
   --maxw-grid: 1000px;
-  --shadow-border:
-    0px 0px 0px 1px rgba(0, 0, 0, 0.06),
-    0px 1px 2px -1px rgba(0, 0, 0, 0.06),
-    0px 2px 4px 0px rgba(0, 0, 0, 0.04);
-  --shadow-border-hover:
-    0px 0px 0px 1px rgba(0, 0, 0, 0.08),
-    0px 1px 2px -1px rgba(0, 0, 0, 0.08),
-    0px 2px 4px 0px rgba(0, 0, 0, 0.06);
-  --shadow-elevated:
-    0px 0px 0px 1px rgba(0, 0, 0, 0.06),
-    0px 4px 12px -2px rgba(0, 0, 0, 0.08),
-    0px 8px 24px 0px rgba(0, 0, 0, 0.06);
+  /* No elevation tokens by design: Are.na has no drop shadows anywhere. A panel
+     that floats free of its trigger gets ervell's BorderedBox treatment
+     instead — a 5px gray.semiLight mat around a gray.regular-bordered box.
+     It's a hard ring with zero blur, so it reads as a frame, not a shadow. */
+  --frame: #e8e8e8;
+  --frame-ring: 0 0 0 5px var(--frame);
   /* Skeleton placeholder fill + the lighter band the shimmer sweeps across */
   --skeleton-base: #e9e9e9;
   --skeleton-sheen: #f4f4f4;
@@ -70,13 +71,13 @@
     --fg-secondary: #d3d3d3;
     --fg-muted: #6e6e6e;
     --border: #2f2f2f;
+    --border-control: #444;
+    --border-active: #6e6e6e;
+    --frame: #1d1d1d;
     --surface: #131313;
     --input-bg: #080a0b;
     --accent: #d3d3d3;
     --link: #d3d3d3;
-    --shadow-border: 0 0 0 1px rgba(255, 255, 255, 0.08);
-    --shadow-border-hover: 0 0 0 1px rgba(255, 255, 255, 0.13);
-    --shadow-elevated: 0 0 0 1px rgba(255, 255, 255, 0.08);
     --skeleton-base: #1d1d1d;
     --skeleton-sheen: #2a2a2a;
   }
@@ -110,10 +111,11 @@ code {
   font-size: 0.8125em;
 }
 
-/* Honor reduced-motion globally: collapse every transition to instant. This
-   covers the interactive animations (modal, popovers, scale-on-press, view
-   switch, toast, item exit, badge). Keyframe loaders (skeleton, spinner) keep
-   gentle, non-vestibular motion via their own reduced-motion rules below. */
+/* Honor reduced-motion globally: collapse every transition to instant. Little
+   is left to collapse — menus, presses, and badges no longer animate at all —
+   but it still covers the modal/toast fades, the item exit, and the scroll-
+   driven nav bars. Keyframe loaders (skeleton, spinner) keep gentle,
+   non-vestibular motion via their own reduced-motion rules below. */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     transition-duration: 0.01ms !important;
@@ -215,13 +217,10 @@ code {
   line-height: var(--leading);
   color: var(--fg-secondary);
   background: var(--bg);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-control);
   border-radius: var(--radius);
   padding: var(--space-2) var(--space-3);
   cursor: pointer;
-  transition-property: border-color, scale;
-  transition-duration: 150ms;
-  transition-timing-function: ease-out;
 }
 /* Custom scope/sort/type dropdown trigger — looks like the old <select> box,
    with the chevron now a real flex item so it can flip on open. */
@@ -260,11 +259,15 @@ code {
 .filter-select-btn:hover,
 .controls > button:hover,
 .controls > a:hover {
-  border-color: var(--fg-muted);
+  border-color: var(--border-active);
 }
-.filter-select-btn:active,
-.controls > button:active {
-  scale: 0.96;
+/* Expanded: darken the edge and square the corners the options panel joins on
+   (ervell Pulldown, `mode === 'expanded'`). This border change *is* the open
+   affordance — the field visibly grows into the panel. */
+.filter-select-btn[aria-expanded="true"] {
+  border-color: var(--border-active);
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
 }
 .controls .ghost {
   color: var(--fg-muted);
@@ -334,36 +337,31 @@ code {
   z-index: 51;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%) translateY(-8px);
+  transform: translate(-50%, -50%);
   width: calc(100% - 2em);
   max-width: 400px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius);
   padding: var(--space-8);
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
   background: var(--bg);
-  box-shadow: var(--shadow-elevated);
+  box-shadow: var(--frame-ring);
+  /* The overlay behind it carries the transition; the dialog itself just
+     appears. No slide, no blur — matching ervell's Modal, which has neither. */
   opacity: 0;
-  filter: blur(4px);
   visibility: hidden;
-  transition-property: opacity, transform, filter, visibility;
+  transition-property: opacity, visibility;
   transition-duration: 150ms;
   transition-timing-function: ease-in;
 }
 .auth.open,
 .shortcuts-modal.open {
   opacity: 1;
-  transform: translate(-50%, -50%) translateY(0);
-  filter: blur(0px);
   visibility: visible;
-  transition-duration: 250ms;
-  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
-}
-@media (prefers-color-scheme: dark) {
-  .auth,
-  .shortcuts-modal { box-shadow: var(--shadow-elevated), 0 4px 24px rgba(0, 0, 0, 0.5); }
+  transition-duration: 200ms;
+  transition-timing-function: ease-out;
 }
 /* ---- keyboard shortcut sheet ---- */
 /* Cap height to the viewport (1em breathing room top/bottom) so the centered
@@ -440,18 +438,14 @@ code {
   width: var(--control-h);
   height: var(--control-h);
   padding: 0;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-control);
   border-radius: var(--radius);
   background: var(--bg);
   color: var(--fg-muted);
   cursor: pointer;
-  transition-property: color, border-color, scale;
-  transition-duration: 150ms;
-  transition-timing-function: ease-out;
 }
 .auth-close[hidden] { display: none; }
-.auth-close:hover { color: var(--fg); border-color: var(--fg-muted); }
-.auth-close:active { scale: 0.96; }
+.auth-close:hover { color: var(--fg); border-color: var(--border-active); }
 .auth-user {
   display: flex;
   align-items: center;
@@ -523,10 +517,6 @@ code {
 .remember-label input {
   margin: 0;
   cursor: pointer;
-  transition: scale 150ms ease-out;
-}
-.remember-label input:active {
-  scale: 0.96;
 }
 .remember-label .auth-note { display: inline; margin-top: 0; }
 .auth-note {
@@ -560,21 +550,17 @@ code {
   line-height: var(--leading);
   color: var(--fg-muted);
   background: none;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-control);
   border-radius: var(--radius);
   padding: var(--space-1) var(--space-3);
   cursor: pointer;
   text-decoration: none;
-  transition-property: border-color, color, scale;
-  transition-duration: 150ms;
-  transition-timing-function: ease-out;
 }
 .auth-btn:hover {
-  border-color: var(--fg-muted);
+  border-color: var(--border-active);
   color: var(--fg);
   text-decoration: none;
 }
-.auth-btn:active { scale: 0.96; }
 .auth-footer {
   display: flex;
   align-items: center;
@@ -946,23 +932,18 @@ code {
   width: var(--control-h);
   height: var(--control-h);
   padding: 0;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-control);
   border-radius: var(--radius);
   background: var(--bg);
   color: var(--fg-muted);
   cursor: pointer;
-  transition-property: color, border-color, scale;
-  transition-duration: 150ms;
-  transition-timing-function: ease-out;
 }
 .item-actions-btn:hover,
 .item-icon-btn:hover {
   color: var(--fg);
-  border-color: var(--fg-muted);
+  border-color: var(--border-active);
   text-decoration: none;
 }
-.item-actions-btn:active,
-.item-icon-btn:active { scale: 0.96; }
 /* ✶✶ source mark sized to read like the 14px icons beside it */
 .item-icon-btn {
   font-size: var(--text-sm);
@@ -980,36 +961,19 @@ code {
   right: anchor(right);
   min-width: 160px;
   background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-elevated);
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius);
+  /* Floating panel → ervell BorderedBox frame (see --frame-ring). The joined
+     scope/sort/type panels drop it again below. */
+  box-shadow: var(--frame-ring);
   overflow: hidden;
   font-size: var(--text-ui);
   line-height: var(--leading);
 }
-/* Exit: animate opacity/transform, holding display/overlay discrete so the
-   popover stays rendered (and in the top layer) until the fade finishes. */
-.item-actions-menu {
-  transition-property: opacity, transform, overlay, display;
-  transition-duration: 150ms;
-  transition-timing-function: ease-in;
-  transition-behavior: allow-discrete;
-}
-.item-actions-menu:not(:popover-open) {
-  opacity: 0;
-  transform: translateY(4px);
-  display: none;
-}
-.item-actions-menu:popover-open {
-  transition-duration: 200ms;
-  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
-}
-@starting-style {
-  .item-actions-menu:popover-open {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-}
+/* No enter/exit animation, by design. Are.na's Pulldown swaps state and the
+   options are simply there — no fade, no slide, no shadow to imply a layer
+   above the page. This also retires the transform/overlay/allow-discrete
+   choreography that kept producing close-flash artifacts. */
 /* Per-item add-filter menu only (the scope/sort/type dropdowns and the funnel
    panel reuse .item-actions-menu but not these rows). Cap the width so a long
    channel title or username truncates via the row span's ellipsis instead of
@@ -1041,22 +1005,17 @@ code {
   width: var(--control-h);
   height: var(--control-h);
   padding: 0;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-control);
   border-radius: var(--radius);
   background: var(--bg);
   color: var(--fg-muted);
   cursor: pointer;
-  transition-property: color, border-color, scale;
-  transition-duration: 150ms;
-  transition-timing-function: ease-out;
 }
 .actions-menu-row button:hover,
 .filter-remove:hover {
   color: var(--fg);
-  border-color: var(--fg-muted);
+  border-color: var(--border-active);
 }
-.actions-menu-row button:active,
-.filter-remove:active { scale: 0.96; }
 .actions-menu-label {
   display: block;
   font-size: var(--text-label);
@@ -1079,29 +1038,33 @@ code {
 }
 
 /* ---- scope/sort/type dropdowns ---- */
-/* The menu reuses .item-actions-menu for its box + open/close animation; here
-   we only set the anchor direction (down on desktop) and the listbox rows.
-   .item-actions-menu anchors upward by default, so override to open downward;
-   the mobile media query flips it back to upward over the bottom bar. We avoid
-   position-try here: re-evaluating fallbacks against the menu's open/close
-   transform made it flicker and jump off-screen, unlike the other popovers.
-   The rightmost field's menu is right-aligned in the media query to stay on-screen. */
+/* Modeled directly on ervell's UI/Pulldown: the open options panel is not a
+   floating menu, it is the lower half of the field. It sits flush on the
+   trigger's bottom edge, bleeds 1px past each side so the two borders read as
+   one continuous box (ervell uses margin-left/right: -1px), squares off the
+   corners where they meet, and carries the same darkened edge the expanded
+   trigger takes. No offset, no shadow, no motion.
+
+   Pinning both left and right to the anchor also sizes the panel to the field,
+   which is why the rightmost dropdown no longer needs a special right-aligned
+   case to stay on-screen. We avoid position-try: re-evaluating fallbacks
+   against an anchored popover made it jump off-screen. */
 .filter-select-menu {
-  top: calc(anchor(bottom) + 4px);
+  top: anchor(bottom);
   bottom: auto;
-  left: anchor(left);
-  right: auto;
-}
-/* Desktop menu opens downward: animate as a drop (start slightly above,
-   fall into place). Reverses the default translateY(4px) from .item-actions-menu
-   which is tuned for upward-opening menus. */
-.filter-select-menu:not(:popover-open) {
-  transform: translateY(-4px);
-}
-@starting-style {
-  .filter-select-menu:popover-open {
-    transform: translateY(-4px);
-  }
+  left: calc(anchor(left) - 1px);
+  right: calc(anchor(right) - 1px);
+  /* The UA sheet gives [popover] `width: fit-content`, which over-constrains
+     left+right and silently drops the right inset. Restore auto so the panel
+     actually spans its trigger. */
+  width: auto;
+  min-width: 0;
+  border-color: var(--border-active);
+  border-top-color: var(--border-control);
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  /* Part of the field, not a floating panel — no frame. */
+  box-shadow: none;
 }
 /* Reset button defaults; layout/typography come from the shared .actions-menu-row
    class (and .item-actions-menu's font-size) this button also carries. */
@@ -1114,6 +1077,14 @@ code {
   text-align: left;
   cursor: pointer;
 }
+/* Match the trigger's metrics exactly — same horizontal padding, and a check
+   that occupies the chevron's slot. In ervell the resting value and the open
+   options are literally the same <Option> component, so the selected label
+   must not shift by a pixel when the panel opens. */
+.filter-select-option {
+  padding-left: var(--space-3);
+  padding-right: var(--space-2);
+}
 .filter-select-option:hover { background: var(--border); }
 /* The label span reuses .actions-menu-row span (flex:1 + ellipsis). Pin the
    trailing check so it doesn't also claim flex space. */
@@ -1124,7 +1095,7 @@ code {
   visibility: hidden;
 }
 .filter-select-option[aria-selected="true"] .opt-check { visibility: visible; }
-.filter-select-option .opt-check svg { width: 1em; height: 1em; }
+.filter-select-option .opt-check svg { width: 0.875em; height: 0.875em; }
 
 @media (max-width: 640px) {
   /* Height of the fixed bottom filter bar: select height (30px, set below)
@@ -1191,29 +1162,21 @@ code {
     min-width: 0;
   }
   .filter-select-btn { width: 100%; }
-  /* The fields sit in the fixed bottom bar, so open the menu UPWARD over it
-     (reinstating .item-actions-menu's default direction the desktop rule flips). */
+  /* The fields sit in the fixed bottom bar, so the panel joins the trigger's
+     TOP edge and grows upward — the same Pulldown seam, mirrored. Swap which
+     pair of corners squares off and which border edge stays light. */
   .filter-select-menu {
     top: auto;
-    bottom: calc(anchor(top) + 4px);
+    bottom: anchor(top);
+    border-top-color: var(--border-active);
+    border-bottom-color: var(--border-control);
+    border-radius: var(--radius) var(--radius) 0 0;
   }
-  /* Restore the upward-slide animation that the desktop rule overrides. */
-  .filter-select-menu:not(:popover-open) {
-    transform: translateY(4px);
+  .filter-select-btn[aria-expanded="true"] {
+    border-radius: 0 0 var(--radius) var(--radius);
   }
-  @starting-style {
-    .filter-select-menu:popover-open {
-      transform: translateY(4px);
-    }
-  }
-  /* The rightmost field (type) sits near the screen edge, so a left-anchored
-     menu would spill off-screen. Right-align it to its trigger instead; the
-     other two stay left-anchored with room to spare. (The menus live on <body>
-     now, so target it by id rather than DOM position.) */
-  #filter-dd-type {
-    left: auto;
-    right: anchor(right);
-  }
+  /* The panel is pinned to both of its trigger's edges, so it can't spill
+     off-screen — the rightmost field needs no special case. */
   /* Icons stay on title row; push icon cluster to the right */
   #settings-toggle { margin-left: auto; }
   .controls .spacer { display: none; }
@@ -1260,13 +1223,10 @@ code {
   border-radius: 0;
   border: 1px solid var(--border);
   overflow: hidden;
-  transition-property: box-shadow, border-color;
-  transition-duration: 150ms;
-  transition-timing-function: ease-out;
 }
+/* Hover darkens the rule. Are.na blocks never lift off the page. */
 .feed.grid .item:hover {
-  box-shadow: var(--shadow-border-hover);
-  border-color: transparent;
+  border-color: var(--border-control);
 }
 .feed.grid .item:first-child { padding-top: 0; }
 .feed.grid .item-thumb-wrap { order: -1; }
@@ -1327,17 +1287,13 @@ code {
   font: inherit;
   font-size: var(--text-ui);
   padding: var(--space-2) var(--space-4);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-control);
   border-radius: var(--radius);
   background: var(--bg);
   color: var(--fg-secondary);
   cursor: pointer;
-  transition-property: border-color, scale;
-  transition-duration: 150ms;
-  transition-timing-function: ease-out;
 }
-#loadmore:hover { border-color: var(--fg-muted); }
-#loadmore:active { scale: 0.96; }
+#loadmore:hover { border-color: var(--border-active); }
 #loadmore:disabled { opacity: 0.4; cursor: default; }
 
 /* Zero-height tripwire watched by the IntersectionObserver; sits just above
@@ -1372,15 +1328,11 @@ code {
 }
 
 /* ---- filtered items ---- */
-/* Subtle exit when a new filter catches an item: fade + small upward drift
-   (softer than an enter), then .filtered removes it from layout. Placed after
-   the grid rules so its transition-property wins over .feed.grid .item. */
+/* Quiet exit when a new filter catches an item: fade out, then .filtered
+   removes it from layout. Fade only — the drift read as decoration. */
 .item.removing {
   opacity: 0;
-  transform: translateY(-8px);
-  transition-property: opacity, transform;
-  transition-duration: 200ms;
-  transition-timing-function: ease-in;
+  transition: opacity 200ms ease-in;
   pointer-events: none;
 }
 .item.filtered { display: none !important; }
@@ -1395,14 +1347,11 @@ code {
   height: var(--control-h);
   flex-shrink: 0;
   padding: 0;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-control);
   border-radius: var(--radius);
   background: var(--bg);
   color: var(--fg-muted);
   cursor: pointer;
-  transition-property: color, border-color, scale;
-  transition-duration: 150ms;
-  transition-timing-function: ease-out;
 }
 .controls .icon-btn::after {
   content: "";
@@ -1413,9 +1362,8 @@ code {
   width: 40px;
   height: 40px;
 }
-.controls .icon-btn:active { scale: 0.96; }
 .controls .icon-btn:hover,
-.controls a.icon-btn:hover { color: var(--fg); border-color: var(--fg-muted); text-decoration: none; }
+.controls a.icon-btn:hover { color: var(--fg); border-color: var(--border-active); text-decoration: none; }
 .controls .icon-btn.connected { color: var(--fg-muted); }
 .icon-badge[hidden] { display: none; }
 .icon-badge {
@@ -1436,31 +1384,16 @@ code {
   font-weight: 700;
   /* Tabular figures so a 1→2 digit change doesn't shift the badge width */
   font-variant-numeric: tabular-nums;
-  /* Smooth fade/scale when the count hits zero (see .hiding) */
-  transition-property: opacity, scale;
-  transition-duration: 150ms;
-  transition-timing-function: ease-out;
+  /* A quiet fade when the count hits zero (see .hiding). The count itself is
+     the information; it doesn't need to pop to be noticed. */
+  transition: opacity 150ms ease-out;
 }
 .icon-badge.disabled {
   background: var(--border);
   color: var(--fg-muted);
 }
-/* Fade + shrink out when the active-filter count returns to 0 */
 .icon-badge.hiding {
   opacity: 0;
-  scale: 0.6;
-}
-/* One-shot pop when the count increments/decrements */
-.icon-badge.pop {
-  animation: badge-pop 280ms ease-out;
-}
-@keyframes badge-pop {
-  0% { scale: 1; }
-  35% { scale: 1.4; }
-  100% { scale: 1; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .icon-badge.pop { animation: none; }
 }
 
 /* ---- filter dropdown ---- */
@@ -1471,7 +1404,7 @@ code {
   padding: 0;
   inset: auto;
   position-anchor: --filter-anchor;
-  top: calc(anchor(bottom) + 4px);
+  top: anchor(bottom);
   right: anchor(right);
   width: 220px;
   max-height: 260px;
@@ -1481,34 +1414,11 @@ code {
   flex-direction: column;
   overflow: hidden;
   background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-elevated);
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius);
+  box-shadow: var(--frame-ring);
   font-size: var(--text-ui);
   line-height: var(--leading);
-}
-/* Exit: see .item-actions-menu — allow-discrete keeps the closing popover
-   visible through the fade. */
-.filter-dropdown {
-  transition-property: opacity, transform, overlay, display;
-  transition-duration: 150ms;
-  transition-timing-function: ease-in;
-  transition-behavior: allow-discrete;
-}
-.filter-dropdown:not(:popover-open) {
-  opacity: 0;
-  transform: translateY(-4px);
-  display: none;
-}
-.filter-dropdown:popover-open {
-  transition-duration: 200ms;
-  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
-}
-@starting-style {
-  .filter-dropdown:popover-open {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
 }
 .filter-dropdown-head {
   flex-shrink: 0;
@@ -1535,10 +1445,8 @@ code {
   border: none;
   padding: var(--space-2) var(--space-1);
   cursor: pointer;
-  transition: color 150ms ease-out, scale 150ms ease-out;
 }
 .filter-reset-btn:hover { color: var(--fg); }
-.filter-reset-btn:active { scale: 0.96; }
 .filter-reset-btn[hidden] { display: none; }
 .filter-toggle-btn {
   font-family: inherit;
@@ -1546,14 +1454,12 @@ code {
   line-height: 1;
   color: var(--fg-muted);
   background: none;
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-control);
   border-radius: var(--radius);
   padding: var(--space-2) var(--space-4);
   cursor: pointer;
-  transition: border-color 150ms ease-out, scale 150ms ease-out;
 }
-.filter-toggle-btn:hover { border-color: var(--fg-muted); }
-.filter-toggle-btn:active { scale: 0.96; }
+.filter-toggle-btn:hover { border-color: var(--border-active); }
 .filter-list {
   padding: var(--space-1) 0;
   /* Only the list scrolls (header stays pinned above); thin, themed scrollbar
@@ -1657,23 +1563,19 @@ code {
   max-width: min(90vw, 320px);
   padding: var(--space-2) var(--space-3);
   background: var(--bg);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-control);
   color: var(--fg);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-elevated);
+  border-radius: var(--radius);
+  box-shadow: var(--frame-ring);
   font-size: var(--text-ui);
   line-height: var(--leading);
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  /* Enter combines opacity + translateY + blur; base state doubles as the exit
-     target (shorter duration than the enter, per the subtle-exit guideline). */
+  /* Fade only. A toast has no ervell counterpart, so it follows the house
+     rule: it may appear, but it may not perform. */
   opacity: 0;
-  transform: translateY(8px);
-  filter: blur(4px);
-  transition-property: opacity, transform, filter;
-  transition-duration: 180ms;
-  transition-timing-function: ease-in;
+  transition: opacity 180ms ease-in;
 }
 .toast-icon {
   display: inline-flex;
@@ -1702,18 +1604,12 @@ code {
   cursor: pointer;
   border-radius: var(--radius);
   flex-shrink: 0;
-  transition: scale 150ms ease-out, color 150ms ease-out;
 }
 .toast-undo:hover {
   color: var(--fg);
 }
-.toast-undo:active {
-  scale: 0.96;
-}
 .toast.show {
   opacity: 1;
-  transform: translateY(0);
-  filter: blur(0);
-  transition-duration: 260ms;
-  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+  transition-duration: 220ms;
+  transition-timing-function: ease-out;
 }

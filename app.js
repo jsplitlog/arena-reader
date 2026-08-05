@@ -715,7 +715,8 @@ function onSelect(key, value) {
 }
 
 // Build one custom popover dropdown to replace a native <select> (scope/sort/
-// type). Mirrors the per-item actions menu: a trigger button toggles a [popover]
+// type). Styled as an ervell Pulldown: the open panel joins the trigger's edge
+// rather than floating (see .filter-select-menu). A trigger button toggles a [popover]
 // menu via the Popover API, positioned with CSS anchor positioning (down on
 // desktop, up over the mobile bottom bar; anchorFallback covers browsers without
 // anchor support). Returns a controller used in place of the old <select>.
@@ -784,7 +785,7 @@ function buildFilterDropdown(key) {
     btn.setAttribute('aria-expanded', e.newState === 'open' ? 'true' : 'false');
   });
   // Desktop opens downward, the fixed mobile bottom bar upward — decide per open.
-  anchorFallback(btn, menu, () => (mobileNavMQ.matches ? 'up' : 'down'));
+  anchorFallback(btn, menu, () => (mobileNavMQ.matches ? 'up' : 'down'), true);
 
   function setValue(v) {
     const opt = options.find((o) => o.v === v);
@@ -828,21 +829,30 @@ function actionsMenuRow(menu, sectionLabel, value, isFiltered, onAdd, onRemove) 
 const SUPPORTS_ANCHOR = CSS.supports('anchor-name: --a');
 // `dir` is 'up'/'down', or a function returning one (evaluated at open time so
 // the filter dropdowns can flip direction at the mobile breakpoint).
-function anchorFallback(btn, pop, dir) {
+// `joined` mirrors the CSS Pulldown seam: instead of floating 4px off a
+// right-aligned edge, the panel spans the trigger's width (bleeding 1px past
+// each side) and sits flush against it, so the two boxes read as one.
+function anchorFallback(btn, pop, dir, joined = false) {
   if (SUPPORTS_ANCHOR) return;
   pop.addEventListener('toggle', (e) => {
     if (e.newState !== 'open') return;
     const d = typeof dir === 'function' ? dir() : dir;
     const r = btn.getBoundingClientRect();
+    const gap = joined ? 0 : 4;
     pop.style.position = 'fixed';
-    pop.style.left = 'auto';
-    pop.style.right = `${Math.max(4, window.innerWidth - r.right)}px`;
+    if (joined) {
+      pop.style.left = `${r.left - 1}px`;
+      pop.style.right = `${window.innerWidth - r.right - 1}px`;
+    } else {
+      pop.style.left = 'auto';
+      pop.style.right = `${Math.max(4, window.innerWidth - r.right)}px`;
+    }
     if (d === 'up') {
       pop.style.top = 'auto';
-      pop.style.bottom = `${window.innerHeight - r.top + 4}px`;
+      pop.style.bottom = `${window.innerHeight - r.top + gap}px`;
     } else {
       pop.style.bottom = 'auto';
-      pop.style.top = `${r.bottom + 4}px`;
+      pop.style.top = `${r.bottom + gap}px`;
     }
   });
 }
