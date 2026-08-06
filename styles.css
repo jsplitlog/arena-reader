@@ -961,7 +961,7 @@ code {
   margin: 0;
   padding: 0;
   inset: auto;
-  bottom: calc(anchor(top) + 4px);
+  bottom: calc(anchor(top) + var(--space-1));
   right: anchor(right);
   min-width: 160px;
   background: var(--bg);
@@ -1410,7 +1410,9 @@ code {
   padding: 0;
   inset: auto;
   position-anchor: --filter-anchor;
-  top: anchor(bottom);
+  /* Floating panel, not a joined Pulldown — stand it off the trigger so the
+     two boxes read as separate rather than as one seamed control. */
+  top: calc(anchor(bottom) + var(--space-1));
   right: anchor(right);
   width: 220px;
   max-height: 260px;

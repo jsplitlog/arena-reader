@@ -838,7 +838,10 @@ function anchorFallback(btn, pop, dir, joined = false) {
     if (e.newState !== 'open') return;
     const d = typeof dir === 'function' ? dir() : dir;
     const r = btn.getBoundingClientRect();
-    const gap = joined ? -1 : 4;
+    // Floating panels stand off by --space-1; joined ones overlap the trigger's
+    // border by 1px so the two 1px lines collapse into a single seam.
+    const spaceUnit = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--space-1')) || 4;
+    const gap = joined ? -1 : spaceUnit;
     pop.style.position = 'fixed';
     if (joined) {
       pop.style.left = `${r.left}px`;
