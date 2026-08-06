@@ -1695,10 +1695,17 @@ function moveFocus(key) {
 
   const target = items[index];
   if (target) {
-    target.focus();
+    // Typewriter focus: park every item on the same reading line rather than
+    // scrolling only once it falls off-screen. `block: 'nearest'` used to leave
+    // focus marching down to the bottom edge — the item you were reading ended
+    // up in the worst spot on the page. Aligning the whole .item to 'start'
+    // against its scroll-margin-top (set in styles.css) keeps it steady.
+    // focus() scrolls on its own, so suppress that and do the one scroll here.
+    target.focus({ preventScroll: true });
+    const row = target.closest('.item') || target;
     // An explicit behavior option overrides the global reduced-motion CSS
     // (scroll-behavior: auto), so gate the smooth scroll here too.
-    target.scrollIntoView({ block: 'nearest', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+    row.scrollIntoView({ block: 'start', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
   }
 }
 

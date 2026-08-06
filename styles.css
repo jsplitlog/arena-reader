@@ -752,6 +752,15 @@ code {
   column-gap: var(--gutter);
   padding: var(--space-4) 0;
   border-bottom: 1px solid var(--border);
+  /* Typewriter focus line for j/k (see moveFocus): scrollIntoView aligns the
+     item's scroll-margin edge to the top of the viewport, so this offset is
+     where the focused item comes to rest — about a quarter down, clear of the
+     sticky topbar, with the item and the next one below it. Literal units (not
+     a token) so the vh fallback works: via var() an unsupported svh would be
+     invalid at computed-value time and collapse to 0 rather than to the line
+     above. */
+  scroll-margin-top: 28vh;
+  scroll-margin-top: 28svh;
 }
 .item:first-child { padding-top: 0; }
 .item:last-child { border-bottom: 0; }
