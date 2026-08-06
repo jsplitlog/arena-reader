@@ -830,19 +830,19 @@ const SUPPORTS_ANCHOR = CSS.supports('anchor-name: --a');
 // `dir` is 'up'/'down', or a function returning one (evaluated at open time so
 // the filter dropdowns can flip direction at the mobile breakpoint).
 // `joined` mirrors the CSS Pulldown seam: instead of floating 4px off a
-// right-aligned edge, the panel spans the trigger's width (bleeding 1px past
-// each side) and sits flush against it, so the two boxes read as one.
+// right-aligned edge, the panel spans the trigger exactly and overlaps its
+// border by 1px, so the two boxes read as one with a single seam line.
 function anchorFallback(btn, pop, dir, joined = false) {
   if (SUPPORTS_ANCHOR) return;
   pop.addEventListener('toggle', (e) => {
     if (e.newState !== 'open') return;
     const d = typeof dir === 'function' ? dir() : dir;
     const r = btn.getBoundingClientRect();
-    const gap = joined ? 0 : 4;
+    const gap = joined ? -1 : 4;
     pop.style.position = 'fixed';
     if (joined) {
-      pop.style.left = `${r.left - 1}px`;
-      pop.style.right = `${window.innerWidth - r.right - 1}px`;
+      pop.style.left = `${r.left}px`;
+      pop.style.right = `${window.innerWidth - r.right}px`;
     } else {
       pop.style.left = 'auto';
       pop.style.right = `${Math.max(4, window.innerWidth - r.right)}px`;

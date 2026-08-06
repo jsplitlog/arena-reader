@@ -1033,19 +1033,26 @@ code {
 /* Modeled directly on ervell's UI/Pulldown: the open options panel is not a
    floating menu, it is the lower half of the field. It sits flush on the
    trigger's bottom edge, bleeds 1px past each side so the two borders read as
-   one continuous box (ervell uses margin-left/right: -1px), squares off the
-   corners where they meet, and carries the same darkened edge the expanded
-   trigger takes. No offset, no shadow, no motion.
+   one continuous box, squares off the corners where they meet, and carries the
+   same darkened edge the expanded trigger takes. No offset, no shadow, no
+   motion.
+
+   Outer edges align exactly with the field's. (ervell writes this as
+   `margin: 0 -1px`, but that sits inside a fullWidth Overlay whose box is
+   already inset by the container's border; on raw anchor positioning the same
+   -1px just makes the panel 2px wider than its trigger.) The -1px on the
+   opening edge instead pulls the panel over the trigger's border so the two
+   1px lines collapse into a single seam rather than stacking into 2px.
 
    Pinning both left and right to the anchor also sizes the panel to the field,
    which is why the rightmost dropdown no longer needs a special right-aligned
    case to stay on-screen. We avoid position-try: re-evaluating fallbacks
    against an anchored popover made it jump off-screen. */
 .filter-select-menu {
-  top: anchor(bottom);
+  top: calc(anchor(bottom) - 1px);
   bottom: auto;
-  left: calc(anchor(left) - 1px);
-  right: calc(anchor(right) - 1px);
+  left: anchor(left);
+  right: anchor(right);
   /* The UA sheet gives [popover] `width: fit-content`, which over-constrains
      left+right and silently drops the right inset. Restore auto so the panel
      actually spans its trigger. */
@@ -1157,7 +1164,7 @@ code {
      pair of corners squares off and which border edge stays light. */
   .filter-select-menu {
     top: auto;
-    bottom: anchor(top);
+    bottom: calc(anchor(top) - 1px);
     border-top-color: var(--border-active);
     border-bottom-color: var(--border-control);
     border-radius: var(--radius) var(--radius) 0 0;
