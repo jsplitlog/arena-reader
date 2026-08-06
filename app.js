@@ -1665,9 +1665,12 @@ function closeMenusOnScroll() {
 // Single source of truth: drives both dispatch (below) and the cheat sheet
 // (renderShortcuts). The Enter/Space activation on #app-title stays a local
 // element handler — it's an activation key, not a global shortcut.
+// `repeatable` opts a shortcut into OS key auto-repeat. Only navigation wants
+// it; letting the others repeat means holding 'r' refetches the feed ~30x a
+// second and holding 'g'/'f' strobes the view.
 const SHORTCUTS = [
   { keys: ['?'],      group: 'General',    label: 'Show this shortcut sheet', run: () => toggleShortcuts() },
-  { keys: ['j', 'k'], group: 'Navigation', label: 'Next / previous item',     run: (e) => moveFocus(e.key) },
+  { keys: ['j', 'k'], group: 'Navigation', label: 'Next / previous item',     repeatable: true, run: (e) => moveFocus(e.key, e.repeat) },
   { keys: ['g'],      group: 'View',       label: 'Toggle grid / list view',  run: () => setView(state.view === 'grid' ? 'list' : 'grid') },
   { keys: ['f'],      group: 'View',       label: 'Toggle filters',           run: () => toggleFilters() },
   { keys: ['r'],      group: 'Feed',       label: 'Refresh feed',             run: () => loadFeed({ reset: true }) },
@@ -1678,8 +1681,24 @@ function toggleFilters() {
   else el.filterDropdown.showPopover();
 }
 
+// Held-key cadence for j/k. The OS repeats at roughly 30/s, far faster than a
+// smooth scroll can finish, so every repeat used to cancel the animation before
+// it landed: the feed looked frozen, then lurched a dozen items once the
+// repeats stopped. Stepping on a fixed interval caps the skim speed at
+// something readable and gives each scroll time to arrive.
+const REPEAT_STEP_MS = 110;
+let lastRepeatStep = 0;
+
 // Move focus through unfiltered feed headlines (j = down, k = up).
-function moveFocus(key) {
+function moveFocus(key, repeating) {
+  // Drop repeats that arrive inside the cadence window. A single press is never
+  // throttled — only a held key.
+  if (repeating) {
+    const now = performance.now();
+    if (now - lastRepeatStep < REPEAT_STEP_MS) return;
+    lastRepeatStep = now;
+  }
+
   const items = Array.from(document.querySelectorAll('.item:not(.filtered) .item-title a'));
   if (!items.length) return;
 
@@ -1704,8 +1723,12 @@ function moveFocus(key) {
     target.focus({ preventScroll: true });
     const row = target.closest('.item') || target;
     // An explicit behavior option overrides the global reduced-motion CSS
-    // (scroll-behavior: auto), so gate the smooth scroll here too.
-    row.scrollIntoView({ block: 'start', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+    // (scroll-behavior: auto), so gate the smooth scroll here too. A held key
+    // steps instantly: one item-height jump per interval, always landing on the
+    // same line, reads as steady stepping — whereas animating each step would
+    // just restart the tween before it could finish.
+    const instant = repeating || prefersReducedMotion();
+    row.scrollIntoView({ block: 'start', behavior: instant ? 'auto' : 'smooth' });
   }
 }
 
@@ -1728,7 +1751,10 @@ window.addEventListener('keydown', (e) => {
 
   const shortcut = SHORTCUTS.find((s) => s.keys.includes(e.key));
   if (!shortcut) return;
+  // Swallow the key either way, so a held non-repeatable shortcut doesn't fall
+  // through to the browser's own handling.
   e.preventDefault();
+  if (e.repeat && !shortcut.repeatable) return;
   shortcut.run(e);
 });
 
