@@ -1692,6 +1692,25 @@ function toggleFilters() {
 const REPEAT_STEP_MS = 110;
 let lastRepeatStep = 0;
 
+// Viewport tests for the j/k cursor. The cursor lives in document.activeElement,
+// which a wheel/trackpad scroll doesn't touch — so scrolling away by hand used
+// to leave a stale focus that the next j yanked the page back to. Mastodon
+// never hits this because its timeline is virtualized: rows unmount when they
+// leave the viewport and focus falls back to <body> on its own. We render the
+// whole feed, so staleness has to be checked outright.
+const rowOf = (link) => link.closest('.item') || link;
+const isOnScreen = (link) => {
+  const rect = rowOf(link).getBoundingClientRect();
+  return rect.bottom > 0 && rect.top < window.innerHeight;
+};
+// Where to re-seat: Mastodon's rule is the first row whose *top* edge is in
+// view — the first one you can read from its beginning, not one half cut off
+// above.
+const firstVisibleIndex = (items) => items.findIndex((link) => {
+  const { top } = rowOf(link).getBoundingClientRect();
+  return top >= 0 && top < window.innerHeight;
+});
+
 // Move focus through unfiltered feed headlines (j = down, k = up).
 function moveFocus(key, repeating) {
   // Drop repeats that arrive inside the cadence window. A single press is never
@@ -1710,6 +1729,23 @@ function moveFocus(key, repeating) {
   if (index === -1) {
     const closestItem = active ? active.closest('.item') : null;
     if (closestItem) index = items.indexOf(closestItem.querySelector('.item-title a'));
+  }
+
+  // Cursor scrolled out of view: treat it as invalid rather than navigating
+  // from it. Re-seat to what's actually on screen and stop there — this press
+  // only moves focus, it doesn't step and it doesn't scroll, so the reading
+  // position the mouse just established survives intact. The next j/k resumes
+  // typewriter stepping from the new seat. Held keys never reach this: mid-run
+  // the focused item is always in view.
+  if (index !== -1 && !isOnScreen(items[index])) index = -1;
+  if (index === -1) {
+    const seat = firstVisibleIndex(items);
+    if (seat !== -1) {
+      items[seat].focus({ preventScroll: true });
+      return;
+    }
+    // Nothing has its top edge in view (a single item taller than the
+    // viewport); fall through to the from-the-end defaults below.
   }
 
   if (key === 'j') index = index === -1 ? 0 : Math.min(index + 1, items.length - 1);
