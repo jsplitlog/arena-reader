@@ -1,63 +1,86 @@
 # ✶✶ Reader
 
-An RSS-style reader for links from people you follow on [Are.na](https://www.are.na), sorted by creation date.
+An RSS-style reader for [Are.na](https://www.are.na) — the links, images, and
+text the people you follow are saving, newest first.
 
-<!-- Add screenshots here: ![List view](screenshots/list-light.png) -->
+**[arena-reader.jsplit.me](https://arena-reader.jsplit.me)**
 
-## How it works
+A static site: no build step, no framework, no backend, no dependencies.
 
-Built on the Are.na **v3 REST API** using a single search endpoint:
+## What it does
 
-```
-GET https://api.are.na/v3/search
-    ?query=*                 # wildcard — match everything
-    &scope=following         # only content from people you follow
-    &type=Link               # only link blocks
-    &sort=created_at_desc    # newest created first
-    &per=50
-    &page=N
-Authorization: Bearer <personal access token>
-```
+Sign in with Are.na and you get a chronological feed of blocks, in a list or a
+grid. Narrow it three ways from the top bar:
 
-The feed comes from one paginated endpoint (plus one lightweight per-block connections lookup for channel/count enrichment) and only fetches when you open it, refresh, or click **Load more** — keeping it inside Are.na's documented per-tier rate limits for typical use.
+| | |
+| --- | --- |
+| **Source** | My Network (people you follow) · My Are.na · All Are.na |
+| **Sort** | Created · Updated · Random |
+| **Type** | Links · Images · Embeds · Attachments · Text · All |
 
-## Running it
+Each item shows its channel, who saved it, the source domain, and how many
+times it's been connected. Anything you don't want to see again — a domain, a
+person, a channel — can be muted from the item's own menu, and unmuted from the
+filter panel.
 
-It's a static site — no build step, no framework.
+## What's tied to your Are.na account
 
-**Locally:**
+**Read-only.** The app calls three `GET` endpoints on the Are.na v3 API
+(`/search`, `/blocks/:id/connections`, `/me`) and never writes anything back.
+Your feed, your identity, and who you follow come from Are.na. Nothing else
+does.
+
+**Local to this browser, never sent to Are.na:** your mutes, the list/grid
+preference, and the access token itself. Filters are yours alone — they don't
+sync between devices and no one else sees them. Clearing site data resets
+them.
+
+Sign-in is OAuth 2.0 with PKCE, run entirely in the browser — no client secret,
+no server. Tick **Remember device** to keep the token in `localStorage`;
+otherwise it lives in `sessionStorage` and clears when you close the browser.
+Are.na tokens don't expire, so signing out clears this browser only — revoke
+access properly at
+[are.na/developers/oauth/authorized](https://www.are.na/developers/oauth/authorized).
+
+> **Note:** `scope=following` may require an Are.na Premium account. If you see
+> a `402` or `403`, that's why.
+
+## Keyboard shortcuts
+
+| Key | |
+| --- | --- |
+| `j` / `k` | Next / previous item |
+| `g` | Toggle grid / list |
+| `f` | Toggle filters |
+| `r` | Refresh feed |
+| `?` | Show the shortcut sheet |
+
+## Running it locally
 
 ```sh
-python3 server.py        # serves at http://localhost:8000
+python3 server.py    # http://127.0.0.1:8000
 ```
 
-The included `server.py` also handles saving filter preferences to a local `filters.json` file. You can also use any static server — filters will fall back to `localStorage`.
+Any static server works; `server.py` just adds writable `filters.json`
+persistence for local development. Sign-in needs a secure context — `https://`
+or `http://127.0.0.1`.
 
-**Hosted:** push to a static host (e.g. GitHub Pages) and visit the URL.
+**Hosting a fork?** Register your own app at
+[are.na/developers/oauth/applications](https://www.are.na/developers/oauth/applications)
+with your URL as the redirect URI, and set the client ID in `oauth.js`.
 
-## Signing in
+## Built with AI
 
-Click **Sign in with Are.na** and authorize the app — the OAuth flow (authorization code + PKCE) runs entirely in your browser; no secrets, no backend.
+Most of this was written with [Claude Code](https://claude.com/claude-code) —
+over half the commits carry a Claude co-author trailer, and the rest were
+hand-edited on top. Every line was reviewed and tested by a human before it
+landed. `docs/` holds the API primer, OAuth notes, and security audit that came
+out of that work.
 
-- Tick **Remember on this device** before signing in to stay signed in across browser restarts; otherwise the token clears when the browser session ends.
-- Sign-in needs a secure context: `https://` in production, or `http://127.0.0.1` for local dev.
-- **Hosting a fork?** Register your own OAuth application at [are.na/developers/oauth/applications](https://www.are.na/developers/oauth/applications) with your URL as the redirect URI, and set its client ID in `oauth.js`.
+## Contributing
 
-## Caveats
+Contributions welcome — it's a small codebase and an easy one to read. Open an
+issue, or send a pull request. Bug reports and design nitpicks are just as
+useful as code.
 
-- **Premium:** the `scope=following` search may require an Are.na Premium account. If you get a `402`/`403`, the app shows a message explaining this.
-- **Token in the browser:** because this is a pure client-side tool, your token lives in the browser. By default it's kept in `sessionStorage` (cleared when the browser session ends); tick **Remember on this device** to persist it in `localStorage`. Are.na tokens never expire, so signing out clears this browser only — revoke the app's access in your [Are.na settings](https://www.are.na/settings) to fully invalidate it.
-- **CORS:** the v3 API supports browser clients, so direct calls work. If a future change blocks cross-origin requests, you'd need a proxy to add the `Authorization` header server-side.
-
-## Files
-
-| File | Purpose |
-| --- | --- |
-| `index.html` | Markup and controls |
-| `styles.css` | Styling (light + dark via `prefers-color-scheme`) |
-| `app.js` | Token handling, API calls, rendering, filtering |
-| `oauth.js` | Sign in with Are.na (OAuth 2.0 + PKCE) |
-| `server.py` | Optional dev server with filter persistence |
-| `manifest.json` | PWA manifest for home screen install |
-
-Unofficial. Not affiliated with Are.na.
+MIT licensed. Unofficial; not affiliated with Are.na.
