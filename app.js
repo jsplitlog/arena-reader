@@ -1403,16 +1403,10 @@ function showAuth(show) {
     const comp = window.innerWidth - root.clientWidth;
     root.style.setProperty('--scrollbar-comp', `${comp}px`);
     root.classList.add('modal-open');
-  } else {
-    if (prefersReducedMotion()) {
-      root.classList.remove('modal-open');
-    } else {
-      setTimeout(() => {
-        if (!el.auth.classList.contains('open')) {
-          root.classList.remove('modal-open');
-        }
-      }, 150); // 150ms matches the exit transition duration
-    }
+  } else if (!el.shortcuts.classList.contains('open')) {
+    // The modal closes instantly, so the lock releases with it — nothing to
+    // hold the layout for. Keep it if the shortcut sheet is still up.
+    root.classList.remove('modal-open');
   }
   const hasToken = !!state.token;
   // Only hide controls on first visit (no token yet)
@@ -1841,8 +1835,8 @@ function renderShortcuts() {
   });
 }
 
-// Modeled on showAuth: same scroll-lock measurement, --scrollbar-comp backfill,
-// and reduced-motion-gated deferred release so the fade-out holds without shift.
+// Modeled on showAuth: same scroll-lock measurement and --scrollbar-comp
+// backfill so the layout doesn't shift when the scrollbar goes away.
 function toggleShortcuts(show) {
   if (show === undefined) show = !el.shortcuts.classList.contains('open');
   if (show && !el.shortcutsList.children.length) renderShortcuts();
@@ -1856,15 +1850,10 @@ function toggleShortcuts(show) {
     root.style.setProperty('--scrollbar-comp', `${comp}px`);
     root.classList.add('modal-open');
     el.shortcutsClose.focus();
-  } else {
-    const release = () => {
-      // Keep the lock if another modal is still open.
-      if (!el.shortcuts.classList.contains('open') && !el.auth.classList.contains('open')) {
-        root.classList.remove('modal-open');
-      }
-    };
-    if (prefersReducedMotion()) release();
-    else setTimeout(release, 150); // matches the exit transition
+  } else if (!el.auth.classList.contains('open')) {
+    // Instant close, so release the lock right away; keep it if the settings
+    // modal is still open.
+    root.classList.remove('modal-open');
   }
 }
 

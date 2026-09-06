@@ -108,8 +108,8 @@ code {
 }
 
 /* Honor reduced-motion globally: collapse every transition to instant. Little
-   is left to collapse — menus, presses, and badges no longer animate at all —
-   but it still covers the modal/toast fades, the item exit, and the scroll-
+   is left to collapse — menus, presses, modals, and badges no longer animate
+   at all — but it still covers the toast fade, the item exit, and the scroll-
    driven nav bars. Keyframe loaders (skeleton, spinner) keep gentle,
    non-vestibular motion via their own reduced-motion rules below. */
 @media (prefers-reduced-motion: reduce) {
@@ -301,31 +301,25 @@ code {
   overflow: hidden;
   padding-right: var(--scrollbar-comp, 0px);
 }
-/* overlay + modal: animated open/close
-   Base = closed/exit state (shorter, ease-in).
-   .open = enter state (longer, spring-like curve). */
+/* overlay + modal: instant open/close, no fade — same as every other surface
+   in the app. The scrim is light enough to read as a dimming, not a curtain. */
 .auth-overlay,
 .modal-overlay {
   position: fixed;
   inset: 0;
   z-index: 50;
-  background: rgba(0, 0, 0, 0.25);
+  background: rgba(0, 0, 0, 0.12);
   opacity: 0;
   visibility: hidden;
-  transition-property: opacity, visibility;
-  transition-duration: 150ms;
-  transition-timing-function: ease-in;
 }
 .auth-overlay.open,
 .modal-overlay.open {
   opacity: 1;
   visibility: visible;
-  transition-duration: 200ms;
-  transition-timing-function: ease-out;
 }
 @media (prefers-color-scheme: dark) {
   .auth-overlay,
-  .modal-overlay { background: rgba(0, 0, 0, 0.5); }
+  .modal-overlay { background: rgba(0, 0, 0, 0.3); }
 }
 .auth,
 .shortcuts-modal {
@@ -343,20 +337,15 @@ code {
   flex-direction: column;
   gap: var(--space-4);
   background: var(--bg);
-  /* The overlay behind it carries the transition; the dialog itself just
-     appears. No slide, no blur — matching ervell's Modal, which has neither. */
+  /* No fade, no slide, no blur — the dialog just appears, matching ervell's
+     Modal, which has none of them either. */
   opacity: 0;
   visibility: hidden;
-  transition-property: opacity, visibility;
-  transition-duration: 150ms;
-  transition-timing-function: ease-in;
 }
 .auth.open,
 .shortcuts-modal.open {
   opacity: 1;
   visibility: visible;
-  transition-duration: 200ms;
-  transition-timing-function: ease-out;
 }
 /* ---- keyboard shortcut sheet ---- */
 /* Cap height to the viewport (1em breathing room top/bottom) so the centered
