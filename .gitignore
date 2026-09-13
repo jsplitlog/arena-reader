@@ -4,3 +4,4 @@ filters.json
 skills-lock.json
 docs/
 __pycache__/
+.DS_Store
