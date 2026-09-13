@@ -96,7 +96,17 @@ html, body {
      feed text — title, description, source, attribution, meta — reads
      comfortably on small screens. */
   html { font-size: 18px; }
-  body { overflow-x: hidden; }
+  /* Contain sideways overflow without turning <body> into a scroll container.
+     `overflow-x: hidden` only stays harmless while it propagates to the
+     viewport, which it does *only* when the root's overflow is `visible`. The
+     moment :root.modal-open sets `overflow: hidden` (auth sheet, shortcuts),
+     propagation stops, body's `hidden` applies to body itself, and the sticky
+     .topbar re-resolves against a scrollport that never scrolls — so it
+     strands at the top of the feed and scrolls away with the content. `clip`
+     never creates a scroll container, so the topbar stays pinned to the
+     viewport through every modal open/close. The `hidden` declaration ahead
+     of it is the fallback for engines without `overflow: clip`. */
+  body { overflow-x: hidden; overflow-x: clip; }
 }
 
 a { color: var(--link); text-decoration: none; }
@@ -1097,6 +1107,23 @@ code {
      plus its top+bottom padding. Used to pad the feed and lift the toast
      region clear of the bar. */
   :root { --filter-bar-h: calc(30px + 2 * var(--space-4)); }
+  /* Live height of the fixed top bar, measured by syncTopbarHeight() in app.js
+     (it varies with the safe-area inset and with whether .controls is shown).
+     The fallback covers the first frame before the observer reports. */
+  :root { --topbar-h: calc(25px + 2 * var(--space-3)); }
+  /* Match the bottom bar: take the top bar out of flow and pin it to the
+     viewport rather than leaning on `position: sticky`. Sticky re-resolves its
+     scrollport on every layout, so an ancestor that momentarily stops being
+     `overflow: visible` (see body above) leaves the bar stranded mid-feed
+     until something forces another layout. Fixed has no such dependency, and
+     it's the same technique .select-row already uses down here — both bars now
+     hide and peek off the same .nav-hidden transform, from the same anchor. */
+  .topbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+  }
   .item { grid-template-columns: 1fr 60px; }
   .item-thumb { width: 60px; height: 60px; }
   /* Unwrap controls so the title-row icons join topbar-inner's flex layout.
@@ -1177,8 +1204,12 @@ code {
   .controls .spacer { display: none; }
   /* Single icon row in the top bar now that selects live at the bottom. */
   .topbar-inner { column-gap: var(--space-2); row-gap: 0; }
-  /* Pad the feed so the last cards / load-more clear the fixed filter bar. */
-  .container { padding-bottom: calc(1em + var(--filter-bar-h) + env(safe-area-inset-bottom, 0)); }
+  /* Pad the feed so the first cards clear the fixed top bar and the last cards
+     / load-more clear the fixed filter bar — both bars are out of flow here. */
+  .container {
+    padding-top: calc(1em + var(--topbar-h));
+    padding-bottom: calc(1em + var(--filter-bar-h) + env(safe-area-inset-bottom, 0));
+  }
 
   /* Larger touch targets on mobile */
   .filter-select-btn,

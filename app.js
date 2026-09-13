@@ -171,6 +171,23 @@ mobileNavMQ.addEventListener('change', () => {
   fitSelectLabels();
 });
 
+/* On mobile the top bar is fixed (see .topbar in the max-width:640px block),
+   so it no longer reserves space in the flow — .container pads itself by
+   --topbar-h instead. The height isn't a constant: it grows by the safe-area
+   inset, shrinks pre-auth while .controls is hidden, and changes again if the
+   title row wraps. Measure it and publish it as a custom property; the CSS
+   fallback only has to cover the first frame. */
+function syncTopbarHeight() {
+  const h = el.topbar.getBoundingClientRect().height;
+  if (h > 0) document.documentElement.style.setProperty('--topbar-h', `${h}px`);
+}
+if ('ResizeObserver' in window) {
+  new ResizeObserver(syncTopbarHeight).observe(el.topbar);
+} else {
+  window.addEventListener('resize', syncTopbarHeight, { passive: true });
+}
+syncTopbarHeight();
+
 // Hide/reveal the top bar and the mobile bottom filter bar together: the top
 // bar slides up, the bottom bar slides down (both via .nav-hidden).
 function setNavHidden(hidden) {
