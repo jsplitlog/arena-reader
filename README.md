@@ -28,7 +28,7 @@ Functionally, are.na is a simple platform for sharing and saving links, images, 
 
 > social media retirement community [✶✶][A/Q2]
 
-Once you have followed many users, the feed becomes tricky to navigate. Are.na's explore page and search mitigate this problem well with robust filtering and sorting. In Are.na's iOS app, channels and notifications can be viewed at different densities from list to grids. This application applies those solutions, along with conventions from RSS readers, to the feed.
+Once you have followed many users, the feed becomes tricky to navigate. Are.na's explore page and search mitigate this problem well with robust filtering and sorting. In Are.na's iOS app, channels and notifications can be viewed at different densities of list and grid. This reader applies those solutions, along with conventions from RSS readers, to the feed.
 
 I built this to serve my own use case built out of 8 years of Are.na habits. I want to see what unique links the people I follow on are.na have recently added, in chronological order, in the style of RSS, with full are.na attribution and basic link metadata. In the spirit of modularity, the inputs and views are open-ended enough to shape the reading experience around a diverse set of preferences.
 
