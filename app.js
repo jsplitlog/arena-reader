@@ -195,13 +195,11 @@ function showToast(message, type = 'mute', onUndo = null) {
   }
   toast.appendChild(iconSpan);
 
-  // Text label
   const textSpan = document.createElement('span');
   textSpan.className = 'toast-label';
   textSpan.textContent = message;
   toast.appendChild(textSpan);
 
-  // Undo button (on the right if onUndo is provided)
   if (type === 'mute' && onUndo) {
     const undoBtn = document.createElement('button');
     undoBtn.type = 'button';
@@ -624,7 +622,6 @@ function renderFilterUI() {
 
   el.filterList.innerHTML = '';
 
-  // Empty state
   if (count === 0) {
     const empty = document.createElement('div');
     empty.className = 'filter-empty';
@@ -632,7 +629,6 @@ function renderFilterUI() {
     el.filterList.appendChild(empty);
   }
 
-  // Domains section
   if (domainKeys.length) {
     const heading = document.createElement('div');
     heading.className = 'filter-section-label';
@@ -644,7 +640,6 @@ function renderFilterUI() {
     }
   }
 
-  // Users section
   if (userKeys.length) {
     const heading = document.createElement('div');
     heading.className = 'filter-section-label';
@@ -656,7 +651,6 @@ function renderFilterUI() {
     }
   }
 
-  // Channels section
   if (channelKeys.length) {
     const heading = document.createElement('div');
     heading.className = 'filter-section-label';
@@ -892,7 +886,6 @@ function renderItem(b) {
   const body = document.createElement('div');
   body.className = 'item-body';
 
-  // Title
   const h = document.createElement('div');
   h.className = 'item-title';
   const a = document.createElement('a');
@@ -913,7 +906,6 @@ function renderItem(b) {
     body.appendChild(src);
   }
 
-  // Description
   if (desc) {
     const p = document.createElement('p');
     p.className = 'item-desc';
@@ -980,7 +972,6 @@ function renderItem(b) {
 
   attribution.appendChild(lead);
 
-  // Trailing group: timestamp + source/filter icon buttons
   const metaActions = document.createElement('div');
   metaActions.className = 'meta-actions';
   const time = document.createElement('time');
@@ -1177,7 +1168,6 @@ async function fetchMe() {
       slug: userSlug(u),
       avatar: avatarUrl(u),
     };
-    // Update modal if it's already showing
     if (el.auth.classList.contains('open')) showAuth(true);
     // Also update if closed — so next open reflects user
     el.authUser.hidden = false;
@@ -1350,7 +1340,6 @@ function setView(mode) {
   state.view = mode;
   localStorage.setItem(VIEW_KEY, mode);
 
-  // Update the toggle icon/label instantly, then swap layout
   updateViewToggle(mode);
 
   const applyLayout = () => {
@@ -1413,7 +1402,6 @@ function showAuth(show) {
   el.controls.hidden = !hasToken;
   // Keep the relocated mobile filter bar in sync with the controls' state.
   syncSelectRowPlacement();
-  // Toggle between connect and manage modes
   el.oauthConnect.hidden = hasToken || !oauthAvailable();
   el.rememberLabel.hidden = hasToken;
   el.manageApps.hidden = !hasToken;
@@ -1421,7 +1409,6 @@ function showAuth(show) {
   el.authClose.hidden = !hasToken;
   el.settingsToggle.classList.toggle('connected', hasToken);
 
-  // User info
   if (hasToken && state.user) {
     el.authUser.hidden = false;
     renderAuthUser();
