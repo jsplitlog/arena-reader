@@ -22,7 +22,7 @@ When browsing the feed easily jump to source URLs, blocks, users, or channels. B
 Joined ✶✶ August 2018, built Summer 2026, ongoing updates at a hobbyist pace.  
 
 ## Why?
-I built this to serve my own use case built out of 8 years of Are.na habits. I want to see what unique links the people I follow on are.na have recently added, in chronological order, in the style of RSS, with full are.na attribution and basic link metadata. In the spirit of modularity, the inputs and views are open-ended enough to shape the reading experience around a diverse set of preferences.
+I built this to serve my own habits from 8 years of using are.na. I want to see what unique links the people I follow on are.na have recently added, in chronological order, in the style of RSS, with full are.na attribution and basic link metadata. In the spirit of modularity, the inputs and views are open-ended enough to shape the reading experience around a diverse set of preferences.
 
 Functionally, are.na is a simple platform for sharing and saving links, images, text, embeds, and attachments to channels. This is a great utility for an individual, but the magic of the platform comes from doing this in parallel with other users. I have described this magic as:
 
