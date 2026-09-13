@@ -1422,11 +1422,11 @@ function showAuth(show) {
     el.authMsg.hidden = true;
     el.authMsg.innerHTML = '';
   } else if (oauthAvailable()) {
-    el.authTagline.textContent = 'Simple are.na feed reader.';
+    el.authTagline.textContent = 'Simple Are.na feed reader';
     el.authMsg.hidden = true;
     el.authMsg.innerHTML = '';
   } else {
-    el.authTagline.textContent = 'Simple are.na feed reader.';
+    el.authTagline.textContent = 'Simple Are.na feed reader';
     // No client id configured, or an insecure context (plain http on a
     // non-loopback host) — WebCrypto and OAuth both need https/127.0.0.1.
     el.authMsg.hidden = false;
