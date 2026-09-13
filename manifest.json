@@ -1,7 +1,7 @@
 {
   "name": "✶✶ Reader",
   "short_name": "✶✶ Reader",
-  "description": "An RSS-style reader for links from people you follow on Are.na",
+  "description": "Simple are.na feed reader.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
