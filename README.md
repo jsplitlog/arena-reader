@@ -1,5 +1,5 @@
 # ✶✶ Reader
-Simple [are.na][A] feed reader.
+Simple [Are.na][A] feed reader.
 
 ## Who?
 [J.Split][A/JS], product designer & collaborator in Chicago, IL.  
