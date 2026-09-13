@@ -2,7 +2,7 @@
 Simple [are.na][A] feed reader.
 
 ## Who?
-[J.Split][A/JS] product designer & collaborator in Chicago, IL.  
+[J.Split][A/JS], product designer & collaborator in Chicago, IL.  
 
 ## What?
 | My Network | My Are.na | All Are.na | Filters |
@@ -22,6 +22,8 @@ When browsing the feed easily jump to source URLs, blocks, users, or channels. B
 Joined ✶✶ August 2018, built Summer 2026, ongoing updates at a hobbyist pace.  
 
 ## Why?
+I built this to serve my own use case built out of 8 years of Are.na habits. I want to see what unique links the people I follow on are.na have recently added, in chronological order, in the style of RSS, with full are.na attribution and basic link metadata. In the spirit of modularity, the inputs and views are open-ended enough to shape the reading experience around a diverse set of preferences.
+
 Functionally, are.na is a simple platform for sharing and saving links, images, text, embeds, and attachments to channels. This is a great utility for an individual, but the magic of the platform comes from doing this in parallel with other users. I have described this magic as:
 
 > like quietly sharing a table at the library with strangers [✶✶][A/Q1]
@@ -29,9 +31,6 @@ Functionally, are.na is a simple platform for sharing and saving links, images, 
 > social media retirement community [✶✶][A/Q2]
 
 Once you have followed many users, the feed becomes tricky to navigate. Are.na's explore page and search mitigate this problem well with robust filtering and sorting. In Are.na's iOS app, channels and notifications can be viewed at different densities of list and grid. This reader applies those solutions, along with conventions from RSS readers, to the feed.
-
-I built this to serve my own use case built out of 8 years of Are.na habits. I want to see what unique links the people I follow on are.na have recently added, in chronological order, in the style of RSS, with full are.na attribution and basic link metadata. In the spirit of modularity, the inputs and views are open-ended enough to shape the reading experience around a diverse set of preferences.
-
 ## How?
 ✶✶ Reader is an unofficial web app built by [J.Split][A/JS] using [Are.na's developer API][A/API], Claude Code, Figma, and Github pages.
 
