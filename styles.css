@@ -96,7 +96,7 @@
 html, body {
   background: var(--bg);
   color: var(--fg);
-  font-family: Areal, Arial, 'Helvetica Neue', Helvetica, sans-serif;
+  font-family: Areal, Arial, sans-serif;
   font-size: 20px;
   line-height: var(--leading);
   -webkit-font-smoothing: antialiased;
