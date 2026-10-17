@@ -1,0 +1,51 @@
+# Deploys the site to GitHub Pages. Areal is pulled from the private
+# jsplitlog/areal-fonts repo at deploy time, since Dinamo's license bars
+# putting the font files in a public repository.
+name: Deploy Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: site
+
+      - uses: actions/checkout@v4
+        with:
+          repository: jsplitlog/areal-fonts
+          ssh-key: ${{ secrets.AREAL_FONTS_DEPLOY_KEY }}
+          path: fonts
+
+      - name: Stage site
+        run: |
+          mkdir _site
+          rsync -a --exclude='.*' site/ _site/
+          mkdir -p _site/assets/fonts
+          cp "fonts/ABC Areal/WOFF2/ABCArealVariable.woff2" _site/assets/fonts/
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
