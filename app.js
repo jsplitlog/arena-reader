@@ -908,6 +908,7 @@ function renderItem(b) {
   const a = document.createElement('a');
   a.href = href; a.target = '_blank'; a.rel = 'noopener';
   a.textContent = title;
+  a.title = title;
   h.appendChild(a);
   body.appendChild(h);
 

@@ -1294,6 +1294,14 @@ code {
 .feed.grid .item-body {
   padding: var(--space-3) var(--space-3) 0;
 }
+/* Clamp long titles so one block can't stretch its whole row. The full title
+   stays on the link's title attribute. */
+.feed.grid .item-title {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
 .feed.grid .item-attribution {
   /* Pin the attribution to the bottom of the (row-stretched) card so cards
      align across a row regardless of neighbours' title/description length.
