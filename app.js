@@ -170,6 +170,9 @@ mobileNavMQ.addEventListener('change', () => {
   syncSelectRowPlacement();
   fitSelectLabels();
 });
+// Labels are first measured with fallback Arial metrics; re-measure once
+// Areal has loaded so the buttons fit the real glyphs.
+document.fonts.ready.then(fitSelectLabels);
 
 /* On mobile the top bar is fixed (see .topbar in the max-width:640px block),
    so it no longer reserves space in the flow — .container pads itself by

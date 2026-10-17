@@ -7,7 +7,7 @@
        per-domain favicons; connect-src covers the API and OAuth token
        endpoint. The authorize step is a top-level navigation (unaffected). -->
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self' https://api.are.na; img-src 'self' data: https:; object-src 'none'; base-uri 'none'; form-action 'self'" />
+        content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self' https://api.are.na; font-src 'self'; img-src 'self' data: https:; object-src 'none'; base-uri 'none'; form-action 'self'" />
   <title>✶✶ Reader</title>
 
   <!-- Web app manifest -->
@@ -26,7 +26,8 @@
   <!-- Favicon -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect width='18' height='18' x='3' y='3' rx='2'/><path d='M7 7v10'/><path d='M11 7v10'/><path d='m15 7 2 10'/></svg>" />
 
-  <link rel="stylesheet" href="styles.css?v=69" />
+  <link rel="preload" href="assets/fonts/ABCArealVariable.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="styles.css?v=70" />
 </head>
 <body>
   <header class="topbar">
@@ -131,6 +132,6 @@
   <div id="toast-region" class="toast-region" role="status" aria-live="polite"></div>
 
   <script src="oauth.js?v=45"></script>
-  <script src="app.js?v=68"></script>
+  <script src="app.js?v=69"></script>
 </body>
 </html>

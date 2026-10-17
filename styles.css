@@ -81,14 +81,30 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* ABC Areal, Dinamo's Arial cut for Are.na. Not in this repo: the license
+   bars public repos, so the Pages workflow copies it in at deploy. Locally
+   it 404s and the Arial stack takes over. One variable file covers
+   wght 400–700 and the slnt axis stands in for italics. */
+@font-face {
+  font-family: 'Areal';
+  src: url('assets/fonts/ABCArealVariable.woff2') format('woff2');
+  font-weight: 400 700;
+  font-style: oblique 0deg 12deg;
+  font-display: swap;
+}
+
 html, body {
   background: var(--bg);
   color: var(--fg);
-  font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif;
+  font-family: Areal, Arial, 'Helvetica Neue', Helvetica, sans-serif;
   font-size: 20px;
   line-height: var(--leading);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+/* Areal's darkmode axis thins strokes so light-on-dark text doesn't bloom */
+@media (prefers-color-scheme: dark) {
+  html, body { font-variation-settings: 'DRKM' 1; }
 }
 
 @media (max-width: 640px) {
