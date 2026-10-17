@@ -1113,6 +1113,7 @@ async function enrichChannels() {
         : `https://www.are.na/channel/${ch.slug || ''}`;
       link.target = '_blank'; link.rel = 'noopener';
       link.textContent = ch.title;
+      link.title = ch.title;
       span.appendChild(link);
 
       // The channel resolves after the item renders, so tag the item now,

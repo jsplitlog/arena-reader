@@ -891,13 +891,14 @@ code {
 .meta-channel:empty { display: none; }
 .meta-channel a {
   color: var(--fg-muted);
-  max-width: 24ch;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
 }
 .meta-channel a:hover { color: var(--fg); }
+/* Let the channel name give way, not the connection count */
+.meta-channel > :not(a) { flex-shrink: 0; }
 
 .item-thumb-wrap {
   position: relative;
