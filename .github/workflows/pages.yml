@@ -39,6 +39,17 @@ jobs:
           mkdir -p _site/assets/fonts
           cp "fonts/ABC Areal/WOFF2/ABCArealVariable.woff2" _site/assets/fonts/
 
+      # Semi Mono only sets source domains (lowercase ASCII), so ship just
+      # those glyphs: ~12 KB instead of ~164 KB.
+      - name: Subset Areal Semi Mono
+        run: |
+          python3 -m venv /tmp/ft
+          /tmp/ft/bin/pip install --quiet fonttools brotli
+          /tmp/ft/bin/pyftsubset "fonts/ABC Areal Semi Mono/WOFF2/ABCArealSemiMonoVariable.woff2" \
+            --unicodes="U+002D-002E,U+0030-0039,U+0061-007A,U+2026" \
+            --layout-features='' --flavor=woff2 \
+            --output-file=_site/assets/fonts/ABCArealSemiMonoVariable.woff2
+
       - uses: actions/configure-pages@v6
 
       - uses: actions/upload-pages-artifact@v5
