@@ -91,15 +91,13 @@
   font-style: oblique 0deg 12deg;
   font-display: swap;
 }
-/* Semi Mono for source domains. Deployed as a subset matching this
-   unicode-range; anything outside it falls through to Areal. */
+/* Semi Mono for source domains */
 @font-face {
   font-family: 'Areal Semi Mono';
   src: url('assets/fonts/ABCArealSemiMonoVariable.woff2') format('woff2');
   font-weight: 400 700;
   font-style: oblique 0deg 12deg;
   font-display: swap;
-  unicode-range: U+002D-002E, U+0030-0039, U+0061-007A, U+2026;
 }
 
 html, body {
