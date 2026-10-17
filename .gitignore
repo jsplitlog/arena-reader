@@ -6,8 +6,6 @@ docs/
 __pycache__/
 .DS_Store
 
-# Font files: Areal's license bars public repos; it lives in the private
-# jsplitlog/areal-fonts repo and is added at deploy (.github/workflows/pages.yml)
 *.woff2
 *.ttf
 *.otf

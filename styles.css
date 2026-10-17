@@ -81,9 +81,8 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* ABC Areal, Dinamo's Arial cut for Are.na. Not in this repo: the license
-   bars public repos, so the Pages workflow copies it in at deploy. Locally
-   it 404s and the Arial stack takes over. One variable file covers
+/* ABC Areal, Dinamo's Arial cut for Are.na. Added at deploy by the Pages
+   workflow; without it Arial takes over. One variable file covers
    wght 400–700 and the slnt axis stands in for italics. */
 @font-face {
   font-family: 'Areal';
