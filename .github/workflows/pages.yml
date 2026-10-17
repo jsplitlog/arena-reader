@@ -35,7 +35,8 @@ jobs:
       - name: Stage site
         run: |
           mkdir _site
-          rsync -a --exclude='.*' site/ _site/
+          rsync -a --exclude='.*' --exclude=server.py --exclude=README.md \
+            --exclude=assets/screenshots site/ _site/
           mkdir -p _site/assets/fonts
           cp "fonts/ABC Areal/WOFF2/ABCArealVariable.woff2" _site/assets/fonts/
           cp "fonts/ABC Areal Semi Mono/WOFF2/ABCArealSemiMonoVariable.woff2" _site/assets/fonts/

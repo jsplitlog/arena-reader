@@ -109,9 +109,11 @@ html, body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-/* Areal's darkmode axis thins strokes so light-on-dark text doesn't bloom */
+/* Areal's darkmode axis thins strokes so light-on-dark text doesn't bloom.
+   Form controls are listed too: the UA's `font` shorthand on them resets
+   font-variation-settings, so they wouldn't inherit it from body. */
 @media (prefers-color-scheme: dark) {
-  html, body { font-variation-settings: 'DRKM' 1; }
+  html, body, button, input, select, textarea { font-variation-settings: 'DRKM' 1; }
 }
 
 @media (max-width: 640px) {

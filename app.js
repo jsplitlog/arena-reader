@@ -171,8 +171,11 @@ mobileNavMQ.addEventListener('change', () => {
   fitSelectLabels();
 });
 // Labels are first measured with fallback Arial metrics; re-measure once
-// Areal has loaded so the buttons fit the real glyphs.
+// Areal has loaded so the buttons fit the real glyphs. `ready` can settle
+// before Areal is requested, and font-display: swap can land it later, so
+// also re-measure whenever a font load finishes.
 document.fonts.ready.then(fitSelectLabels);
+document.fonts.addEventListener('loadingdone', fitSelectLabels);
 
 /* On mobile the top bar is fixed (see .topbar in the max-width:640px block),
    so it no longer reserves space in the flow — .container pads itself by
@@ -1115,8 +1118,8 @@ async function enrichChannels() {
         ? `https://www.are.na/${ch.userSlug}/${ch.slug}`
         : `https://www.are.na/channel/${ch.slug || ''}`;
       link.target = '_blank'; link.rel = 'noopener';
-      link.textContent = ch.title;
-      link.title = ch.title;
+      link.textContent = ch.title || ch.slug || '';
+      link.title = link.textContent;
       span.appendChild(link);
 
       // The channel resolves after the item renders, so tag the item now,
