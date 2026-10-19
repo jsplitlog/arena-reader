@@ -28,12 +28,12 @@
 
   <link rel="preload" href="assets/fonts/ABCArealVariable.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="preload" href="assets/fonts/ABCArealSemiMonoVariable.woff2" as="font" type="font/woff2" crossorigin />
-  <link rel="stylesheet" href="styles.css?v=75" />
+  <link rel="stylesheet" href="styles.css?v=76" />
 </head>
 <body>
   <header class="topbar">
     <div class="topbar-inner">
-      <h1 id="app-title" role="button" tabindex="0" title="Home — My Network · Created · Links">✶✶ Reader</h1>
+      <h1 id="app-title" role="button" tabindex="0" title="Home — My Network · Created · Links"><span class="arena-mark" role="img" aria-label="Are.na"></span> Reader</h1>
       <div class="controls" id="controls" hidden>
         <span class="spacer"></span>
         <!-- scope/sort/type filters are custom popover dropdowns built in app.js
@@ -75,7 +75,7 @@
   <section id="auth" class="auth">
     <button id="auth-close" type="button" class="auth-close" aria-label="Close" hidden><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
     <div class="auth-brand">
-      <strong>✶✶ Reader</strong>
+      <strong><span class="arena-mark" role="img" aria-label="Are.na"></span> Reader</strong>
       <div id="auth-user" class="auth-user" hidden>
         <img id="auth-avatar" class="avatar" alt="" hidden />
         <span id="auth-avatar-fallback" class="avatar avatar-fallback" hidden></span>
@@ -84,7 +84,7 @@
       <span id="auth-tagline">Simple Are.na feed reader</span>
     </div>
     <div id="oauth-connect" class="oauth-connect" hidden>
-      <button id="oauth-signin" type="button" class="auth-btn oauth-primary">Sign in with Are.na ✶✶</button>
+      <button id="oauth-signin" type="button" class="auth-btn oauth-primary">Sign in with Are.na <span class="arena-mark" aria-hidden="true"></span></button>
     </div>
     <div id="auth-actions" class="auth-actions" hidden>
       <button id="sign-out" type="button" class="auth-btn">Sign out</button>
@@ -133,6 +133,6 @@
   <div id="toast-region" class="toast-region" role="status" aria-live="polite"></div>
 
   <script src="oauth.js?v=45"></script>
-  <script src="app.js?v=70"></script>
+  <script src="app.js?v=71"></script>
 </body>
 </html>

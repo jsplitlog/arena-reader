@@ -109,6 +109,11 @@ html, body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+/* Are.na's logo. Areal has it at U+E000; app.js adds .has-areal once the
+   font loads. Without Areal the private-use glyph would be a blank box, so
+   the mark stays ✶✶ until then. */
+.arena-mark::before { content: '\2736\2736'; }
+.has-areal .arena-mark::before { content: '\E000'; }
 /* Areal's darkmode axis thins strokes so light-on-dark text doesn't bloom.
    Form controls are listed too: the UA's `font` shorthand on them resets
    font-variation-settings, so they wouldn't inherit it from body. */
@@ -485,6 +490,12 @@ code {
   gap: var(--space-2);
 }
 .auth-brand strong { font-size: var(--text-title); }
+/* Keep the logo inline at the heading's size, not a tagline-style row */
+.auth-brand .arena-mark {
+  display: inline;
+  font-size: inherit;
+  color: inherit;
+}
 .auth-brand span {
   display: flex;
   align-items: center;
@@ -514,6 +525,7 @@ code {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 0.25em; /* the word space before the logo, which flex drops */
   font-size: var(--text-ui);
   border-color: var(--accent);
   background: var(--accent);
@@ -980,6 +992,11 @@ code {
   line-height: 1;
   letter-spacing: -0.08em;
   text-indent: -0.08em;
+}
+/* The logo is one glyph, so it needs no tightening to sit centered */
+.has-areal .item-icon-btn {
+  letter-spacing: 0;
+  text-indent: 0;
 }
 .item-actions-menu {
   /* [popover]: reset UA top-layer defaults, anchor to the trigger button

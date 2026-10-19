@@ -176,6 +176,11 @@ mobileNavMQ.addEventListener('change', () => {
 // also re-measure whenever a font load finishes.
 document.fonts.ready.then(fitSelectLabels);
 document.fonts.addEventListener('loadingdone', fitSelectLabels);
+// Areal carries Are.na's logo at U+E000. Switch .arena-mark to it once the
+// font has loaded; until then, or if it never does, the mark stays ✶✶.
+document.fonts.load('1em Areal', '\uE000')
+  .then((faces) => { if (faces.length) document.documentElement.classList.add('has-areal'); })
+  .catch(() => {});
 
 /* On mobile the top bar is fixed (see .topbar in the max-width:640px block),
    so it no longer reserves space in the flow — .container pads itself by
@@ -1010,7 +1015,7 @@ function renderItem(b) {
   arenaBtn.href = blockUrl(b);
   arenaBtn.target = '_blank';
   arenaBtn.rel = 'noopener';
-  arenaBtn.textContent = '✶✶';
+  arenaBtn.innerHTML = '<span class="arena-mark" aria-hidden="true"></span>';
   arenaBtn.title = 'View on Are.na';
   arenaBtn.setAttribute('aria-label', 'View on Are.na');
   metaActions.appendChild(arenaBtn);
